@@ -1192,6 +1192,10 @@ const afrikaans = <String, String>{
   'Watch your Nanit camera over home Wi-Fi':
       'Kyk na jou Nanit-kamera oor die huis se Wi-Fi',
   'Pick a camera': 'Kies ’n kamera',
+  'Motion sensitivity': 'Bewegingsensitiwiteit',
+  'Low': 'Laag',
+  'Normal': 'Normaal',
+  'High': 'Hoog',
   'The camera did not accept that': 'Die kamera het dit nie aanvaar nie',
   'Sound machine': 'Klankmasjien',
   'Speaker and light': 'Luidspreker en lig',

@@ -73,7 +73,8 @@ class NanitHub extends ChangeNotifier {
       locator: _MulticastLocator(),
     );
     c.addListener(notifyListeners);
-    final cl = client = NanitCameraClient(c)..addListener(notifyListeners);
+    final cl = client = NanitCameraClient(c, store: account.store)
+      ..addListener(notifyListeners);
     live = NanitLiveStream(client: cl);
     final a = alerts = NanitAlertNotifier(
       events: cl.events,
