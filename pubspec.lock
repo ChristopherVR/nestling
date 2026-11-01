@@ -482,7 +482,7 @@ packages:
     description:
       path: "packages/nanit_camera"
       ref: master
-      resolved-ref: d0dacee7769544d23d0328e430947b923e4574db
+      resolved-ref: b8e0fd1875f8efbfc928101d727e0c4aa08c56ff
       url: "https://github.com/ChristopherVR/nanit-research.git"
     source: git
     version: "0.1.0"
