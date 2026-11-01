@@ -47,6 +47,12 @@ dependencies:
   file_picker: ^13.1.0
   package_info_plus: ^10.2.2
   universal_ble: ^3.2.0
+  # Local Nanit camera support, from the private research repo.
+  nanit_camera:
+    git:
+      url: https://github.com/ChristopherVR/nanit-research.git
+      path: packages/nanit_camera
+      ref: master
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -183,7 +183,9 @@ class Reminders {
   static const snoozeMinutes = 10;
 
   /// Ids: 1 = legacy feed, 100+ = pill slots, 900–999 = snoozed reminders,
-  /// 1000+ = routine weekdays, 1000000+ = per-baby feed reminders.
+  /// 1000+ = routine weekdays, 1000000+ = per-baby feed reminders,
+  /// 2000000 = feeding timer, 3000000+ = Nanit camera alerts
+  /// (nanit_integration.dart).
   static const _feedId = 1;
   static const _snoozeBase = 900;
 

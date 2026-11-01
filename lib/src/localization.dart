@@ -1095,6 +1095,23 @@ const afrikaans = <String, String>{
   'This pump has no firmware channel': 'Hierdie pomp het geen fermware-kanaal nie',
   'The pump did not answer': 'Die pomp het nie geantwoord nie',
   'The pump answered the check wrongly': 'Die pomp het die kontrole verkeerd beantwoord',
+  'Sound and motion alerts from the Nanit camera':
+      'Klank- en bewegingswaarskuwings van die Nanit-kamera',
+  '{name}: sound detected': '{name}: klank bespeur',
+  '{name}: motion detected': '{name}: beweging bespeur',
+  'Sound detected': 'Klank bespeur',
+  'Motion detected': 'Beweging bespeur',
+  'Heard by the Nanit camera': 'Deur die Nanit-kamera gehoor',
+  'Seen by the Nanit camera': 'Deur die Nanit-kamera gesien',
+  'Experimental: this alert type is not verified yet':
+      'Eksperimenteel: hierdie soort waarskuwing is nog nie bevestig nie',
+  'Camera paused': 'Kamera onderbreek',
+  'Show camera': 'Wys kamera',
+  'Try again': 'Probeer weer',
+  'The camera did not send video': 'Die kamera het nie video gestuur nie',
+  'Not connected to the camera': 'Nie aan die kamera gekoppel nie',
+  'Could not connect to the video': 'Kon nie aan die video koppel nie',
+  'Video connection interrupted': 'Videoverbinding onderbreek',
 };
 
 /// The Google Play build tracks "habits" instead of "pills", so Play does not

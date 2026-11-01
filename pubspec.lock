@@ -85,10 +85,10 @@ packages:
     dependency: transitive
     description:
       name: crypto
-      sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
+      sha256: e3626ae6270383c9e3a549f34c9e4cd26c09ae6a9adaab2bf4737a00340efdc4
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.7"
+    version: "3.0.8"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -97,6 +97,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  dart_webrtc:
+    dependency: transitive
+    description:
+      name: dart_webrtc
+      sha256: "078e3c431500147e5cc52b3c6ea41ed538f30c7720cc2467d2186c9251e62716"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.2"
   dbus:
     dependency: transitive
     description:
@@ -235,6 +243,54 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_secure_storage:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage
+      sha256: d4e1fb6b2cb524868929e78dc0282fa000554b22060fb53789dc481c9fc95bb8
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.2.0"
+  flutter_secure_storage_darwin:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage_darwin
+      sha256: a031ceac9b070e62ef183cd7f7d1a8798ebde402d5049f0fe6eb3a51bd797a21
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.3"
+  flutter_secure_storage_linux:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage_linux
+      sha256: caa75bd78f017422912e3a904933113b2428eb79f981ac37acd2dd2a700458ea
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.3"
+  flutter_secure_storage_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage_platform_interface
+      sha256: "64951127f001f546891c86f414972bf49ef2c4c8a4c92c65f5790cc0c9100045"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
+  flutter_secure_storage_web:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage_web
+      sha256: "073a62b3aeb866ab4ce795f960413948e51e5a42a9b0c8333b6daf5bb3208a1c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
+  flutter_secure_storage_windows:
+    dependency: transitive
+    description:
+      name: flutter_secure_storage_windows
+      sha256: "471951813a97006d899db4948acc654a4f28c440083ea08178935ce20b173ec1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -261,6 +317,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_webrtc:
+    dependency: transitive
+    description:
+      name: flutter_webrtc
+      sha256: b98ef03376401e54ff87fc78907b38e562b15ca8424aba589c263eddc3c1ecf9
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.3"
   hooks:
     dependency: transitive
     description:
@@ -349,6 +413,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  logger:
+    dependency: transitive
+    description:
+      name: logger
+      sha256: "2a0dc097e7b01d942475bdd552356db2d0f768b05540bd4b2b53f1840f2239a7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.8.0"
   logging:
     dependency: transitive
     description:
@@ -397,6 +469,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.4.2"
+  multicast_dns:
+    dependency: transitive
+    description:
+      name: multicast_dns
+      sha256: "134668a9605c747322d8c3eb0e89a4c0cbdedb29f8d2d5ae29d14daef724987b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3+1"
+  nanit_camera:
+    dependency: "direct main"
+    description:
+      path: "packages/nanit_camera"
+      ref: master
+      resolved-ref: d0dacee7769544d23d0328e430947b923e4574db
+      url: "https://github.com/ChristopherVR/nanit-research.git"
+    source: git
+    version: "0.1.0"
   objective_c:
     dependency: transitive
     description:
@@ -578,6 +667,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  synchronized:
+    dependency: transitive
+    description:
+      name: synchronized
+      sha256: b3d516dbd3757ff2a458735e4f6cbac9ff261f576f6e87bcb17feabb39e657c5
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.0"
   term_glyph:
     dependency: transitive
     description:
@@ -642,6 +739,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  webrtc_interface:
+    dependency: transitive
+    description:
+      name: webrtc_interface
+      sha256: c6f100eac5057d9a817a60473126f9828c796d42884d498af4f339c97b21014f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.1"
   win32:
     dependency: transitive
     description:
