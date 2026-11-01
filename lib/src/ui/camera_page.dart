@@ -397,8 +397,14 @@ class _Watch extends StatelessWidget {
           const SizedBox(height: 12),
           _Problem(
             text: problem,
-            action: failed ? _fixLabel(hub) : null,
-            onAction: failed ? () => _fix(context, hub) : null,
+            action: failed
+                ? _fixLabel(hub)
+                : hub.account.pairing?.manualIp == null
+                ? 'Enter address'
+                : null,
+            onAction: failed
+                ? () => _fix(context, hub)
+                : () => editCameraAddress(context, hub),
           ),
         ],
         if (client != null) _Room(client: client),
@@ -543,14 +549,6 @@ class _Details extends StatelessWidget {
   const _Details({required this.hub});
   final NanitHub hub;
 
-  Future<void> _editIp(BuildContext context) async {
-    final v = await showDialog<String>(
-      context: context,
-      builder: (_) => _AddressDialog(initial: hub.account.pairing?.manualIp),
-    );
-    if (v != null) await hub.setManualIp(v);
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = hub.account.pairing;
@@ -591,7 +589,7 @@ class _Details extends StatelessWidget {
           ),
           subtitle: LText(p?.manualIp ?? 'Found automatically', style: sub()),
           trailing: Icon(Icons.chevron_right_rounded, color: Baby.muted),
-          onTap: () => _editIp(context),
+          onTap: () => editCameraAddress(context, hub),
         ),
         if (expires != null)
           ListTile(
@@ -634,6 +632,15 @@ class _Details extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Asks for the camera's IP address, for when it is not found by itself.
+Future<void> editCameraAddress(BuildContext context, NanitHub hub) async {
+  final v = await showDialog<String>(
+    context: context,
+    builder: (_) => _AddressDialog(initial: hub.account.pairing?.manualIp),
+  );
+  if (v != null) await hub.setManualIp(v);
 }
 
 class _AddressDialog extends StatefulWidget {

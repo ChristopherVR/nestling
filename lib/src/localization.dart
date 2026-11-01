@@ -1179,6 +1179,7 @@ const afrikaans = <String, String>{
   'Camera address': 'Kamera-adres',
   'Only needed if Nestling cannot find the camera by itself. Find it in your router’s list of devices.': 'Net nodig as Nestling die kamera nie self kan vind nie. Kry dit in jou roeteerder se lys toestelle.',
   'Find it myself': 'Vind dit self',
+  'Enter address': 'Tik adres in',
   'Connected at {address}': 'Gekoppel by {address}',
   'Looking for the camera…': 'Soek die kamera…',
   'Found automatically': 'Outomaties gevind',
