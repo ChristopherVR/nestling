@@ -407,43 +407,14 @@ class _Watch extends StatelessWidget {
                 : () => editCameraAddress(context, hub),
           ),
         ],
-        if (client != null) _Room(client: client),
-        if (hub.alerts != null) ...[
-          const SectionTitle('Alerts'),
-          ListCard(
-            children: [
-              SwitchListTile(
-                contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-                secondary: IconBubble(
-                  glyph: (s, c) => Icon(
-                    Icons.notifications_active_rounded,
-                    size: s,
-                    color: c,
-                  ),
-                  color: Baby.feedSoft,
-                  iconColor: Baby.feed,
-                  size: 40,
-                ),
-                title: const LText(
-                  'Sound and motion alerts',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                subtitle: LText(
-                  'A notification when the camera hears or sees the baby, '
-                  'while Nestling is open or running in the background.',
-                  style: TextStyle(
-                    color: Baby.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                value: hub.alerts!.mode == NanitAlertMode.on,
-                onChanged: (on) => hub.alerts!.setMode(
-                  on ? NanitAlertMode.on : NanitAlertMode.off,
-                ),
-              ),
-            ],
+        if (client != null)
+          NanitCameraControls(
+            client: client,
+            alerts: hub.alerts,
+            text: tr,
+            ago: ago,
+            header: (_, title) => SectionTitle(title),
           ),
-        ],
         const SectionTitle('Camera'),
         _Details(hub: hub),
       ],
@@ -466,82 +437,6 @@ class _Watch extends StatelessWidget {
       case _:
         hub.reconnect();
     }
-  }
-}
-
-class _Room extends StatelessWidget {
-  const _Room({required this.client});
-  final NanitCameraClient client;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = client.temperature;
-    final h = client.humidity;
-    final sound = client.lastAlert[NanitAlertKind.sound];
-    final motion = client.lastAlert[NanitAlertKind.motion];
-    if (t == null && h == null && sound == null && motion == null) {
-      return const SizedBox.shrink();
-    }
-    Widget stat(
-      IconData icon,
-      String label,
-      String value,
-      Color color,
-    ) => Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 4),
-          LText.raw(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-          ),
-          LText(
-            label,
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionTitle('Room'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            child: Row(
-              children: [
-                stat(
-                  Icons.thermostat_rounded,
-                  'Temperature',
-                  t == null ? '–' : '${t.toStringAsFixed(1)} °C',
-                  Baby.feed,
-                ),
-                stat(
-                  Icons.water_drop_rounded,
-                  'Humidity',
-                  h == null ? '–' : '${h.round()} %',
-                  Baby.sleep,
-                ),
-                stat(
-                  Icons.graphic_eq_rounded,
-                  'Sound',
-                  sound == null ? '–' : ago(sound),
-                  Baby.primary,
-                ),
-                stat(
-                  Icons.directions_run_rounded,
-                  'Motion',
-                  motion == null ? '–' : ago(motion),
-                  Baby.nappy,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 
@@ -750,7 +645,8 @@ class _Problem extends StatelessWidget {
   );
 }
 
-/// On Today, once a camera is paired: the room at a glance, tap to watch.
+/// The Camera button on Today: the room at a glance once a camera is
+/// paired, a way to set one up before that.
 class CameraTodayCard extends StatelessWidget {
   const CameraTodayCard({super.key, this.hub});
   final NanitHub? hub;
@@ -761,52 +657,53 @@ class CameraTodayCard extends StatelessWidget {
     return ListenableBuilder(
       listenable: h,
       builder: (context, _) {
-        if (!h.loaded || !h.paired) return const SizedBox.shrink();
+        final paired = h.loaded && h.paired;
         final c = h.client;
         final bits = <String>[
+          if (c != null &&
+              nanitActivityOf(c, NanitAlertKind.motion) == NanitActivity.now)
+            'Moving now',
+          if (c != null &&
+              nanitActivityOf(c, NanitAlertKind.sound) == NanitActivity.now)
+            'Sound now',
           if (c?.temperature != null)
             '${c!.temperature!.toStringAsFixed(1)} °C',
           if (c?.humidity != null) '${c!.humidity!.round()} %',
-          if (c?.lastAlert[NanitAlertKind.sound] case final at?)
-            'Sound ${ago(at)}',
         ];
         final connected = h.connection?.connected ?? false;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-              leading: IconBubble(
-                glyph: (s, col) =>
-                    Icon(Icons.videocam_rounded, size: s, color: col),
-                color: Baby.primarySoft,
-                iconColor: Baby.primary,
-                size: 40,
-              ),
-              title: const LText(
-                'Camera',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: LText(
-                bits.isNotEmpty
-                    ? bits.join(' · ')
-                    : connected
-                    ? 'Connected'
-                    : 'Not connected',
-                style: TextStyle(
-                  color: Baby.muted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              trailing: FilledButton.tonal(
-                onPressed: () => openCamera(context),
-                child: const LText('Watch'),
-              ),
-              onTap: () => openCamera(context),
+        final subtitle = !paired
+            ? 'Set up your Nanit camera'
+            : bits.isNotEmpty
+            ? bits.join(' · ')
+            : connected
+            ? 'Connected'
+            : 'Not connected';
+        return Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
             ),
+            leading: IconBubble(
+              glyph: (s, col) =>
+                  Icon(Icons.videocam_rounded, size: s, color: col),
+              color: Baby.primarySoft,
+              iconColor: Baby.primary,
+              size: 40,
+            ),
+            title: const LText(
+              'Camera',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: LText(
+              subtitle,
+              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+            ),
+            trailing: FilledButton.tonal(
+              onPressed: () => openCamera(context),
+              child: LText(paired ? 'Watch' : 'Set up'),
+            ),
+            onTap: () => openCamera(context),
           ),
         );
       },

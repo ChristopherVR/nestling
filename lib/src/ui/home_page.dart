@@ -83,7 +83,6 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 14),
       ],
       const PumpLiveCard(),
-      const CameraTodayCard(),
       Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -145,6 +144,10 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      if (app.cameraOnToday) ...[
+        const SizedBox(height: 14),
+        const CameraTodayCard(),
+      ],
       if (app.tourPending) ...[
         const SizedBox(height: 14),
         _FirstLogGuide(app: app),
@@ -334,6 +337,15 @@ class _HomePageState extends State<HomePage> {
             onTap: () => _pillTap(context, app),
           ),
           if (app.pumpOnToday) _pumpTile(context, app),
+          if (app.cameraOnToday)
+            ActionTile(
+              glyph: Glyphs.camera,
+              label: 'Camera',
+              hint: 'Watch the baby',
+              soft: Baby.primarySoft,
+              strong: Baby.primary,
+              onTap: () => openCamera(context),
+            ),
           ActionTile(
             glyph: Glyphs.sleep,
             label: nap == null ? 'Start nap' : 'End nap',

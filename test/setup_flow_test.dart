@@ -151,6 +151,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('That’s the basics'), findsOneWidget);
+    // The Camera button on Today can push the guide below the fold.
+    await tester.ensureVisible(find.text('Got it'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Got it'));
     await tester.pumpAndSettle();
     expect(app.tourPending, isFalse);

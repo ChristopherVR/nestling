@@ -317,6 +317,9 @@ class AppState extends ChangeNotifier {
   /// Pump tile on Today, next to Feed and Nappy. On unless switched off.
   bool? showPump;
 
+  /// The Camera button on Today; on unless turned off.
+  bool? showCamera;
+
   /// Bluetooth pumps paired on this phone, by device id: name, serial, side.
   final pumpDevices = <String, Map<String, dynamic>>{};
 
@@ -325,6 +328,7 @@ class AppState extends ChangeNotifier {
   final pumpFound = <Entry>[];
 
   bool get pumpOnToday => showPump ?? true;
+  bool get cameraOnToday => showCamera ?? true;
 
   /// False until the first-time setup has been finished or skipped.
   bool setupDone = false;
@@ -877,6 +881,11 @@ class AppState extends ChangeNotifier {
 
   void setShowPump(bool on) {
     showPump = on;
+    _settingsChanged();
+  }
+
+  void setShowCamera(bool on) {
+    showCamera = on;
     _settingsChanged();
   }
 
@@ -1914,6 +1923,7 @@ class AppState extends ChangeNotifier {
       appearance = j['appearance'] as String? ?? 'light';
       nightLight = j['nightLight'] as bool? ?? true;
       showPump = j['showPump'] as bool?;
+      showCamera = j['showCamera'] as bool?;
       pumpDevices.addAll({
         for (final e in Map<String, dynamic>.from(
           j['pumpDevices'] as Map? ?? {},
@@ -2040,6 +2050,7 @@ class AppState extends ChangeNotifier {
       'appearance': appearance,
       'nightLight': nightLight,
       'showPump': ?showPump,
+      'showCamera': ?showCamera,
       'pumpDevices': pumpDevices,
       'pumpFound': [for (final e in pumpFound) e.toJson()],
       'setupDone': setupDone,

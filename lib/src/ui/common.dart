@@ -126,6 +126,7 @@ abstract final class Glyphs {
   static final nappy = _sym(Symbols.baby_changing_station_rounded);
   static final pee = _sym(Symbols.water_drop_rounded);
   static final pump = _sym(Symbols.water_full_rounded);
+  static final camera = _sym(Symbols.videocam_rounded);
   // The Play build tracks habits, not pills.
   static Glyph get pill => Distribution.play ? _habit : _pill;
   static IconData get pillIcon =>

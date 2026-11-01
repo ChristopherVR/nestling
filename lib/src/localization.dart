@@ -1192,6 +1192,47 @@ const afrikaans = <String, String>{
   'Watch your Nanit camera over home Wi-Fi':
       'Kyk na jou Nanit-kamera oor die huis se Wi-Fi',
   'Pick a camera': 'Kies ’n kamera',
+  'The camera did not accept that': 'Die kamera het dit nie aanvaar nie',
+  'Sound machine': 'Klankmasjien',
+  'Speaker and light': 'Luidspreker en lig',
+  'Camera settings': 'Kamera-instellings',
+  'Sound now': 'Klank nou',
+  'Moving now': 'Beweeg nou',
+  'Last sound {ago}': 'Laaste klank {ago}',
+  'Last moved {ago}': 'Laas beweeg {ago}',
+  'Quiet': 'Stil',
+  'Still': 'Roerloos',
+  'Comfortable': 'Gemaklik',
+  'Too cold': 'Te koud',
+  'Too warm': 'Te warm',
+  'Too dry': 'Te droog',
+  'Too humid': 'Te vogtig',
+  '{minutes} min': '{minutes} min',
+  '{hours} h': '{hours} h',
+  'Play for': 'Speel vir',
+  'Play': 'Speel',
+  'Playing {track}': 'Speel {track}',
+  'Speaker volume': 'Luidsprekervolume',
+  'Night light brightness': 'Nagligte se helderheid',
+  'While the app is open or running in the background':
+      'Terwyl die toepassing oop is of in die agtergrond loop',
+  'Night vision': 'Nagsig',
+  'Infrared picture in the dark': 'Infrarooi beeld in die donker',
+  'Microphone': 'Mikrofoon',
+  'Off means no sound in the video and no sound alerts':
+      'Af beteken geen klank in die video en geen klankwaarskuwings nie',
+  'Status light': 'Statuslig',
+  'The small light on the front of the camera':
+      'Die klein liggie voor op die kamera',
+  'Camera sleep': 'Kamera slaap',
+  'Turns the camera off: no video, sound or alerts until it is woken':
+      'Skakel die kamera af: geen video, klank of waarskuwings totdat dit wakker gemaak word nie',
+  'Set up your Nanit camera': 'Stel jou Nanit-kamera op',
+  'Set up': 'Stel op',
+  'Watch the baby': 'Hou die baba dop',
+  'Show Camera on Today': 'Wys Kamera op Vandag',
+  'A Camera button on Today, for watching the Nanit camera.':
+      '’n Kamera-knoppie op Vandag, om na die Nanit-kamera te kyk.',
 };
 
 /// The Google Play build tracks "habits" instead of "pills", so Play does not

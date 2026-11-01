@@ -588,6 +588,23 @@ class _SettingsPageState extends State<SettingsPage> {
     ]);
     addSection('Camera', [
       (
+        terms: ['Show Camera on Today', 'Camera', 'Nanit'],
+        child: SwitchListTile(
+          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+          secondary: const _Badge(Icons.videocam_rounded),
+          title: const LText(
+            'Show Camera on Today',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: LText(
+            'A Camera button on Today, for watching the Nanit camera.',
+            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+          ),
+          value: app.cameraOnToday,
+          onChanged: app.setShowCamera,
+        ),
+      ),
+      (
         terms: ['Camera', 'Nanit', 'Baby monitor', 'Video', 'Sound', 'Motion'],
         child: ListenableBuilder(
           listenable: NanitHub.instance,
