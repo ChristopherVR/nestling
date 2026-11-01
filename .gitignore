@@ -64,3 +64,6 @@ baby-log-backup-*.json
 *.p12
 /android/.kotlin/
 __pycache__/
+
+# Local path override for developing nanit_camera alongside Nestling.
+pubspec_overrides.yaml

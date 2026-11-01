@@ -59,6 +59,10 @@ object Background {
                     result.success(null)
                 }
                 "deviceName" -> result.success(deviceName(app))
+                "multicastLock" -> {
+                    setMulticast(app, call.arguments == true)
+                    result.success(null)
+                }
                 "releaseAwake" -> {
                     wakeLock?.takeIf { it.isHeld }?.release()
                     result.success(null)
@@ -131,5 +135,23 @@ object Background {
             .apply { setReferenceCounted(false) }
             .also { wakeLock = it }
         lock.acquire(millis)
+    }
+
+    private var multicastLock: android.net.wifi.WifiManager.MulticastLock? = null
+
+    /// Android drops incoming multicast (mDNS) unless an app holds this.
+    /// Held only while looking for the Nanit camera.
+    private fun setMulticast(context: Context, on: Boolean) {
+        if (on) {
+            if (multicastLock?.isHeld == true) return
+            val wifi = context.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
+            multicastLock = wifi.createMulticastLock("BabyLog:nanit").apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        } else {
+            multicastLock?.takeIf { it.isHeld }?.release()
+            multicastLock = null
+        }
     }
 }

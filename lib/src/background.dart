@@ -18,7 +18,8 @@ class BackgroundSync {
 
   static Future<T?> _call<T>(String method, [Object? args]) async {
     if (!Platform.isAndroid) return null;
-    if (!batteryExemptSupported && const {'isBatteryExempt', 'requestBatteryExempt'}.contains(method)) {
+    if (!batteryExemptSupported &&
+        const {'isBatteryExempt', 'requestBatteryExempt'}.contains(method)) {
       return null;
     }
     try {
@@ -34,12 +35,24 @@ class BackgroundSync {
   static Future<void> stop() => _call('stop');
 
   /// Whether Android lets the app keep its network connection while the phone sleeps.
-  static Future<bool> isBatteryExempt() async => await _call<bool>('isBatteryExempt') ?? true;
+  static Future<bool> isBatteryExempt() async =>
+      await _call<bool>('isBatteryExempt') ?? true;
 
   static Future<void> requestBatteryExempt() => _call('requestBatteryExempt');
 
   /// After an alarm: stop showing the app over the lock screen.
   static Future<void> leaveLockScreen() => _call('leaveLockScreen');
+
+  /// Lets mDNS answers through while [work] runs (Android filters
+  /// multicast otherwise). Used to find the Nanit camera.
+  static Future<T> withMulticast<T>(Future<T> Function() work) async {
+    await _call('multicastLock', true);
+    try {
+      return await work();
+    } finally {
+      await _call('multicastLock', false);
+    }
+  }
 
   static int _awake = 0;
 

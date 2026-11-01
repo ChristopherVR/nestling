@@ -9,6 +9,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+import 'package:nanit_camera/nanit_camera.dart'
+    show ensureNanitVideoInitialized;
+
+import 'src/nanit_integration.dart';
 import 'src/notifications.dart';
 import 'src/store.dart';
 import 'src/sync.dart';
@@ -46,6 +50,11 @@ Future<void> main(List<String> args) async {
     foreground: !args.contains('--headless'),
   );
   runApp(BabyApp(state: state, profile: profile));
+  if (!args.contains('--headless')) {
+    // The camera player (libmpv) and the paired Nanit camera, if any.
+    ensureNanitVideoInitialized();
+    unawaited(NanitHub.instance.start());
+  }
 
   final p = pair?.split(':');
   if (p != null && p.length == 3) {

@@ -999,7 +999,8 @@ const afrikaans = <String, String>{
   'Connecting…': 'Koppel tans…',
   'Connected': 'Gekoppel',
   'Not connected': 'Nie gekoppel nie',
-  'Not reachable. Is it switched on?': 'Nie bereikbaar nie. Is dit aangeskakel?',
+  'Not reachable. Is it switched on?':
+      'Nie bereikbaar nie. Is dit aangeskakel?',
   'Disconnect': 'Ontkoppel',
   'Disconnected': 'Ontkoppel',
   'Forget {name}': 'Vergeet {name}',
@@ -1030,7 +1031,8 @@ const afrikaans = <String, String>{
   'Look again': 'Soek weer',
   'No pumps found. Switch them on, close the Momcozy app and look again.': 'Geen pompe gevind nie. Skakel hulle aan, maak die Momcozy-toep toe en soek weer.',
   'Tap to connect': 'Tik om te koppel',
-  'Trouble connecting? Open the pump lab': 'Sukkel om te koppel? Maak die pomplab oop',
+  'Trouble connecting? Open the pump lab':
+      'Sukkel om te koppel? Maak die pomplab oop',
   'Edit pumping': 'Wysig pompsessie',
   'How much': 'Hoeveel',
   'Pumping saved': 'Pompsessie gestoor',
@@ -1044,9 +1046,11 @@ const afrikaans = <String, String>{
   'Left pump': 'Linkerpomp',
   'Right pump': 'Regterpomp',
   '{pump}: error {code}': '{pump}: fout {code}',
-  'Nestling needs the Nearby devices permission to find pumps.': 'Nestling het die “Toestelle naby”-toestemming nodig om pompe te vind.',
+  'Nestling needs the Nearby devices permission to find pumps.':
+      'Nestling het die “Toestelle naby”-toestemming nodig om pompe te vind.',
   'Turn on Bluetooth to find pumps.': 'Skakel Bluetooth aan om pompe te vind.',
-  'Saved on this phone; the pump no longer has these.': 'Op hierdie foon gestoor; die pomp het dit nie meer nie.',
+  'Saved on this phone; the pump no longer has these.':
+      'Op hierdie foon gestoor; die pomp het dit nie meer nie.',
   'Milk': 'Melk',
   'Battery': 'Battery',
   'Pumped': 'Gepomp',
@@ -1075,7 +1079,8 @@ const afrikaans = <String, String>{
   'Other…': 'Ander…',
   'How much?': 'Hoeveel?',
   'Which pump is it?': 'Watter pomp is dit?',
-  'Momcozy pumps that work with Nestling.': 'Momcozy-pompe wat met Nestling werk.',
+  'Momcozy pumps that work with Nestling.':
+      'Momcozy-pompe wat met Nestling werk.',
   'My pump isn’t listed': 'My pomp is nie gelys nie',
   'Chosen by you': 'Deur jou gekies',
   'Showing every Bluetooth device. Tap your {model}; it is usually named “M5 Smart” or after the model.': 'Wys elke Bluetooth-toestel. Tik jou {model}; dit heet gewoonlik “M5 Smart” of na die model.',
@@ -1092,9 +1097,12 @@ const afrikaans = <String, String>{
   'Check firmware details': 'Kyk na fermware-besonderhede',
   'Firmware {version}': 'Fermware {version}',
   'Firmware updates come from Momcozy: install them with the Momcozy app, then check here that both pumps match.': 'Fermware-opdaterings kom van Momcozy: installeer dit met die Momcozy-toep en kyk dan hier of albei pompe ooreenstem.',
-  'This pump has no firmware channel': 'Hierdie pomp het geen fermware-kanaal nie',
+  'This pump has no firmware channel':
+      'Hierdie pomp het geen fermware-kanaal nie',
   'The pump did not answer': 'Die pomp het nie geantwoord nie',
-  'The pump answered the check wrongly': 'Die pomp het die kontrole verkeerd beantwoord',
+  'The pump answered the check wrongly':
+      'Die pomp het die kontrole verkeerd beantwoord',
+  // Nanit camera.
   'Sound and motion alerts from the Nanit camera':
       'Klank- en bewegingswaarskuwings van die Nanit-kamera',
   '{name}: sound detected': '{name}: klank bespeur',
@@ -1103,15 +1111,86 @@ const afrikaans = <String, String>{
   'Motion detected': 'Beweging bespeur',
   'Heard by the Nanit camera': 'Deur die Nanit-kamera gehoor',
   'Seen by the Nanit camera': 'Deur die Nanit-kamera gesien',
-  'Experimental: this alert type is not verified yet':
-      'Eksperimenteel: hierdie soort waarskuwing is nog nie bevestig nie',
   'Camera paused': 'Kamera onderbreek',
   'Show camera': 'Wys kamera',
+  'Starting the video…': 'Begin die video…',
   'Try again': 'Probeer weer',
-  'The camera did not send video': 'Die kamera het nie video gestuur nie',
   'Not connected to the camera': 'Nie aan die kamera gekoppel nie',
-  'Could not connect to the video': 'Kon nie aan die video koppel nie',
+  'This device is not on the same Wi-Fi as the camera':
+      'Hierdie toestel is nie op dieselfde Wi-Fi as die kamera nie',
+  'The camera is already streaming to as many apps as it allows':
+      'Die kamera stroom reeds na soveel toepassings as wat dit toelaat',
+  'The camera did not send video. A firewall on this device may be blocking it.': 'Die kamera het nie video gestuur nie. ’n Brandmuur op hierdie toestel blokkeer dit dalk.',
   'Video connection interrupted': 'Videoverbinding onderbreek',
+  'Mute': 'Demp',
+  'Unmute': 'Ontdemp',
+  'Camera': 'Kamera',
+  'Watch your Nanit camera': 'Kyk na jou Nanit-kamera',
+  'Sign in with your Nanit account once. After that, Nestling talks to the camera over your home Wi-Fi, even when the internet is down.': 'Meld een keer aan met jou Nanit-rekening. Daarna praat Nestling met die kamera oor jou huis se Wi-Fi, selfs as die internet af is.',
+  'Email': 'E-pos',
+  'Password': 'Wagwoord',
+  'Enter your Nanit email and password': 'Tik jou Nanit-e-pos en -wagwoord in',
+  'Sign in to Nanit': 'Meld aan by Nanit',
+  'Your password goes only to Nanit. This device keeps the sign-in key in its secure storage.': 'Jou wagwoord gaan net na Nanit. Hierdie toestel hou die aanmeldsleutel in sy veilige berging.',
+  'Enter the code': 'Tik die kode in',
+  'That code did not work. Try the newest one.':
+      'Daardie kode het nie gewerk nie. Probeer die nuutste een.',
+  'Nanit sent a code to your phone{hint}.':
+      'Nanit het ’n kode na jou foon{hint} gestuur.',
+  'Nanit sent a code to your email{hint}.':
+      'Nanit het ’n kode na jou e-pos{hint} gestuur.',
+  'Send again': 'Stuur weer',
+  'Code sent again': 'Kode weer gestuur',
+  'Could not send the code again': 'Kon nie die kode weer stuur nie',
+  'Nanit did not accept that email and password':
+      'Nanit het nie daardie e-pos en wagwoord aanvaar nie',
+  'Sign-in cancelled': 'Aanmelding gekanselleer',
+  'The code was not accepted': 'Die kode is nie aanvaar nie',
+  'Could not reach Nanit. Check the internet.':
+      'Kon Nanit nie bereik nie. Kyk na die internet.',
+  'Signed out of Nanit. Sign in again.': 'Afgemeld by Nanit. Meld weer aan.',
+  'That baby has no camera': 'Daardie baba het geen kamera nie',
+  'Nanit answered unexpectedly': 'Nanit het onverwags geantwoord',
+  'Which camera?': 'Watter kamera?',
+  'Pick the baby whose camera this device should watch.':
+      'Kies die baba wie se kamera hierdie toestel moet dophou.',
+  'Could not load your cameras': 'Kon nie jou kameras laai nie',
+  'This Nanit account has no babies':
+      'Hierdie Nanit-rekening het geen babas nie',
+  'No camera': 'Geen kamera',
+  'Nanit camera': 'Nanit-kamera',
+  'Sign out of Nanit': 'Meld af by Nanit',
+  'The camera’s identity changed (was it reset?). Pick it again.': 'Die kamera se identiteit het verander (is dit teruggestel?). Kies dit weer.',
+  'The camera refused this device. Sign in again.':
+      'Die kamera het hierdie toestel geweier. Meld weer aan.',
+  'Could not get a camera key from Nanit. Check the internet.':
+      'Kon nie ’n kamerasleutel by Nanit kry nie. Kyk na die internet.',
+  'Looking for the camera on this Wi-Fi…': 'Soek die kamera op hierdie Wi-Fi…',
+  'Alerts': 'Waarskuwings',
+  'Sound and motion alerts': 'Klank- en bewegingswaarskuwings',
+  'A notification when the camera hears or sees the baby, while Nestling is open or running in the background.': '’n Kennisgewing wanneer die kamera die baba hoor of sien, terwyl Nestling oop is of in die agtergrond loop.',
+  'Pick the camera again': 'Kies die kamera weer',
+  'Sign in again': 'Meld weer aan',
+  'Room': 'Kamer',
+  'Temperature': 'Temperatuur',
+  'Humidity': 'Humiditeit',
+  'Sound': 'Klank',
+  'Motion': 'Beweging',
+  'Camera address': 'Kamera-adres',
+  'Only needed if Nestling cannot find the camera by itself. Find it in your router’s list of devices.': 'Net nodig as Nestling die kamera nie self kan vind nie. Kry dit in jou roeteerder se lys toestelle.',
+  'Find it myself': 'Vind dit self',
+  'Connected at {address}': 'Gekoppel by {address}',
+  'Looking for the camera…': 'Soek die kamera…',
+  'Found automatically': 'Outomaties gevind',
+  'Works offline until': 'Werk vanlyn tot',
+  '{when} · sign in to renew': '{when} · meld aan om te hernu',
+  'Pick another camera': 'Kies ’n ander kamera',
+  'Watch': 'Kyk',
+  'Sound {ago}': 'Klank {ago}',
+  'Live view, room and alerts': 'Regstreekse beeld, kamer en waarskuwings',
+  'Watch your Nanit camera over home Wi-Fi':
+      'Kyk na jou Nanit-kamera oor die huis se Wi-Fi',
+  'Pick a camera': 'Kies ’n kamera',
 };
 
 /// The Google Play build tracks "habits" instead of "pills", so Play does not

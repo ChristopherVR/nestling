@@ -9,7 +9,9 @@ import '../distribution.dart';
 import '../store.dart';
 import '../sync.dart';
 import '../routines.dart';
+import '../nanit_integration.dart';
 import 'baby_photo.dart';
+import 'camera_page.dart';
 import 'common.dart';
 import 'growth_page.dart';
 import 'data_transfer.dart';
@@ -446,8 +448,7 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: Icons.alarm_on_rounded,
               tone: 1,
               title: 'Allow exact reminders',
-              subtitle:
-                  'Without this, Android can delay reminders by several minutes',
+              subtitle: 'Without this, Android can delay reminders by several minutes',
               value: '',
               onTap: () async {
                 await app.reminders.openExactAccessSettings();
@@ -482,7 +483,9 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: Glyphs.pillIcon,
             title: 'Pill reminders',
             subtitle: 'For you, on this phone',
-            value: app.pillAlarm && !Distribution.play ? 'Alarm' : 'Notification',
+            value: app.pillAlarm && !Distribution.play
+                ? 'Alarm'
+                : 'Notification',
             onTap: () => _showPillRingSheet(context),
           ),
         ),
@@ -582,6 +585,31 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ),
+    ]);
+    addSection('Camera', [
+      (
+        terms: ['Camera', 'Nanit', 'Baby monitor', 'Video', 'Sound', 'Motion'],
+        child: ListenableBuilder(
+          listenable: NanitHub.instance,
+          builder: (context, _) {
+            final hub = NanitHub.instance;
+            return _Tile(
+              icon: Icons.videocam_rounded,
+              tone: 0,
+              title: 'Nanit camera',
+              subtitle: hub.paired
+                  ? 'Live view, room and alerts'
+                  : 'Watch your Nanit camera over home Wi-Fi',
+              value: hub.paired
+                  ? hub.account.pairing!.babyName
+                  : hub.signedIn
+                  ? 'Pick a camera'
+                  : '',
+              onTap: () => openCamera(context),
+            );
+          },
+        ),
+      ),
     ]);
     addSection('Family hub', [
       (

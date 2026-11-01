@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import '../store.dart';
 import 'baby_photo.dart';
+import 'camera_page.dart';
 import 'common.dart';
 import 'growth_page.dart';
 import 'hub_page.dart';
@@ -82,6 +83,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 14),
       ],
       const PumpLiveCard(),
+      const CameraTodayCard(),
       Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -138,8 +140,7 @@ class _HomePageState extends State<HomePage> {
                   onTap: () => _pillTap(context, app),
                 ),
               ),
-              if (app.pumpOnToday)
-                Expanded(child: _pumpTile(context, app)),
+              if (app.pumpOnToday) Expanded(child: _pumpTile(context, app)),
             ],
           ),
         ),
