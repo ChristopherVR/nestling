@@ -112,3 +112,13 @@ session/control path and a supervised Breathing Wear test remain unvalidated. Or
 motion messages for a region called `sting` are not breathing measurements. No PC
 microphone/talk-back or breathing alarm was triggered in this round. Test tooling and
 numeric evidence are recorded in the research repo's `OFFLINE_ACCESS.md` and `evidence/`.
+
+The owner then clarified that the mic option means both listening and talk-back. A further
+WAN-blocked PoC check played camera AAC audio on the PC and sent five seconds of live Razer
+Seiren Mini microphone capture to the camera (80,000 mono PCM16 samples at 16 kHz). Camera
+playback exited successfully and its speaker monitor measured a nonzero signal. The input
+was extremely quiet, so intelligible speech and practical volume still require a coordinated
+spoken test. No speech recording was retained; global mixer settings were unchanged and
+temporary helpers/firewall rules were removed. This validates the transport path; it does
+not yet add a Talk button to Nestling. Evidence: research repo
+`evidence/offline-two-way-audio-2026-11-05.json`.
