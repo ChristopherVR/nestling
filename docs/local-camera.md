@@ -138,3 +138,13 @@ spoken test. No speech recording was retained; global mixer settings were unchan
 temporary helpers/firewall rules were removed. This validates the transport path; it does
 not yet add a Talk button to Nestling. Evidence: research repo
 `evidence/offline-two-way-audio-2026-11-05.json`.
+
+An owner-coordinated follow-up used the selected Razer microphone for five seconds.
+Input RMS was −48.49 dBFS, and the camera's digital speaker monitor again measured
+the output with WAN blocked and tokens absent. Playback completed and cleanup was
+verified; audible speech clarity still awaits the owner's confirmation. Evidence:
+research repo `evidence/offline-spoken-audio-2026-11-05.json`.
+The requested ten-second repeat also completed, but microphone input was only
+−83.71 dBFS, so it did not resolve speech clarity. The corresponding `offline-spoken-audio-repeat-2026-11-05.json`
+records delivery, isolation and cleanup; user confirmation of speaking/audibility
+is still pending.
