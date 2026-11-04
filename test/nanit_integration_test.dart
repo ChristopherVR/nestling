@@ -129,6 +129,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: CameraPage(hub: hub)));
     await tester.runAsync(hub.start);
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('Use a Nanit account instead'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Use a Nanit account instead'));
+    await tester.pump();
     expect(find.text('Sign in to Nanit'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'me@example.com');

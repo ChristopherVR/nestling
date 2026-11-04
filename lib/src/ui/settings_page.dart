@@ -614,11 +614,13 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: Icons.videocam_rounded,
               tone: 0,
               title: 'Nanit camera',
-              subtitle: hub.paired
+              subtitle: hub.local.saved != null
+                  ? 'Video, audio and room readings over your home network'
+                  : hub.paired
                   ? 'Live view, room and alerts'
                   : 'Watch your Nanit camera over home Wi-Fi',
-              value: hub.paired
-                  ? hub.account.pairing!.babyName
+              value: hub.hasCamera
+                  ? hub.cameraName
                   : hub.signedIn
                   ? 'Pick a camera'
                   : '',

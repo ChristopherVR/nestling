@@ -6,6 +6,7 @@ import 'package:nanit_camera/nanit_camera.dart';
 
 import 'background.dart';
 import 'localization.dart';
+import 'local_nanit.dart';
 
 /// Nestling's side of the nanit_camera package: one shared camera
 /// ([NanitHub]), the words (through [tr]) and the notification ids and
@@ -32,7 +33,15 @@ class NanitHub extends ChangeNotifier {
   static final instance = NanitHub();
 
   NanitHub({NanitAccount? account, this.alertSink})
-    : account = account ?? NanitAccount();
+    : account = account ?? NanitAccount() {
+    local = LocalNanitHub(store: this.account.store)
+      ..addListener(notifyListeners);
+  }
+
+  late final LocalNanitHub local;
+  bool get hasCamera => local.saved != null || paired;
+  String get cameraName =>
+      local.saved?.name ?? account.pairing?.babyName ?? 'Camera';
 
   final NanitAccount account;
   final NanitAlertSink? alertSink;
@@ -53,6 +62,7 @@ class NanitHub extends ChangeNotifier {
   Future<void> start() => _loading ??= _start();
 
   Future<void> _start() async {
+    await local.load();
     try {
       await account.load();
     } catch (e) {
@@ -61,9 +71,25 @@ class NanitHub extends ChangeNotifier {
     }
     loaded = true;
     account.addListener(notifyListeners);
-    if (account.paired) _open();
+    if (account.paired && local.saved == null) _open();
     notifyListeners();
-    unawaited(account.refreshIfDue());
+    if (local.saved == null) unawaited(account.refreshIfDue());
+  }
+
+  Future<void> useLocalCamera(
+    String address, {
+    String name = 'Nursery camera',
+  }) async {
+    await local.add(address, name: name);
+    await _close();
+  }
+
+  @override
+  void dispose() {
+    local.removeListener(notifyListeners);
+    local.dispose();
+    account.removeListener(notifyListeners);
+    super.dispose();
   }
 
   void _open() {

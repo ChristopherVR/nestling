@@ -1159,6 +1159,86 @@ const afrikaans = <String, String>{
       'Hierdie Nanit-rekening het geen babas nie',
   'No camera': 'Geen kamera',
   'Nanit camera': 'Nanit-kamera',
+  'Your camera, at home': 'Jou kamera, by die huis',
+  'Watch and listen over your home network. No Nanit account or internet connection needed.': 'Kyk en luister oor jou tuisnetwerk. Geen Nanit-rekening of internetverbinding nodig nie.',
+  'Already on Wi-Fi': 'Reeds op Wi-Fi',
+  'Set up Wi-Fi': 'Stel Wi-Fi op',
+  'Find nearby camera': 'Vind kamera naby',
+  'Looking for cameras…': 'Soek kameras…',
+  'Put the camera in pairing mode with its light flashing. Keep it nearby and close the Nanit app. Choose your camera, then enter a WPA2 Wi-Fi network.': 'Sit die kamera in koppelmodus met sy liggie wat flits. Hou dit naby en maak die Nanit-toepassing toe. Kies jou kamera en voer dan ’n WPA2-Wi-Fi-netwerk in.',
+  'Wi-Fi name': 'Wi-Fi-naam',
+  'Wi-Fi password': 'Wi-Fi-wagwoord',
+  'Used once to connect your camera. Not saved.':
+      'Eenmalig gebruik om jou kamera te koppel. Word nie gestoor nie.',
+  'Hidden network': 'Versteekte netwerk',
+  'Connect camera to Wi-Fi': 'Koppel kamera aan Wi-Fi',
+  'Connecting camera to Wi-Fi…': 'Koppel kamera aan Wi-Fi…',
+  'Keep the camera nearby. This can take up to two minutes.':
+      'Hou die kamera naby. Dit kan tot twee minute neem.',
+  'The camera accepted the Wi-Fi details. Find it on your home network below.': 'Die kamera het die Wi-Fi-besonderhede aanvaar. Vind dit hieronder op jou tuisnetwerk.',
+  'Camera name': 'Kameranaam',
+  'Find cameras on my network': 'Vind kameras op my netwerk',
+  'Could not search the network. Check Wi-Fi and try again.':
+      'Kon nie die netwerk deursoek nie. Kyk na Wi-Fi en probeer weer.',
+  'No camera found yet. Try again after it joins Wi-Fi, or enter its address from your router’s device list.': 'Nog geen kamera gevind nie. Probeer weer nadat dit aan Wi-Fi gekoppel het, of voer sy adres uit jou roeteerder se toestellys in.',
+  'Camera IP address': 'Kamera se IP-adres',
+  'Connect by address': 'Koppel met adres',
+  'Local access has been verified on Nanit Pro firmware 6.58.615. Other firmware may behave differently.': 'Plaaslike toegang is op Nanit Pro-firmware 6.58.615 bevestig. Ander firmware kan anders werk.',
+  'Use a Nanit account instead': 'Gebruik eerder ’n Nanit-rekening',
+  'Local setup': 'Plaaslike opstelling',
+  'Local camera': 'Plaaslike kamera',
+  'Camera Wi-Fi': 'Kamera se Wi-Fi',
+  'Back to camera': 'Terug na kamera',
+  'Live · Home network': 'Regstreeks · Tuisnetwerk',
+  'Opening video…': 'Maak video oop…',
+  'Connecting to your camera…': 'Koppel aan jou kamera…',
+  'Listen': 'Luister',
+  'Reconnect': 'Koppel weer',
+  'In the room': 'In die kamer',
+  'Unavailable': 'Nie beskikbaar nie',
+  'Local connection': 'Plaaslike verbinding',
+  'Video and room readings pause when you leave this screen. Local mode does not provide motion, sound or breathing alerts.': 'Video en kameralesings word onderbreek wanneer jy hierdie skerm verlaat. Plaaslike modus bied nie bewegings-, klank- of asemhalingswaarskuwings nie.',
+  'Change camera address': 'Verander kamera-adres',
+  'Change Wi-Fi': 'Verander Wi-Fi',
+  'Forget this camera': 'Vergeet hierdie kamera',
+  'Forget this camera?': 'Vergeet hierdie kamera?',
+  'Removes it from Nestling. Does not reset the camera.':
+      'Verwyder dit uit Nestling. Stel nie die kamera terug nie.',
+  'You can add it again from your home network.':
+      'Jy kan dit weer vanaf jou tuisnetwerk byvoeg.',
+  'Home network · No account needed': 'Tuisnetwerk · Geen rekening nodig nie',
+  'Video, audio and room readings over your home network':
+      'Video, klank en kameralesings oor jou tuisnetwerk',
+  'Enter the camera’s local IPv4 address.':
+      'Voer die kamera se plaaslike IPv4-adres in.',
+  'Could not connect. Check the address and that both devices are on the same network.': 'Kon nie koppel nie. Kyk na die adres en maak seker albei toestelle is op dieselfde netwerk.',
+  'Could not connect to that camera address.':
+      'Kon nie aan daardie kamera-adres koppel nie.',
+  'Saved camera details could not be loaded. Add the camera again.': 'Gestoorde kamerabesonderhede kon nie gelaai word nie. Voeg die kamera weer by.',
+  'A different camera is using the saved address. Find your camera again.':
+      '’n Ander kamera gebruik die gestoorde adres. Vind jou kamera weer.',
+  'Camera unreachable. Keep this device on the same home network.':
+      'Kamera onbereikbaar. Hou hierdie toestel op dieselfde tuisnetwerk.',
+  'Connection lost. Reconnecting to your camera…':
+      'Verbinding verloor. Koppel weer aan jou kamera…',
+  'Video connection interrupted. Reconnecting…':
+      'Videoverbinding onderbreek. Koppel weer…',
+  'Could not change the night light. Try again.':
+      'Kon nie die nagliggie verander nie. Probeer weer.',
+  'Turn on Bluetooth, then scan again.':
+      'Skakel Bluetooth aan en soek dan weer.',
+  'Bluetooth scan failed. Check Bluetooth and Nearby devices permissions.': 'Bluetooth-soektog het misluk. Kyk na Bluetooth en toestemmings vir nabygeleë toestelle.',
+  'No camera found. Check its flashing pairing light, keep it nearby and close the Nanit app.': 'Geen kamera gevind nie. Kyk of sy koppelliggie flits, hou dit naby en maak die Nanit-toepassing toe.',
+  'Bluetooth is unavailable. Check Nearby devices permissions and try again.': 'Bluetooth is nie beskikbaar nie. Kyk na toestemmings vir nabygeleë toestelle en probeer weer.',
+  'This device does not offer Nanit Wi-Fi setup.':
+      'Hierdie toestel bied nie Nanit-Wi-Fi-opstelling nie.',
+  'Camera disconnected during Wi-Fi setup.':
+      'Kamera het tydens Wi-Fi-opstelling ontkoppel.',
+  'Camera did not confirm Wi-Fi setup (status {status}). Check the network name and password.': 'Kamera het nie Wi-Fi-opstelling bevestig nie (status {status}). Kyk na die netwerknaam en wagwoord.',
+  'Wi-Fi setup was interrupted. Enable pairing mode again and retry.': 'Wi-Fi-opstelling is onderbreek. Skakel koppelmodus weer aan en probeer weer.',
+  'Wi-Fi name must be 1–32 UTF-8 bytes.':
+      'Wi-Fi-naam moet 1–32 UTF-8-grepe lank wees.',
+  'Enter an 8–63 byte WPA2 password or a 64-digit hexadecimal key.': 'Voer ’n WPA2-wagwoord van 8–63 grepe of ’n heksadesimale sleutel van 64 syfers in.',
   'Sign out of Nanit': 'Meld af by Nanit',
   'The camera’s identity changed (was it reset?). Pick it again.': 'Die kamera se identiteit het verander (is dit teruggestel?). Kies dit weer.',
   'The camera refused this device. Sign in again.':
@@ -1229,8 +1309,7 @@ const afrikaans = <String, String>{
   'The small light on the front of the camera':
       'Die klein liggie voor op die kamera',
   'Camera sleep': 'Kamera slaap',
-  'Turns the camera off: no video, sound or alerts until it is woken':
-      'Skakel die kamera af: geen video, klank of waarskuwings totdat dit wakker gemaak word nie',
+  'Turns the camera off: no video, sound or alerts until it is woken': 'Skakel die kamera af: geen video, klank of waarskuwings totdat dit wakker gemaak word nie',
   'Set up your Nanit camera': 'Stel jou Nanit-kamera op',
   'Set up': 'Stel op',
   'Watch the baby': 'Hou die baba dop',

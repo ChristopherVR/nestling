@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Alarms: full screen on the lock screen -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- Connecting to Bluetooth breast pumps. Scans are not used for location. -->
+    <!-- Bluetooth pumps and camera Wi-Fi setup. Scans are not used for location. -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />

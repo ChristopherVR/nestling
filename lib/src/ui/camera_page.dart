@@ -4,15 +4,14 @@ import 'package:nanit_camera/nanit_camera.dart';
 import '../nanit_integration.dart';
 import 'common.dart';
 import 'theme.dart';
+import 'local_camera_page.dart';
 
 void openCamera(BuildContext context) => Navigator.push(
   context,
   MaterialPageRoute(builder: (_) => const CameraPage()),
 );
 
-/// The Nanit camera: sign in, pick the baby's camera, then the live view,
-/// the room and the alerts. Everything after sign-in runs over the home
-/// Wi-Fi, straight to the camera.
+/// Local camera setup and viewing, with optional legacy account connectivity.
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key, this.hub});
 
@@ -25,6 +24,7 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   NanitHub get hub => widget.hub ?? NanitHub.instance;
+  bool _accountMode = false;
 
   @override
   void initState() {
@@ -39,6 +39,35 @@ class _CameraPageState extends State<CameraPage> {
       final Widget body;
       if (!hub.loaded) {
         body = const Center(child: CircularProgressIndicator());
+      } else if (hub.local.saved != null) {
+        body = LocalCameraWatch(
+          hub: hub.local,
+          onWifiSetup: () async {
+            if (!context.mounted) return;
+            await Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const LText('Camera Wi-Fi')),
+                  body: PageWidth(
+                    maxWidth: 720,
+                    child: LocalCameraSetup(
+                      hub: hub,
+                      setupWifi: true,
+                      onAccount: () => Navigator.pop(context),
+                      onConnected: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else if (!_accountMode && !hub.paired) {
+        body = LocalCameraSetup(
+          hub: hub,
+          onAccount: () => setState(() => _accountMode = true),
+        );
       } else if (!hub.signedIn && !hub.paired) {
         body = _SignIn(hub: hub);
       } else if (!hub.paired) {
@@ -47,7 +76,31 @@ class _CameraPageState extends State<CameraPage> {
         body = _Watch(hub: hub);
       }
       return Scaffold(
-        appBar: AppBar(title: const LText('Camera')),
+        appBar: AppBar(
+          title: const LText('Camera'),
+          actions: [
+            if (_accountMode || (hub.paired && hub.local.saved == null))
+              TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(title: const LText('Local camera')),
+                      body: PageWidth(
+                        maxWidth: 720,
+                        child: LocalCameraSetup(
+                          hub: hub,
+                          onAccount: () => Navigator.pop(context),
+                          onConnected: () => Navigator.pop(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                child: const LText('Local setup'),
+              ),
+          ],
+        ),
         body: PageWidth(maxWidth: 720, child: body),
       );
     },
@@ -657,7 +710,7 @@ class CameraTodayCard extends StatelessWidget {
     return ListenableBuilder(
       listenable: h,
       builder: (context, _) {
-        final paired = h.loaded && h.paired;
+        final paired = h.loaded && h.hasCamera;
         final c = h.client;
         final bits = <String>[
           if (c != null &&
@@ -678,6 +731,9 @@ class CameraTodayCard extends StatelessWidget {
             : connected
             ? 'Connected'
             : 'Not connected';
+        final localSubtitle = h.local.saved == null
+            ? subtitle
+            : 'Home network · No account needed';
         return Card(
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(
@@ -696,7 +752,7 @@ class CameraTodayCard extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: LText(
-              subtitle,
+              localSubtitle,
               style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
             ),
             trailing: FilledButton.tonal(

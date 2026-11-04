@@ -18,6 +18,17 @@ and `python tool/flatten_store_pngs.py`.
 
 Use Flutter **3.47.7** (Dart 3.13.5) and Java 21. Add Flutter's `bin` directory to PATH.
 
+## Local Nanit camera
+
+Open **Camera** from Today or Settings. Choose **Already on Wi-Fi** to discover your camera
+or enter its LAN IP address. Choose **Set up Wi-Fi** for a camera in physical pairing mode;
+Nestling sends WPA2 network details over Bluetooth without a Nanit account. Camera video,
+microphone audio (muted until **Listen**), room readings and night light work locally.
+
+No separate bridge process or expiring camera token is needed. Verified on Nanit Pro
+firmware **6.58.615**. See [local camera setup, architecture and validation](docs/local-camera.md)
+for supported platforms, troubleshooting, test commands and remaining hardware checks.
+
 ## Install on Windows
 
 Download `BabyLog-<version>-windows-x64.zip` from
