@@ -19,11 +19,12 @@ object Background {
     private const val CHANNEL = "babylog/background"
     private const val PREFS = "babylog_background"
     private const val KEY_ENABLED = "enabled"
+    private const val KEY_CAMERA = "camera_monitoring"
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    /// [headless]: started by the sync service without a screen. Dart then
-    /// starts no timers until the app is actually opened.
+    /// [headless]: started by the service without a screen. Dart restores saved
+    /// camera monitoring, but leaves foreground UI timers and video stopped.
     fun engine(context: Context, headless: Boolean = false): FlutterEngine {
         FlutterEngineCache.getInstance().get(ENGINE_ID)?.let { return it }
         val app = context.applicationContext
@@ -39,8 +40,21 @@ object Background {
                 }
                 "stop" -> {
                     setEnabled(app, false)
-                    app.stopService(Intent(app, SyncService::class.java))
+                    if (!isEnabled(app)) app.stopService(Intent(app, SyncService::class.java))
                     result.success(null)
+                }
+                "cameraMonitoring" -> {
+                    val on = call.arguments == true
+                    app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_CAMERA, on).apply()
+                    if (isEnabled(app)) {
+                        if (!startService(app)) {
+                            app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_CAMERA, false).apply()
+                            result.error("background_unavailable", "Android refused camera monitoring", null)
+                        } else result.success(null)
+                    } else {
+                        app.stopService(Intent(app, SyncService::class.java))
+                        result.success(null)
+                    }
                 }
                 "leaveLockScreen" -> {
                     MainActivity.current?.get()?.let { it.runOnUiThread { it.setLockScreen(false) } }
@@ -78,13 +92,16 @@ object Background {
         return engine
     }
 
-    fun isEnabled(context: Context) =
+    fun isCameraEnabled(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_CAMERA, false)
+
+    fun isEnabled(context: Context) = isCameraEnabled(context) ||
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ENABLED, false)
 
     private fun setEnabled(context: Context, on: Boolean) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, on).apply()
 
-    fun startService(context: Context) {
+    fun startService(context: Context): Boolean {
         val intent = Intent(context, SyncService::class.java)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -92,10 +109,12 @@ object Background {
             } else {
                 context.startService(intent)
             }
+            return true
         } catch (e: Exception) {
             // Android can refuse to start it from the background; it is started
             // again next time the app opens.
             android.util.Log.w("BabyLog", "Could not start sync service", e)
+            return false
         }
     }
 

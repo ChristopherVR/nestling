@@ -36,6 +36,7 @@ android {
         // The GitHub channel keeps the original ID so sideloaded installs keep
         // updating in place; Play publishes under its own ID (see the flavor).
         applicationId = "com.babyapp.baby_app"
+        manifestPlaceholders["appLabel"] = "Nestling"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -67,6 +68,13 @@ android {
 
     flavorDimensions += "distribution"
     productFlavors {
+        // Device integration tests must never replace the owner's real log.
+        create("cameraTest") {
+            dimension = "distribution"
+            applicationIdSuffix = ".camera_test"
+            manifestPlaceholders["appLabel"] = "Nestling Camera Test"
+            signingConfig = signingConfigs.getByName("debug")
+        }
         create("github") {
             dimension = "distribution"
             // Preserve the key used by existing sideloaded installations.

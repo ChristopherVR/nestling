@@ -34,6 +34,14 @@ class BackgroundSync {
 
   static Future<void> stop() => _call('stop');
 
+  /// Independent of the partner-sync preference. Fail visibly if Android
+  /// cannot keep camera polling alive; never imply that monitoring started.
+  static Future<void> setCameraMonitoring(bool on) async {
+    if (Platform.isAndroid) {
+      await _channel.invokeMethod<void>('cameraMonitoring', on);
+    }
+  }
+
   /// Whether Android lets the app keep its network connection while the phone sleeps.
   static Future<bool> isBatteryExempt() async =>
       await _call<bool>('isBatteryExempt') ?? true;

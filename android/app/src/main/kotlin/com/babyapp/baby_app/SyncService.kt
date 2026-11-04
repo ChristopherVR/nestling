@@ -11,12 +11,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 
 /// Foreground service that keeps the process (and the shared Flutter engine
-/// running the sync server) alive while the app is closed. No Wi-Fi or wake
-/// lock is held: an incoming request wakes the phone, and the Dart side holds
-/// a short wake lock only while a sync runs.
+/// running sync and camera polling) alive without an activity. Camera monitoring
+/// holds a separate CPU wake lock only while the user has enabled it. Partner
+/// sync alone retains its short, per-request wake lock behavior.
 class SyncService : Service() {
+    private var cameraWake: PowerManager.WakeLock? = null
     override fun onCreate() {
         super.onCreate()
         startInForeground()
@@ -24,7 +26,26 @@ class SyncService : Service() {
         Background.engine(this, headless = true)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startInForeground()
+        if (Background.isCameraEnabled(this)) {
+            if (cameraWake?.isHeld != true) {
+                cameraWake = (getSystemService(Context.POWER_SERVICE) as PowerManager)
+                    .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nestling:cameraMonitoring")
+                    .apply { setReferenceCounted(false); acquire() }
+            }
+        } else {
+            cameraWake?.takeIf { it.isHeld }?.release()
+            cameraWake = null
+        }
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        cameraWake?.takeIf { it.isHeld }?.release()
+        cameraWake = null
+        super.onDestroy()
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -44,7 +65,7 @@ class SyncService : Service() {
         val notification = builder
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Nestling")
-            .setContentText("Sharing your log over Wi-Fi")
+            .setContentText(if (Background.isCameraEnabled(this)) "Camera sound and cry monitoring enabled · keep home Wi-Fi connected" else "Sharing your log over Wi-Fi")
             .setOngoing(true)
             .setContentIntent(open)
             .build()

@@ -30,7 +30,7 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
-        android:label="Nestling"
+        android:label="${appLabel}"
         android:usesCleartextTraffic="true"
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -64,7 +64,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Local Wi-Fi server that shares the baby log with a partner's device" />
+                android:value="Local Wi-Fi baby-log sync and user-enabled baby-camera sound and cry monitoring" />
         </service>
         <receiver android:exported="false" android:name=".FeedingTimerReceiver">
             <intent-filter>

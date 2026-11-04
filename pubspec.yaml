@@ -52,7 +52,7 @@ dependencies:
     git:
       url: https://github.com/ChristopherVR/nanit-research.git
       path: packages/nanit_camera
-      ref: e3efd11208a509f444d4f633e61ba158455366d7
+      ref: 0a52fdf361f24b6db7bdac4f2fb3d8fd4ccb513c
 dev_dependencies:
   integration_test:
     sdk: flutter

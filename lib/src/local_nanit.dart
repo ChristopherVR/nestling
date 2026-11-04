@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 
 import 'background.dart';
+import 'local_camera_alerts.dart';
 
 class SavedLocalCamera {
   const SavedLocalCamera({
@@ -37,7 +38,21 @@ class LocalNanitHub extends ChangeNotifier {
   LocalNanitHub({
     required this.store,
     NanitOfflineCamera Function(String)? cameraFactory,
-  }) : _cameraFactory = cameraFactory ?? NanitOfflineCamera.new;
+    Future<void> Function(LocalCameraAlert)? deliverAlert,
+    Future<bool> Function(bool)? alertPermission,
+    Future<void> Function(bool)? alertBackground,
+  }) : _cameraFactory = cameraFactory ?? NanitOfflineCamera.new {
+    alerts = LocalCameraAlerts(
+      store: store,
+      address: () => saved?.address,
+      uid: () => saved?.uid,
+      cameraFactory: _cameraFactory,
+      deliver: deliverAlert,
+      permission: alertPermission,
+      background: alertBackground,
+    );
+  }
+  late final LocalCameraAlerts alerts;
   static const storageKey = 'nestling.localCamera.v1';
   final NanitSecretStore store;
   final NanitOfflineCamera Function(String) _cameraFactory;
@@ -68,6 +83,7 @@ class LocalNanitHub extends ChangeNotifier {
       problem =
           'Saved camera details could not be loaded. Add the camera again.';
     }
+    await alerts.load();
   }
 
   Future<Map<String, String>> discover() =>
@@ -85,6 +101,7 @@ class LocalNanitHub extends ChangeNotifier {
       );
       await store.write(storageKey, jsonEncode(next.toJson()));
       saved = next;
+      await alerts.restart();
       problem = null;
       _notify();
     } finally {
@@ -301,6 +318,8 @@ class LocalNanitHub extends ChangeNotifier {
   }
 
   Future<void> forget() async {
+    await alerts.setEnabled(false);
+    await store.delete(LocalCameraAlerts.storageKey);
     await pause();
     await store.delete(storageKey);
     saved = null;
@@ -331,6 +350,7 @@ class LocalNanitHub extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    alerts.dispose();
     _watching = false;
     unawaited(_close());
     super.dispose();

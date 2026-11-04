@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 
 import '../local_nanit.dart';
+import '../local_camera_alerts.dart';
+import '../background.dart';
 import '../nanit_integration.dart';
 import '../nanit_wifi_setup.dart';
 import 'common.dart';
@@ -501,6 +503,8 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
           const SizedBox(height: 20),
           _CameraSounds(hub: hub),
           const SizedBox(height: 12),
+          CameraAlertsCard(alerts: hub.alerts),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -564,7 +568,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: LText(
-                    'Video and room readings pause when you leave this screen. Local mode does not provide motion, sound or breathing alerts.',
+                    'Video and room readings pause when you leave this screen. Enabled sound and cry alerts keep monitoring while Nestling runs. Motion and breathing alerts are not available in local mode.',
                   ),
                 ),
                 ListTile(
@@ -654,6 +658,118 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
     );
     if (yes == true) await widget.hub.forget();
   }
+}
+
+class CameraAlertsCard extends StatelessWidget {
+  const CameraAlertsCard({super.key, required this.alerts});
+  final LocalCameraAlerts alerts;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: alerts,
+    builder: (context, _) => Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              tr('Sound & cry alerts'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const LText('Monitor in background'),
+              subtitle: const LText(
+                'Keep monitoring when you leave the camera screen',
+              ),
+              value: alerts.enabled,
+              onChanged: alerts.changing ? null : alerts.setEnabled,
+            ),
+            LText(alerts.status ?? 'Monitoring is off'),
+            if (alerts.problem != null && !alerts.enabled)
+              LText(alerts.problem!),
+            if (alerts.notificationProblem != null)
+              LText(alerts.notificationProblem!),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const LText('Sound alerts'),
+              value: alerts.soundEnabled,
+              onChanged: alerts.changing
+                  ? null
+                  : (v) => alerts.configure(sound: v),
+            ),
+            DropdownButtonFormField<SoundSensitivity>(
+              key: ValueKey(alerts.sensitivity),
+              isExpanded: true,
+              initialValue: alerts.sensitivity,
+              decoration: InputDecoration(labelText: tr('Sound sensitivity')),
+              items: const [
+                DropdownMenuItem(
+                  value: SoundSensitivity.low,
+                  child: LText('Low · louder sounds'),
+                ),
+                DropdownMenuItem(
+                  value: SoundSensitivity.normal,
+                  child: LText('Normal'),
+                ),
+                DropdownMenuItem(
+                  value: SoundSensitivity.high,
+                  child: LText('High · quieter sounds'),
+                ),
+              ],
+              onChanged: alerts.changing
+                  ? null
+                  : (v) => alerts.configure(level: v),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const LText('Cry alerts'),
+              subtitle: const LText(
+                'Possible crying from sustained camera classification',
+              ),
+              value: alerts.cryEnabled,
+              onChanged: alerts.changing
+                  ? null
+                  : (v) => alerts.configure(cry: v),
+            ),
+            const LText(
+              'Sound alerts pause while the camera speaker plays audio. Cry checks continue. Alerts repeat at most once a minute for each type.',
+            ),
+            const SizedBox(height: 8),
+            const LText(
+              'Stay on the same home network. Windows must remain open and awake. Android shows an ongoing monitoring notification; battery restrictions or force-stopping Nestling can interrupt monitoring.',
+            ),
+            if (BackgroundSync.batteryExemptSupported && alerts.enabled)
+              TextButton(
+                onPressed: BackgroundSync.requestBatteryExempt,
+                child: const LText('Allow background battery use'),
+              ),
+            if (alerts.history.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                tr('Recent alerts'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              for (final event in alerts.history.take(3))
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    event.kind == LocalAlertKind.unavailable
+                        ? Icons.wifi_off
+                        : Icons.hearing,
+                  ),
+                  title: LText(localAlertTitle(event.kind)),
+                  trailing: Text(
+                    TimeOfDay.fromDateTime(event.at).format(context),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _CameraSounds extends StatefulWidget {
@@ -900,6 +1016,10 @@ class _CameraHelpPage extends StatelessWidget {
               const _HelpTopic(
                 title: 'Playing or stopping camera sounds',
                 text: 'Open Camera sounds below the video. Choose Wind, White noise, Waves or Birds, set a volume and timer, then tap Play sound. Volume can change while playing. Sound continues if you leave the screen or close Nestling; return and tap Stop sound, or let the camera’s timer finish. Stop the current sound before choosing another track or timer.',
+              ),
+              const _HelpTopic(
+                title: 'Sound and cry alerts in the background',
+                text: 'Enable Monitor in background under Sound & cry alerts. Choose Sound alerts, Cry alerts, or both. Listen can stay muted. Monitoring continues when you leave Camera. Keep this device on the same home network and keep Windows open and awake. On Android, allow notifications and background battery use; force-stopping the app stops monitoring. A monitoring-interrupted alert means the feed is unavailable, not that the room is quiet. General sound alerts pause during camera speaker playback; possible-cry alerts continue. Possible crying uses a local confidence rule and is not a guarantee that a baby is crying.',
               ),
               const SizedBox(height: 20),
               const LText(

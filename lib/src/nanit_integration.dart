@@ -7,6 +7,7 @@ import 'package:nanit_camera/nanit_camera.dart';
 import 'background.dart';
 import 'localization.dart';
 import 'local_nanit.dart';
+import 'local_camera_alerts.dart';
 
 /// Nestling's side of the nanit_camera package: one shared camera
 /// ([NanitHub]), the words (through [tr]) and the notification ids and
@@ -17,14 +18,57 @@ import 'local_nanit.dart';
 /// never initialises the plugin itself: a second initialize() would replace
 /// the reminders' tap and snooze handlers.
 ///
-/// Background: alerts arrive while the camera socket is alive. On Android
-/// the Dart side keeps running only as long as SyncService (the foreground
-/// service) holds the process; the camera socket is not yet tied to that
-/// service, so alerts stop when Android kills the app.
+/// Local monitoring owns a separate connection from video. Android keeps the
+/// shared Dart engine alive through SyncService while monitoring is enabled;
+/// Windows needs the application to remain running and awake.
 
 /// Notification ids 3000000+ are the camera's; see the id table in
 /// notifications.dart. One id per kind, so a new alert replaces the last.
 const nanitAlertIdBase = 3000000;
+
+Future<bool> _localAlertPermission(bool request) async {
+  final android = FlutterLocalNotificationsPlugin()
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+  if (android == null) return true;
+  return (request
+          ? await android.requestNotificationsPermission()
+          : await android.areNotificationsEnabled()) ==
+      true;
+}
+
+String localAlertTitle(LocalAlertKind kind) => switch (kind) {
+  LocalAlertKind.sound => 'Sound detected',
+  LocalAlertKind.cry => 'Possible crying',
+  LocalAlertKind.unavailable => 'Camera monitoring interrupted',
+};
+
+Future<void> deliverLocalCameraAlert(
+  LocalCameraAlert alert, {
+  bool test = false,
+}) => FlutterLocalNotificationsPlugin().show(
+  id: nanitAlertIdBase + 10 + alert.kind.index,
+  title: test
+      ? 'Test · ${tr(localAlertTitle(alert.kind))}'
+      : tr(localAlertTitle(alert.kind)),
+  body: tr(
+    alert.kind == LocalAlertKind.unavailable
+        ? 'Check the camera and home Wi-Fi. Nestling is trying to reconnect.'
+        : 'Detected by your nursery camera. Open Nestling to listen and check.',
+  ),
+  notificationDetails: NotificationDetails(
+    android: AndroidNotificationDetails(
+      'local_camera_alerts',
+      'Local camera alerts',
+      channelDescription: 'Sound, possible crying and monitoring interruptions',
+      importance: Importance.high,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.event,
+    ),
+    windows: const WindowsNotificationDetails(),
+  ),
+);
 
 /// The signed-in Nanit account and, once a camera is picked, its control
 /// socket, readings, video and alerts. One for the whole app, like
@@ -34,8 +78,11 @@ class NanitHub extends ChangeNotifier {
 
   NanitHub({NanitAccount? account, this.alertSink})
     : account = account ?? NanitAccount() {
-    local = LocalNanitHub(store: this.account.store)
-      ..addListener(notifyListeners);
+    local = LocalNanitHub(
+      store: this.account.store,
+      deliverAlert: deliverLocalCameraAlert,
+      alertPermission: _localAlertPermission,
+    )..addListener(notifyListeners);
   }
 
   late final LocalNanitHub local;

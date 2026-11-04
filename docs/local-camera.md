@@ -39,7 +39,8 @@ in the running app without scanning, provisioning or resetting the camera.
 The pairing-button and flashing-night-light guidance follows Nanit's
 [camera pairing instructions](https://support.nanit.com/en_us/pairing-the-camera-By48GhCFlg).
 
-Leaving the screen or backgrounding the app closes the local stream and polling. Returning
+Leaving the screen or backgrounding the app closes video and room/sound-control polling.
+Opt-in sound and cry monitoring continues independently (see below). Returning
 starts muted. Reconnection retries every 8 seconds while viewing, with mDNS rediscovery if the
 saved address stops working, followed by the bounded RTSP fallback. A different serial at the saved address is rejected. Change the
 address or Wi-Fi from the camera details. Forgetting removes Nestling's saved entry only.
@@ -65,7 +66,8 @@ the camera's WAN access; use router policy if it must never reach the internet.
   setup sends request 15 only. The password is not persisted or logged; mutable packet
   buffers are cleared after use. Runtime strings cannot be guaranteed erased from memory.
 - The existing Nanit account UI is optional. Local mode exposes no cloud alerts, recordings,
-  motion/sound detection, breathing monitoring or camera sleep.
+  motion alerts, breathing monitoring or camera sleep. Local sound and possible-cry alerts
+  use Nestling's explicit policy described below.
   Those are not silently represented as supported local features.
 
 Local RTSP/maintenance traffic uses the camera's unauthenticated LAN interfaces. Serial
@@ -233,3 +235,106 @@ Validation for pinned `e3efd11` (0.2.3): all 86 camera-package tests passed with
 seven optional skips; the five opt-in sound hardware tests and ten relevant app
 tests passed. Windows release and Android GitHub debug builds succeeded. The
 updated Windows release was reopened and connected to live video.
+
+## Local sound and possible-cry alerts — 5 November 2026
+
+In **Camera → Sound & cry alerts**, enable **Monitor in background** and allow
+notifications. Sound and cry alerts have independent switches. Sound sensitivity
+offers Low (louder sounds), Normal, and High (quieter sounds). Recent detections,
+monitor health and notification-delivery problems appear in the same card.
+Monitoring does not require Listen or live video to remain on. Preferences are
+saved per device and restored when Nestling starts. Forgetting a camera stops its
+monitor and removes its alert preferences.
+
+This is Nestling's local policy, not a reproduction of Nanit's private final
+notification decision:
+
+- Sound requires two fresh above-threshold observations. Low/Normal/High use
+  −25/−35/−45 dBFS. These are digital microphone levels, not calibrated room SPL.
+- Possible crying requires three consecutive native cry-model scores of at least
+  0.70. Scores are read from the camera's existing classifier; generic noise and
+  raw `is_alert=false` candidate messages are never relabelled as crying.
+- Each alert type repeats at most once a minute. Startup/reconnect/reboot discard
+  historical data. Muted microphones and stale data are reported as unavailable.
+  An unhealthy monitor sends one interruption notification after 15 seconds.
+- General sound alerts pause during camera speaker playback, including sounds
+  and talk-back. Cry checks continue; accuracy during playback is unvalidated.
+
+The package's separate per-instance sampler converts microphone PCM to numeric
+one-second RMS on the camera. No audio file is retained or uploaded. Only numeric
+levels, native probability windows and health metadata are polled, approximately
+every two seconds plus request time. An owned-process check protects cleanup;
+each helper expires after 45 seconds without renewal. Windows and Android can
+monitor independently without stopping each other's helper.
+
+Windows must remain running and awake. Android uses the existing foreground
+service/shared Flutter engine with its own persistent monitoring flag and CPU
+wake lock. Turning off log sync does not turn off camera monitoring. Turning off
+monitoring releases its wake lock while retaining enabled log sync. The optional
+**Allow background battery use** action opens Android's system prompt. Both
+devices must stay on the camera's LAN. Force-stop, sleep on Windows, Wi-Fi loss,
+and Android power restrictions can interrupt alerts. A short locked-screen test
+does not establish overnight reliability or survival of every OEM power policy.
+
+### Device-test isolation and deployment incident
+
+The first Android integration deployment replaced the installed GitHub app with
+the checkout's older test build. Flutter's automatic uninstall removed the phone's
+local log. The owner was informed; the official Nestling 1.5.30 (code 38) APK was
+restored. The owner chose to restore their log manually; no PC backup was imported.
+Private recovery files remain ignored and are not part of this change.
+
+The `cameraTest` flavor uses app ID `com.babyapp.baby_app.camera_test`, label
+**Nestling Camera Test**, and an updater stub. Also, this Flutter SDK can infer the
+production namespace before the test APK exists and later target it during test
+cleanup. A separate flavor alone is insufficient: prebuild and verify its APK
+identity, and disable automatic uninstall. `tool/test_camera_android.ps1` does
+these checks. Do not use direct `flutter test --flavor github` on an owner's app.
+The production app was restored and its version verified again after testing.
+
+```powershell
+# Keep the phone unlocked for launch; lock it after ALERT_BACKGROUND_READY.
+./tool/test_camera_android.ps1 -Device <adb-device-id> -Camera <camera-ip>
+# Windows opt-in hardware test:
+flutter test integration_test/local_alerts_live_test.dart -d windows --dart-define=NANIT_TEST_IP=<camera-ip>
+```
+
+The hardware test leaves the camera screen, checks that native levels continue
+advancing, and sends an explicitly labelled synthetic cry notification through
+the production policy/delivery path. Synthetic probabilities test alert routing;
+they do not validate recognition of actual crying.
+
+### Validation results
+
+- Pinned camera package `0a52fdf` (0.2.4), with the local dependency override
+  removed: app analysis passed and all 171 app tests passed (two optional skips).
+  Windows release, Android GitHub debug and isolated cameraTest debug builds passed.
+- Windows: a 180-second observation away from Camera advanced native level time
+  by 178 seconds, remained healthy, and delivered one real **Sound detected** alert
+  during owner-confirmed speech at Normal sensitivity. A separate labelled
+  synthetic fixture passed possible-cry notification delivery. The release app
+  was reopened on live video and its real alert controls enabled; monitoring
+  reported healthy with both alert types on.
+- Samsung SM-S938B (reported Android 17): the 90-second away-from-Camera test
+  advanced native level time by 88.99 seconds and passed while Home/background
+  and sleep were applied during the window. Android reported foreground service
+  ID 4242 and the `Nestling:cameraMonitoring` partial wake lock. After stopping,
+  no service remained and Android recorded release of that wake lock. A labelled
+  synthetic possible-cry notification call succeeded; this first run captured
+  zero acoustic alerts.
+- A second Android run through the guarded launcher passed a 120-second window
+  with 119 seconds of native level advancement. The phone was locked/backgrounded
+  after readiness; the service and wake lock were again removed after Stop.
+  Synthetic cry delivery passed and the normal app remained version 1.5.30/code
+  38 after cleanup. This window also captured zero acoustic alerts; real Android
+  sound-alert delivery remains unverified. The isolated normal-app build is
+  provided separately for manual use, without importing the owner's log.
+- Package validation: 88 tests passed; two simultaneous real-camera sessions
+  maintained fresh levels/classifier metadata independently. A forced short-lease
+  check removed its helper and Pulse source output after expiry.
+
+No camera reboot, pairing, credential reads/deletion, microphone-mixer change,
+sound-machine start or breathing action was used for these alert tests. No new
+WAN-block experiment was performed. Real-cry sensitivity/false positives, cry
+performance during sound playback, overnight Android power management and
+reboot/process-restart recovery remain unvalidated on hardware.

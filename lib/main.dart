@@ -50,10 +50,11 @@ Future<void> main(List<String> args) async {
     foreground: !args.contains('--headless'),
   );
   runApp(BabyApp(state: state, profile: profile));
+  // Saved local alerts also resume in the shared engine's headless service.
+  unawaited(NanitHub.instance.start());
   if (!args.contains('--headless')) {
     // The camera player (libmpv) and the paired Nanit camera, if any.
     ensureNanitVideoInitialized();
-    unawaited(NanitHub.instance.start());
   }
 
   final p = pair?.split(':');
