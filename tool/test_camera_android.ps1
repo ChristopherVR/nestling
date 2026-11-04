@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Device,
     [Parameter(Mandatory = $true)][string]$Camera,
     [int]$Seconds = 90,
+    [switch]$RequireSound,
     [string]$Flutter = 'flutter',
     [string]$AndroidSdk = "$env:LOCALAPPDATA/Android/Sdk"
 )
@@ -9,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
     $defines = @("--dart-define=NANIT_TEST_IP=$Camera", "--dart-define=ALERT_BACKGROUND_SECONDS=$Seconds")
+    if ($RequireSound) { $defines += '--dart-define=ALERT_REQUIRE_SOUND=true' }
     # Prebuild is essential: without an APK Flutter can infer the production
     # namespace as the test identity before it sees the flavor's application ID.
     & $Flutter build apk --debug --flavor cameraTest --target integration_test/local_alerts_live_test.dart @defines

@@ -295,6 +295,9 @@ The production app was restored and its version verified again after testing.
 ```powershell
 # Keep the phone unlocked for launch; lock it after ALERT_BACKGROUND_READY.
 ./tool/test_camera_android.ps1 -Device <adb-device-id> -Camera <camera-ip>
+# Coordinated speech check: wait up to ten minutes, finish after an actual sound
+# notification, and retain a short window for inspecting Android's OS notice.
+./tool/test_camera_android.ps1 -Device <adb-device-id> -Camera <camera-ip> -Seconds 600 -RequireSound
 # Windows opt-in hardware test:
 flutter test integration_test/local_alerts_live_test.dart -d windows --dart-define=NANIT_TEST_IP=<camera-ip>
 ```
@@ -303,6 +306,9 @@ The hardware test leaves the camera screen, checks that native levels continue
 advancing, and sends an explicitly labelled synthetic cry notification through
 the production policy/delivery path. Synthetic probabilities test alert routing;
 they do not validate recognition of actual crying.
+The optional `-RequireSound` check fails if no real sound notification is delivered
+before the deadline. It counts events only after the notification call succeeds;
+the ordinary timed background test can legitimately pass with zero sound events.
 
 ### Validation results
 
