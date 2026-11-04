@@ -219,3 +219,17 @@ tests pass; two Windows hardware video/lifecycle checks also pass with sound pol
 enabled. Windows release and Android GitHub debug builds succeeded against package
 `3c35d4d` (0.2.2). Android hardware sound control remains untested. Findings and numeric
 evidence are in the research repo's `evidence/local-sound-controls-2026-11-05.json`.
+
+The owner subsequently reported silent playback despite an active, unmuted Pulse
+stream. Package 0.2.3 fixes the missing S5L speaker-enable step: Play saves GPIO 60's
+previous state and enables it; Stop, timer expiry and failure cleanup restore that
+state. Unknown hardware is rejected instead of assuming the same pin. The owner
+confirmed audible Wind during a 10-second test at 20%. Both original pin states,
+timer expiry, failed playback and forced cleanup were verified on the camera.
+The earlier zero-volume checks proved control operation but missed this physical
+speaker requirement. See `evidence/speaker-enable-fix-2026-11-05.json` in research.
+
+Validation for pinned `e3efd11` (0.2.3): all 86 camera-package tests passed with
+seven optional skips; the five opt-in sound hardware tests and ten relevant app
+tests passed. Windows release and Android GitHub debug builds succeeded. The
+updated Windows release was reopened and connected to live video.
