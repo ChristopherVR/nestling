@@ -137,6 +137,11 @@ class _LocalCameraSetupState extends State<LocalCameraSetup> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
+          const LText(
+            'First time here? Choose Set up Wi-Fi if your camera has not joined your home network yet.',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
           SegmentedButton<bool>(
             segments: [
               ButtonSegment(
@@ -173,9 +178,7 @@ class _LocalCameraSetupState extends State<LocalCameraSetup> {
             const SizedBox(height: 12),
           ],
           if (_bluetooth) ...[
-            const LText(
-              'Put the camera in pairing mode with its light flashing. Keep it nearby and close the Nanit app. Choose your camera, then enter a WPA2 Wi-Fi network.',
-            ),
+            const _PairingGuide(),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: busy || _wifi.scanning ? null : _wifi.scan,
@@ -268,13 +271,24 @@ class _LocalCameraSetupState extends State<LocalCameraSetup> {
                   onTap: busy ? null : () => _add(e.key),
                 ),
               ),
-            if (_searched && _found.isEmpty)
+            if (_searched && _found.isEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: LText(
-                  'No camera found yet. Try again after it joins Wi-Fi, or enter its address from your router’s device list.',
+                  'No camera found yet. If it has not joined this network, set up its Wi-Fi first. Otherwise, retry or enter its address from your router’s device list.',
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                        _bluetooth = true;
+                        _error = null;
+                      }),
+                icon: const Icon(Icons.bluetooth),
+                label: const LText('Set up camera Wi-Fi'),
+              ),
+            ],
             const SizedBox(height: 20),
             TextField(
               controller: _address,
@@ -304,6 +318,11 @@ class _LocalCameraSetupState extends State<LocalCameraSetup> {
               child: LinearProgressIndicator(),
             ),
           const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => _showCameraHelp(context),
+            icon: const Icon(Icons.help_outline),
+            label: const LText('Setup help & troubleshooting'),
+          ),
           TextButton(
             onPressed: busy ? null : widget.onAccount,
             child: LText(
@@ -329,7 +348,7 @@ class LocalCameraWatch extends StatefulWidget {
 class _LocalCameraWatchState extends State<LocalCameraWatch>
     with WidgetsBindingObserver {
   bool _muted = true, _foreground = true, _playing = false;
-  bool _configuringWifi = false;
+  bool _showingDetails = false;
   String? _playingUrl;
   @override
   void initState() {
@@ -349,24 +368,24 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
       _muted = true;
       _playing = false;
     });
-    if (foreground && !_configuringWifi) {
+    if (foreground && !_showingDetails) {
       unawaited(widget.hub.watch());
     } else {
       unawaited(widget.hub.pause());
     }
   }
 
-  Future<void> _configureWifi() async {
+  Future<void> _openDetails(Future<void> Function() open) async {
     setState(() {
-      _configuringWifi = true;
+      _showingDetails = true;
       _muted = true;
     });
     await widget.hub.pause();
     try {
-      await widget.onWifiSetup?.call();
+      await open();
     } finally {
       if (mounted) {
-        setState(() => _configuringWifi = false);
+        setState(() => _showingDetails = false);
         if (_foreground) await widget.hub.watch();
       }
     }
@@ -552,8 +571,13 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
                   ListTile(
                     leading: const Icon(Icons.wifi),
                     title: const LText('Change Wi-Fi'),
-                    onTap: _configureWifi,
+                    onTap: () => _openDetails(widget.onWifiSetup!),
                   ),
+                ListTile(
+                  leading: const Icon(Icons.help_outline),
+                  title: const LText('Setup help & troubleshooting'),
+                  onTap: () => _openDetails(() => _showCameraHelp(context)),
+                ),
                 ListTile(
                   leading: const Icon(Icons.link_off),
                   title: const LText('Forget this camera'),
@@ -625,6 +649,123 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
     );
     if (yes == true) await widget.hub.forget();
   }
+}
+
+class _PairingGuide extends StatelessWidget {
+  const _PairingGuide();
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr('Connect your camera for the first time'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          const LText(
+            '1. Power the camera and keep it within 1–2 metres of this device. Turn on Bluetooth and close the Nanit app on other devices.',
+          ),
+          const SizedBox(height: 12),
+          const LText(
+            '2. Press the Wi-Fi pairing button on the back of the camera. Wait for the night light to flash. Pairing does not require a factory reset.',
+          ),
+          const SizedBox(height: 12),
+          const LText(
+            '3. In Set up Wi-Fi, tap Find nearby camera, select your camera, then enter your home Wi-Fi name and WPA2 password. Keep this device on that same home network.',
+          ),
+          const SizedBox(height: 12),
+          const LText(
+            'Nestling sends the Wi-Fi details over Bluetooth, then looks for the camera on your network. Your Wi-Fi password is not saved.',
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<void> _showCameraHelp(BuildContext context) async {
+  await Navigator.of(context)
+      .push<void>(MaterialPageRoute(builder: (_) => const _CameraHelpPage()));
+}
+
+class _CameraHelpPage extends StatelessWidget {
+  const _CameraHelpPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final windows = Theme.of(context).platform == TargetPlatform.windows;
+    return Scaffold(
+      appBar: AppBar(title: const LText('Camera setup help')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const _PairingGuide(),
+              const SizedBox(height: 20),
+              Text(
+                tr('Troubleshooting'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              _HelpTopic(
+                title: 'Bluetooth is off or permission was denied',
+                text: windows
+                    ? 'Open Windows Settings → Bluetooth & devices and turn Bluetooth on. This PC needs a Bluetooth Low Energy adapter. If Bluetooth is unavailable, check the adapter and its driver. Return to Nestling and tap Find nearby camera again.'
+                    : 'Turn Bluetooth on. In Android Settings → Apps → Nestling → Permissions, allow Nearby devices. On Android 11 or earlier, also allow Location and turn Location on while scanning. Return to Nestling and tap Find nearby camera again.',
+              ),
+              const _HelpTopic(
+                title: 'My camera does not appear nearby',
+                text: 'Check that the camera is powered and its night light is flashing. Keep it within 1–2 metres and close the Nanit app on all other devices. If flashing has stopped, press the Wi-Fi pairing button again, then retry Find nearby camera. You do not need to pair it in the system Bluetooth device list.',
+              ),
+              const _HelpTopic(
+                title: 'The camera could not join Wi-Fi',
+                text: 'Check the exact Wi-Fi name and password, including capitals. This setup supports a WPA2 network; use one without a web sign-in page. Enable Hidden network only if your router hides its network name. Keep the camera near your router. If setup was interrupted, enable pairing mode again and retry.',
+              ),
+              const _HelpTopic(
+                title: 'Wi-Fi was accepted but discovery finds nothing',
+                text: 'Give the camera a moment to join, then retry Find cameras on my network. Connect this device to the same home network. Guest Wi-Fi, device isolation or a VPN can prevent local discovery. You can also find the camera in your router’s device list and use Connect by address. Internet access is not required to search your home network.',
+              ),
+              _HelpTopic(
+                title: 'Video will not connect or keeps stopping',
+                text:
+                    'Check the camera power and that both devices can reach each other on your home network. Tap Reconnect. If your router changed the camera’s address, use Change camera address. If you changed routers or Wi-Fi details, use Change Wi-Fi.'
+                    '${windows ? ' If Windows asks about network access, allow Nestling on your trusted private network.' : ''}'
+                    ' Video pauses when you leave the camera screen or put Nestling in the background.',
+              ),
+              const _HelpTopic(
+                title: 'I can see video but cannot hear audio',
+                text: 'Video starts muted. Tap Listen and check this device’s media volume and selected speaker or headphones. Returning to the camera screen starts muted again. Speaking through the camera is not yet available in Nestling.',
+              ),
+              const SizedBox(height: 20),
+              const LText(
+                'Local camera access has been tested on Nanit Pro firmware 6.58.615. Windows video playback has passed hardware tests. Android playback and the complete Bluetooth setup flow in Nestling still need testing on physical devices.',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HelpTopic extends StatelessWidget {
+  const _HelpTopic({required this.title, required this.text});
+  final String title, text;
+
+  @override
+  Widget build(BuildContext context) => ExpansionTile(
+    tilePadding: EdgeInsets.zero,
+    childrenPadding: const EdgeInsets.only(bottom: 16),
+    expandedCrossAxisAlignment: CrossAxisAlignment.start,
+    title: LText(title),
+    children: [Align(alignment: Alignment.centerLeft, child: LText(text))],
+  );
 }
 
 class _Notice extends StatelessWidget {

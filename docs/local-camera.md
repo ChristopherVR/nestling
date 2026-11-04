@@ -18,6 +18,22 @@ Other firmware is not yet certified compatible.
 5. Video starts muted. **Listen** plays incoming microphone audio on this device. Night light
    toggles between off and 50%; room temperature/humidity update every 15 seconds.
 
+Both Windows and Android include a first-time checklist under **Set up Wi-Fi**: power and
+proximity, the rear Wi-Fi pairing button and flashing night light, then selection and Wi-Fi
+credentials. Empty network discovery also offers **Set up camera Wi-Fi** directly.
+**Setup help & troubleshooting** is available during onboarding and from the saved camera
+screen. It covers platform-specific Bluetooth settings/permissions, missing cameras, failed
+Wi-Fi joins, discovery, reconnecting after a router/address change, and muted audio. Reading
+help does not start Bluetooth scanning or alter the camera. These UI additions do not change
+the outstanding physical Android and Flutter BLE validation below.
+Opening help from live video pauses the stream; returning resumes muted. The updated Windows
+release and Android GitHub debug APK both build successfully. Static analysis and the 11
+camera tests pass; Windows first-time setup navigation and expandable help were inspected
+in the running app without scanning, provisioning or resetting the camera.
+
+The pairing-button and flashing-night-light guidance follows Nanit's
+[camera pairing instructions](https://support.nanit.com/en_us/pairing-the-camera-By48GhCFlg).
+
 Leaving the screen or backgrounding the app closes the local stream and polling. Returning
 starts muted. Reconnection retries every 8 seconds while viewing, with mDNS rediscovery if the
 saved address stops working, followed by the bounded RTSP fallback. A different serial at the saved address is rejected. Change the
