@@ -361,6 +361,9 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // A visible Windows window becomes inactive when another app has focus.
+    // Keep its live feed running; hidden/paused still close the connection.
+    if (state == AppLifecycleState.inactive) return;
     final foreground = state == AppLifecycleState.resumed;
     if (_foreground == foreground) return;
     setState(() {

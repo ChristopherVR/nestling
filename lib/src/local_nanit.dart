@@ -141,8 +141,6 @@ class LocalNanitHub extends ChangeNotifier {
       _bridge = bridge;
       await bridge.start();
       if (!current()) return;
-      readings = await camera.readings();
-      if (!current()) return;
       saved = SavedLocalCamera(
         address: address,
         uid: info.uid,
@@ -153,7 +151,9 @@ class LocalNanitHub extends ChangeNotifier {
       if (!current()) return;
       state = LocalCameraState.ready;
       _notify();
-      _scheduleRead(generation);
+      // Room telemetry uses a separate maintenance service. It must not hold
+      // up video startup or tear down healthy media when that service is busy.
+      unawaited(_readRoom(generation));
     } catch (e) {
       if (current()) {
         await _failed(
@@ -166,19 +166,24 @@ class LocalNanitHub extends ChangeNotifier {
   }
 
   void _scheduleRead(int generation) {
-    _poll = Timer(const Duration(seconds: 15), () async {
-      try {
-        final value = await _camera!.readings();
-        if (generation != _generation || !_watching) return;
-        readings = value;
-        _notify();
-        _scheduleRead(generation);
-      } catch (_) {
-        if (generation == _generation && _watching) {
-          await _failed('Connection lost. Reconnecting to your camera…');
-        }
-      }
-    });
+    _poll = Timer(const Duration(seconds: 15), () => _readRoom(generation));
+  }
+
+  Future<void> _readRoom(int generation) async {
+    if (generation != _generation || !_watching || _camera == null) return;
+    try {
+      final value = await _camera!.readings();
+      if (generation != _generation || !_watching) return;
+      readings = value;
+      problem = null;
+    } catch (_) {
+      if (generation != _generation || !_watching) return;
+      readings = null;
+      problem =
+          'Room readings unavailable. Video can continue; readings will retry.';
+    }
+    _notify();
+    if (generation == _generation && _watching) _scheduleRead(generation);
   }
 
   Future<void> streamFailed() async {

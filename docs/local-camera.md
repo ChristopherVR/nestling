@@ -148,3 +148,38 @@ The requested ten-second repeat also completed, but microphone input was only
 −83.71 dBFS, so it did not resolve speech clarity. The corresponding `offline-spoken-audio-repeat-2026-11-05.json`
 records delivery, isolation and cleanup; user confirmation of speaking/audibility
 is still pending.
+
+## Stream stability and latency — 5 November 2026
+
+The Windows delay/disconnection report exposed three independent problems:
+
+- The RTSP bridge applied the same 20-second receive timeout in both directions.
+  An RTSP player can send no control requests during that interval while the camera
+  continues sending RTP. The bridge now allows that client silence, while retaining
+  a timeout for camera inactivity and stalled writes. TCP_NODELAY is enabled on both
+  sides. A fake-camera regression test reproduced the early disconnect before the fix.
+- A delayed or failed temperature/humidity request previously blocked initial video
+  or tore down an established stream. Telemetry now loads separately, clears stale
+  readings on failure and retries without restarting media.
+- Losing focus on Windows emits `inactive` even while the window is visible. This
+  no longer pauses the camera; hiding/minimizing/backgrounding still does.
+
+The native player uses mpv's low-latency profile with disk caching and read-ahead
+disabled, and a 100 ms audio buffer. Audio/video clock synchronization remains enabled.
+Recoverable decoder log errors no longer trigger immediate reconnection; end-of-stream,
+startup failure or eight seconds without playback timeline progress do. The settings
+follow the [mpv low-latency guidance](https://mpv.io/manual/stable/#low-latency-playback).
+These settings reduce sources of buffering; they do not establish an exact physical
+camera-to-screen or speaker delay.
+
+Validation against pinned package `e82df97` (0.2.1): Windows decoded 1920×1080
+video after 2,180 ms and sustained a 90-second muted playback test with 901 timeline
+updates and zero stream errors. A separate hardware test passed visible-window
+focus changes, background pause/resume and Wi-Fi setup remaining paused. Its live
+test harness was corrected to avoid waiting for a rendered frame while paused.
+All 161 app tests and 82 camera-package tests passed; app and changed-package-file
+analysis passed. Numeric evidence is in the research repo's
+`evidence/windows-stream-stability-2026-11-05.json`. This run did not block WAN;
+physical audio/video delay and Android hardware playback still need confirmation.
+The normal Windows release and Android GitHub debug APK were rebuilt successfully
+against that pinned dependency; the Windows release was reopened on the live camera.

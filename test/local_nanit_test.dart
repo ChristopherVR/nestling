@@ -12,6 +12,7 @@ import 'nanit_integration_test.dart' show FakeNanitHttp, testHub;
 class FakeLocalCamera extends NanitOfflineCamera {
   FakeLocalCamera(super.address);
   Completer<NanitOfflineInfo>? pendingIdentity;
+  Completer<NanitRoomReadings>? pendingReadings;
   String uid = 'N301TEST123456';
   int starts = 0, reads = 0, lights = 0;
   bool closed = false;
@@ -27,6 +28,7 @@ class FakeLocalCamera extends NanitOfflineCamera {
   @override
   Future<NanitRoomReadings> readings() async {
     reads++;
+    if (pendingReadings != null) return pendingReadings!.future;
     return NanitRoomReadings(
       temperature: 22,
       humidity: 60,
@@ -50,6 +52,69 @@ class FakeLocalCamera extends NanitOfflineCamera {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'slow or failed room telemetry cannot block or disconnect video',
+    () async {
+      final device = FakeLocalCamera('192.168.1.5')
+        ..pendingReadings = Completer<NanitRoomReadings>();
+      final hub =
+          LocalNanitHub(
+              store: MemoryNanitSecretStore(),
+              cameraFactory: (_) => device,
+            )
+            ..saved = const SavedLocalCamera(
+              address: '192.168.1.5',
+              uid: 'N301TEST123456',
+              firmware: '6.58.615',
+            );
+      try {
+        await hub.watch().timeout(const Duration(seconds: 1));
+        final url = hub.streamUrl;
+        expect(hub.state, LocalCameraState.ready);
+        expect(url, isNotNull);
+        expect(hub.readings, isNull);
+        device.pendingReadings!.completeError(
+          TimeoutException('maintenance busy'),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(hub.state, LocalCameraState.ready);
+        expect(hub.streamUrl, url);
+        expect(device.closed, isFalse);
+        expect(hub.problem, contains('Room readings unavailable'));
+      } finally {
+        await hub.pause();
+        hub.dispose();
+      }
+    },
+  );
+
+  test(
+    'late room telemetry after pause cannot revive readings or polling',
+    () async {
+      final device = FakeLocalCamera('192.168.1.5')
+        ..pendingReadings = Completer<NanitRoomReadings>();
+      final hub =
+          LocalNanitHub(
+              store: MemoryNanitSecretStore(),
+              cameraFactory: (_) => device,
+            )
+            ..saved = const SavedLocalCamera(
+              address: '192.168.1.5',
+              uid: 'N301TEST123456',
+              firmware: '6.58.615',
+            );
+      await hub.watch();
+      await hub.pause();
+      device.pendingReadings!.complete(
+        NanitRoomReadings(temperature: 22, at: DateTime.now()),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(hub.readings, isNull);
+      expect(hub.state, LocalCameraState.idle);
+      hub.dispose();
+    },
+  );
 
   test(
     'local setup saves only camera metadata and does not start media',
@@ -173,6 +238,7 @@ void main() {
       expect(device.reads, 1);
       expect(device.lights, 0);
       expect(hub.streamUrl, startsWith('rtsp://127.0.0.1:'));
+      await Future<void>.delayed(Duration.zero);
       expect(hub.readings!.temperature, 22);
       await hub.setNightLight(50);
       expect(device.lights, 1);

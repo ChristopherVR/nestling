@@ -568,11 +568,11 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/nanit_camera"
-      ref: "3e1714fab4f40606ec395fe243209ed58c4f6240"
-      resolved-ref: "3e1714fab4f40606ec395fe243209ed58c4f6240"
+      ref: e82df97cfb6e3625d594b0dddac89708ca2c652f
+      resolved-ref: e82df97cfb6e3625d594b0dddac89708ca2c652f
       url: "https://github.com/ChristopherVR/nanit-research.git"
     source: git
-    version: "0.2.0"
+    version: "0.2.1"
   objective_c:
     dependency: transitive
     description:
