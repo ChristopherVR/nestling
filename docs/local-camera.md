@@ -94,3 +94,21 @@ flutter test integration_test/local_camera_live_test.dart -d windows --dart-defi
 The camera package is pinned to a Git commit in `pubspec.yaml`. A local sibling checkout may
 be used for development through the ignored `pubspec_overrides.yaml`; release validation must
 also resolve the pinned dependency without that override.
+
+## Additional hardware checks — 5 November 2026
+
+After the owner enabled further feature testing, the research PoC verified camera
+microphone capture/mute/restore, room readings and brief Wind playback with WAN blocked
+and credential files absent. Wind was played for three seconds at 5%, then 30%; digital
+speaker output was measured, but user confirmation of audibility remains outstanding.
+The camera's native journal also exposed fresh motion active/clear events without an
+account, and one fresh active event during a final WAN-blocked observation. Controlled
+movement correlation is still outstanding. These newly tested
+microphone controls, sound playback and native event access are **PoC functionality, not
+additional Nestling UI controls in this commit**.
+
+Breathing's executable/library are installed, but the detector is stopped. A token-free
+session/control path and a supervised Breathing Wear test remain unvalidated. Ordinary
+motion messages for a region called `sting` are not breathing measurements. No PC
+microphone/talk-back or breathing alarm was triggered in this round. Test tooling and
+numeric evidence are recorded in the research repo's `OFFLINE_ACCESS.md` and `evidence/`.
