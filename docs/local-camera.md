@@ -180,6 +180,10 @@ test harness was corrected to avoid waiting for a rendered frame while paused.
 All 161 app tests and 82 camera-package tests passed; app and changed-package-file
 analysis passed. Numeric evidence is in the research repo's
 `evidence/windows-stream-stability-2026-11-05.json`. This run did not block WAN;
-physical audio/video delay and Android hardware playback still need confirmation.
+exact physical audio/video delay remains unmeasured and Android hardware playback
+still needs confirmation.
 The normal Windows release and Android GitHub debug APK were rebuilt successfully
 against that pinned dependency; the Windows release was reopened on the live camera.
+The owner then confirmed the Windows result: “Much better and stays connected.”
+This records the observed improvement in delay and stability without assigning an
+unmeasured latency value or uptime duration.
