@@ -333,11 +333,21 @@ the ordinary timed background test can legitimately pass with zero sound events.
   after readiness; the service and wake lock were again removed after Stop.
   Synthetic cry delivery passed and the normal app remained version 1.5.30/code
   38 after cleanup. This window also captured zero acoustic alerts; real Android
-  sound-alert delivery remains unverified. The isolated normal-app build is
-  provided separately for manual use, without importing the owner's log.
+  sound-alert delivery was not established until the coordinated check below.
+  The isolated normal-app build is provided separately for manual use, without
+  importing the owner's log.
 - Package validation: 88 tests passed; two simultaneous real-camera sessions
   maintained fresh levels/classifier metadata independently. A forced short-lease
   check removed its helper and Pulse source output after expiry.
+- Coordinated Android speech check: the longer `ALERT_REQUIRE_SOUND` test ended
+  successfully after 56 seconds, with 56 seconds of native level advancement and
+  one real Sound detected notification at Normal sensitivity. The owner confirmed
+  speaking. Android's notification record independently showed ID 3000010,
+  channel `local_camera_alerts`, title **Sound detected**, and importance 4 while
+  keyguard reported `showing=true` and `inputRestricted=true`. Monitoring remained
+  healthy and the separate synthetic cry-notification check passed. Stop removed
+  the service and released its wake lock. The isolated normal-app APK was put back
+  afterward; the production app remained 1.5.30/code 38 and no log was imported.
 
 No camera reboot, pairing, credential reads/deletion, microphone-mixer change,
 sound-machine start or breathing action was used for these alert tests. No new
