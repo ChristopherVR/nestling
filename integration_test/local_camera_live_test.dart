@@ -74,6 +74,7 @@ void main() {
       expect(errors, 0);
       expect(hub.readings?.temperature, isNotNull);
       expect(hub.readings?.humidity, isNotNull);
+      expect(hub.sound?.supported, isTrue);
       expect(progressEvents, greaterThan(2));
       expect(lastPosition, greaterThan(firstPosition!));
       if (soakSeconds >= 20) {

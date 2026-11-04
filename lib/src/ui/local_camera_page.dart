@@ -499,6 +499,8 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
               child: _Notice(hub.problem!),
             ),
           const SizedBox(height: 20),
+          _CameraSounds(hub: hub),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -654,6 +656,156 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
   }
 }
 
+class _CameraSounds extends StatefulWidget {
+  const _CameraSounds({required this.hub});
+  final LocalNanitHub hub;
+  @override
+  State<_CameraSounds> createState() => _CameraSoundsState();
+}
+
+class _CameraSoundsState extends State<_CameraSounds> {
+  NanitSoundTrack _track = NanitSoundTrack.wind;
+  int _minutes = 15;
+  double _volume = 20;
+  bool _draggingVolume = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hub = widget.hub;
+    final sound = hub.sound;
+    final playing = sound?.playing == true;
+    final enabled =
+        hub.state == LocalCameraState.ready &&
+        sound?.supported == true &&
+        !hub.changingSound;
+    final track = playing ? sound!.track! : _track;
+    final volume = playing && !_draggingVolume
+        ? sound!.volume.toDouble()
+        : _volume;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.graphic_eq),
+                const SizedBox(width: 8),
+                Text(
+                  tr('Camera sounds'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            LText(
+              playing
+                  ? '${sound!.track!.label} is playing · ${((sound.remainingSeconds + 59) ~/ 60)} min remaining'
+                  : sound == null
+                  ? 'Checking camera sounds…'
+                  : !sound.supported
+                  ? 'Sound playback is unavailable on this camera.'
+                  : 'Play a soothing sound through the camera’s speaker.',
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<NanitSoundTrack>(
+              key: ValueKey(track),
+              initialValue: track,
+              decoration: InputDecoration(labelText: tr('Sound')),
+              items: [
+                for (final item in NanitSoundTrack.values)
+                  DropdownMenuItem(value: item, child: LText(item.label)),
+              ],
+              onChanged: enabled && !playing
+                  ? (value) => setState(() => _track = value!)
+                  : null,
+            ),
+            if (!playing) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                initialValue: _minutes,
+                decoration: InputDecoration(labelText: tr('Stop after')),
+                items: [
+                  for (final minutes in [5, 15, 30, 60])
+                    DropdownMenuItem(
+                      value: minutes,
+                      child: LText('$minutes minutes'),
+                    ),
+                ],
+                onChanged: enabled && !playing
+                    ? (value) => setState(() => _minutes = value!)
+                    : null,
+              ),
+            ],
+            const SizedBox(height: 16),
+            LText('Sound volume · ${volume.round()}%'),
+            Slider(
+              value: volume,
+              min: 0,
+              max: 100,
+              divisions: 20,
+              label: '${volume.round()}%',
+              onChanged: enabled
+                  ? (value) => setState(() {
+                      _draggingVolume = true;
+                      _volume = value;
+                    })
+                  : null,
+              onChangeEnd: enabled
+                  ? (value) async {
+                      if (playing) await hub.setSoundVolume(value.round());
+                      if (mounted) setState(() => _draggingVolume = false);
+                    }
+                  : null,
+            ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: enabled && !playing
+                      ? () => hub.playSound(
+                          _track,
+                          _volume.round(),
+                          _minutes * 60,
+                        )
+                      : null,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const LText('Play sound'),
+                ),
+                OutlinedButton.icon(
+                  // Stop stays available when playback status is uncertain.
+                  onPressed:
+                      hub.state == LocalCameraState.ready && !hub.changingSound
+                      ? hub.stopSound
+                      : null,
+                  icon: const Icon(Icons.stop),
+                  label: const LText('Stop sound'),
+                ),
+              ],
+            ),
+            if (hub.changingSound)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: LinearProgressIndicator(),
+              ),
+            if (hub.soundProblem != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: LText(hub.soundProblem!),
+              ),
+            const SizedBox(height: 12),
+            const LText(
+              'Sound continues if you leave this screen, until its timer ends or you tap Stop sound.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PairingGuide extends StatelessWidget {
   const _PairingGuide();
 
@@ -744,6 +896,10 @@ class _CameraHelpPage extends StatelessWidget {
               const _HelpTopic(
                 title: 'I can see video but cannot hear audio',
                 text: 'Video starts muted. Tap Listen and check this device’s media volume and selected speaker or headphones. Returning to the camera screen starts muted again. Speaking through the camera is not yet available in Nestling.',
+              ),
+              const _HelpTopic(
+                title: 'Playing or stopping camera sounds',
+                text: 'Open Camera sounds below the video. Choose Wind, White noise, Waves or Birds, set a volume and timer, then tap Play sound. Volume can change while playing. Sound continues if you leave the screen or close Nestling; return and tap Stop sound, or let the camera’s timer finish. Stop the current sound before choosing another track or timer.',
               ),
               const SizedBox(height: 20),
               const LText(

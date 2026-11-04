@@ -17,6 +17,11 @@ Other firmware is not yet certified compatible.
    name. Nestling verifies its identity before saving it.
 5. Video starts muted. **Listen** plays incoming microphone audio on this device. Night light
    toggles between off and 50%; room temperature/humidity update every 15 seconds.
+6. **Camera sounds** plays Wind, White noise, Waves or Birds through the camera speaker.
+   Choose a volume and a 5/15/30/60-minute timer, then tap **Play sound**. The volume slider
+   also works during playback. **Stop sound** stops the current Nestling sound. Stop before
+   choosing another track or timer. Playback continues if you leave the screen or close
+   the app, and the camera itself stops it when the timer expires.
 
 Both Windows and Android include a first-time checklist under **Set up Wi-Fi**: power and
 proximity, the rear Wi-Fi pairing button and flashing night light, then selection and Wi-Fi
@@ -60,7 +65,7 @@ the camera's WAN access; use router policy if it must never reach the internet.
   setup sends request 15 only. The password is not persisted or logged; mutable packet
   buffers are cleared after use. Runtime strings cannot be guaranteed erased from memory.
 - The existing Nanit account UI is optional. Local mode exposes no cloud alerts, recordings,
-  motion/sound detection, breathing monitoring, camera sleep, speaker playback or white noise.
+  motion/sound detection, breathing monitoring or camera sleep.
   Those are not silently represented as supported local features.
 
 Local RTSP/maintenance traffic uses the camera's unauthenticated LAN interfaces. Serial
@@ -187,3 +192,30 @@ against that pinned dependency; the Windows release was reopened on the live cam
 The owner then confirmed the Windows result: “Much better and stays connected.”
 This records the observed improvement in delay and stability without assigning an
 unmeasured latency value or uptime duration.
+
+## Camera sound controls — 5 November 2026
+
+Camera sounds are now a first-class local feature on the shared Windows/Android screen.
+They use the bundled WAV files and a namespaced temporary camera process, not account
+requests or uploaded media. Its timer runs independently of Nestling, the sound loops
+until the deadline, and the global microphone/speaker mixer remains unchanged. Volume
+changes target only the Nestling PulseAudio stream. Stop validates the runner's command
+line and process group before signaling it, so it does not kill other camera audio jobs.
+
+The UI reads sound status every three seconds and restores the current track/volume when
+you return. Status/action errors do not interrupt video. Opening, reconnecting or leaving
+the screen never automatically starts or stops a sound. Stop remains available when the
+current playback status is uncertain. No sound is started until Play sound is pressed.
+
+The package's opt-in `test/manual/sound_live_test.dart` verified muted start, volume update,
+status and stop for all four tracks, plus automatic timer expiry with the client closed.
+All five hardware tests passed at zero volume. A Pulse inspection separately confirmed
+0% output and removal of the stream after Stop. These tests establish control operation;
+they do not independently confirm audible quality for every track.
+
+The real Windows Play/Stop buttons were then verified at 0% volume. Playback status
+updated and Stop removed the camera's stream/helper. All 163 app tests and 85 package
+tests pass; two Windows hardware video/lifecycle checks also pass with sound polling
+enabled. Windows release and Android GitHub debug builds succeeded against package
+`3c35d4d` (0.2.2). Android hardware sound control remains untested. Findings and numeric
+evidence are in the research repo's `evidence/local-sound-controls-2026-11-05.json`.

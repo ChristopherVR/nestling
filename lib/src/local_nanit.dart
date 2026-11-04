@@ -43,12 +43,16 @@ class LocalNanitHub extends ChangeNotifier {
   final NanitOfflineCamera Function(String) _cameraFactory;
   SavedLocalCamera? saved;
   NanitRoomReadings? readings;
+  NanitSoundState? sound;
+  String? soundProblem;
+  bool changingSound = false;
   LocalCameraState state = LocalCameraState.idle;
   String? problem;
   String? get streamUrl => _bridge?.url;
   NanitOfflineCamera? _camera;
   NanitOfflineBridge? _bridge;
-  Timer? _poll, _retry;
+  Timer? _poll, _retry, _soundPoll;
+  int _soundRevision = 0;
   int _generation = 0;
   bool _watching = false, _disposed = false, changingLight = false;
 
@@ -154,6 +158,7 @@ class LocalNanitHub extends ChangeNotifier {
       // Room telemetry uses a separate maintenance service. It must not hold
       // up video startup or tear down healthy media when that service is busy.
       unawaited(_readRoom(generation));
+      unawaited(_readSound(generation));
     } catch (e) {
       if (current()) {
         await _failed(
@@ -189,6 +194,68 @@ class LocalNanitHub extends ChangeNotifier {
   Future<void> streamFailed() async {
     if (_watching && state == LocalCameraState.ready) {
       await _failed('Video connection interrupted. Reconnecting…');
+    }
+  }
+
+  Future<void> _readSound(int generation) async {
+    if (generation != _generation || !_watching || _camera == null) return;
+    final revision = _soundRevision;
+    try {
+      final value = await _camera!.soundStatus();
+      if (generation != _generation || !_watching) return;
+      if (revision == _soundRevision && !changingSound) {
+        sound = value;
+        soundProblem = null;
+        _notify();
+      }
+    } catch (_) {
+      if (generation != _generation || !_watching) return;
+      if (revision == _soundRevision && !changingSound) {
+        sound = null;
+        soundProblem = 'Could not check camera sounds. Retrying…';
+        _notify();
+      }
+    }
+    if (generation == _generation && _watching) {
+      _soundPoll = Timer(
+        const Duration(seconds: 3),
+        () => _readSound(generation),
+      );
+    }
+  }
+
+  Future<void> playSound(NanitSoundTrack track, int volume, int seconds) =>
+      _soundAction(
+        (camera) => camera.playSound(track, volume: volume, seconds: seconds),
+      );
+
+  Future<void> stopSound() => _soundAction((camera) => camera.stopSound());
+
+  Future<void> setSoundVolume(int volume) =>
+      _soundAction((camera) => camera.setSoundVolume(volume));
+
+  Future<void> _soundAction(
+    Future<NanitSoundState> Function(NanitOfflineCamera) action,
+  ) async {
+    final camera = _camera;
+    if (camera == null || state != LocalCameraState.ready || changingSound) {
+      return;
+    }
+    final generation = _generation;
+    final revision = ++_soundRevision;
+    changingSound = true;
+    soundProblem = null;
+    _notify();
+    try {
+      final value = await action(camera);
+      if (generation == _generation) sound = value;
+    } catch (_) {
+      if (generation == _generation) {
+        soundProblem = 'The camera did not confirm that sound action. Check its status and retry.';
+      }
+    } finally {
+      if (revision == _soundRevision) changingSound = false;
+      _notify();
     }
   }
 
@@ -244,6 +311,11 @@ class LocalNanitHub extends ChangeNotifier {
     ++_generation;
     _poll?.cancel();
     _retry?.cancel();
+    _soundPoll?.cancel();
+    ++_soundRevision;
+    changingSound = false;
+    sound = null;
+    soundProblem = null;
     _camera?.close();
     _camera = null;
     final bridge = _bridge;

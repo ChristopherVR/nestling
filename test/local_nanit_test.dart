@@ -16,6 +16,35 @@ class FakeLocalCamera extends NanitOfflineCamera {
   String uid = 'N301TEST123456';
   int starts = 0, reads = 0, lights = 0;
   bool closed = false;
+  int soundPlays = 0, soundStops = 0;
+  NanitSoundState sound = const NanitSoundState(
+    supported: true,
+    playing: false,
+  );
+  @override
+  Future<NanitSoundState> soundStatus() async => sound;
+  @override
+  Future<NanitSoundState> playSound(
+    NanitSoundTrack track, {
+    int volume = 20,
+    int seconds = 900,
+  }) async {
+    soundPlays++;
+    return sound = NanitSoundState(
+      supported: true,
+      playing: true,
+      track: track,
+      volume: volume,
+      remainingSeconds: seconds,
+    );
+  }
+
+  @override
+  Future<NanitSoundState> stopSound() async {
+    soundStops++;
+    return sound = const NanitSoundState(supported: true, playing: false);
+  }
+
   @override
   Future<NanitOfflineInfo> identify() async =>
       pendingIdentity?.future ??
@@ -52,6 +81,48 @@ class FakeLocalCamera extends NanitOfflineCamera {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'watch never plays sounds; explicit controls preserve the video connection',
+    () async {
+      final device = FakeLocalCamera('192.168.1.5');
+      final hub =
+          LocalNanitHub(
+              store: MemoryNanitSecretStore(),
+              cameraFactory: (_) => device,
+            )
+            ..saved = const SavedLocalCamera(
+              address: '192.168.1.5',
+              uid: 'N301TEST123456',
+              firmware: '6.58.615',
+            );
+      try {
+        await hub.watch();
+        await Future<void>.delayed(Duration.zero);
+        final url = hub.streamUrl;
+        expect(device.soundPlays, 0);
+        expect(hub.sound?.playing, isFalse);
+        await hub.playSound(NanitSoundTrack.whiteNoise, 25, 300);
+        expect(hub.sound?.track, NanitSoundTrack.whiteNoise);
+        expect(hub.sound?.volume, 25);
+        expect(hub.sound?.remainingSeconds, 300);
+        expect(hub.streamUrl, url);
+        await hub.stopSound();
+        expect(hub.sound?.playing, isFalse);
+        expect(device.soundStops, 1);
+        expect(hub.streamUrl, url);
+        await hub.pause();
+        expect(
+          device.soundStops,
+          1,
+          reason: 'Leaving must not stop a timed sound',
+        );
+      } finally {
+        await hub.pause();
+        hub.dispose();
+      }
+    },
+  );
 
   test(
     'slow or failed room telemetry cannot block or disconnect video',
