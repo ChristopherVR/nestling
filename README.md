@@ -2,6 +2,31 @@
 
 # Nestling
 
+**Use at your own risk.** All features are provided as is, without warranties or
+responsibility for use to the extent permitted by law. Read the full
+[disclaimer and responsibility notice](DISCLAIMER.md), also available in Settings.
+
+## Local camera use
+
+On Windows or Android, open **Camera** and choose **Find cameras on my network**.
+For a camera without Wi-Fi, use **Set up Wi-Fi** and the built-in pairing checklist.
+Keep the camera and Nestling on the same trusted home network.
+
+Local mode includes live video, Listen, room readings, night light, camera sounds,
+and opt-in sound/possible-cry alerts. Enable **Monitor in background** on the camera
+screen and allow notifications. Windows must stay running and awake; Android uses
+an ongoing notification. Read [setup, troubleshooting and tested limits](docs/local-camera.md).
+Real sound alerts were verified on Windows and locked Android. Cry recognition,
+overnight reliability, breathing monitoring and in-app talk-back are not certified
+by these checks. Check your child independently and keep backups of your log.
+
+Use the signed APK from [Releases](https://github.com/ChristopherVR/baby-log/releases)
+to update Android in place. Do not uninstall your existing app. Developers should
+use the isolated `cameraTest` flavor and guarded test launcher for hardware tests.
+
+Release CI reads the pinned private camera package using a dedicated read-only
+deploy key; it does not publish the research repository or use a personal access token.
+
 Track feeds (left / right / both / bottle, time, how long), nappies (pee / poo / both), sleep, growth and
 your own pills with reminders. Every device in the family hub shares the same log over Wi-Fi, or by QR codes.
 

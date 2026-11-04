@@ -9,6 +9,7 @@ import '../background.dart';
 import '../nanit_integration.dart';
 import '../nanit_wifi_setup.dart';
 import 'common.dart';
+import 'disclaimer_page.dart';
 
 /// Local onboarding is also used to reconnect after changing Wi-Fi.
 class LocalCameraSetup extends StatefulWidget {
@@ -504,6 +505,16 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
           _CameraSounds(hub: hub),
           const SizedBox(height: 12),
           CameraAlertsCard(alerts: hub.alerts),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: LText(
+              'Use at your own risk. Camera feeds and alerts can fail or be delayed. Always independently check your child.',
+            ),
+          ),
+          TextButton(
+            onPressed: () => showDisclaimer(context),
+            child: const LText('Disclaimer & responsibility'),
+          ),
           const SizedBox(height: 12),
           Card(
             child: Padding(

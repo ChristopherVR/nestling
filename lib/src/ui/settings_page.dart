@@ -15,6 +15,7 @@ import 'camera_page.dart';
 import 'common.dart';
 import 'growth_page.dart';
 import 'data_transfer.dart';
+import 'disclaimer_page.dart';
 import 'hub_page.dart';
 import 'peer_page.dart';
 import 'pump_lab_page.dart';
@@ -727,6 +728,21 @@ class _SettingsPageState extends State<SettingsPage> {
           title: 'App version',
           value: AppState.appVersion,
           onTap: () => showAppUpdates(context),
+        ),
+      ),
+      (
+        terms: [
+          'Disclaimer & responsibility',
+          'About',
+          'Legal',
+          'Use at your own risk',
+        ],
+        child: _Tile(
+          icon: Icons.description_outlined,
+          title: 'Disclaimer & responsibility',
+          value: '',
+          subtitle: 'Applies to all features',
+          onTap: () => showDisclaimer(context),
         ),
       ),
       (
