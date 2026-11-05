@@ -27,6 +27,13 @@ use the isolated `cameraTest` flavor and guarded test launcher for hardware test
 Release CI reads the pinned private camera package using a dedicated read-only
 deploy key; it does not publish the research repository or use a personal access token.
 
+For the camera investigation, see the private
+[Nanit research overview](https://github.com/ChristopherVR/nanit-research#readme),
+with editable architecture diagrams, intercepted/probed targets, current findings
+and the debugging steps that led to the independent local-access solution. The
+[architecture guide](https://github.com/ChristopherVR/nanit-research/blob/master/docs/architecture.md)
+explains the camera services and reusable Python/Dart protocol adapters.
+
 Track feeds (left / right / both / bottle, time, how long), nappies (pee / poo / both), sleep, growth and
 your own pills with reminders. Every device in the family hub shares the same log over Wi-Fi, or by QR codes.
 

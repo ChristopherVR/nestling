@@ -134,7 +134,9 @@ Breathing's executable/library are installed, but the detector is stopped. A tok
 session/control path and a supervised Breathing Wear test remain unvalidated. Ordinary
 motion messages for a region called `sting` are not breathing measurements. No PC
 microphone/talk-back or breathing alarm was triggered in this round. Test tooling and
-numeric evidence are recorded in the research repo's `OFFLINE_ACCESS.md` and `evidence/`.
+numeric evidence are recorded in the research repo's `archive/reports/OFFLINE_ACCESS.md`
+and `evidence/`. Start with its [current findings and evidence matrix](https://github.com/ChristopherVR/nanit-research/blob/master/docs/findings.md)
+for the consolidated state and remaining limits.
 
 The owner then clarified that the mic option means both listening and talk-back. A further
 WAN-blocked PoC check played camera AAC audio on the PC and sent five seconds of live Razer
@@ -315,7 +317,7 @@ is expected when changing modes. Windows uses software decoding to avoid its
 hardware copy-back queue. Android retains automatic decoder selection. Background
 sound/cry monitoring continues independently. The remaining camera/transport
 delay and optical measurement limits are documented in the research repository's
-`STREAM_LATENCY.md` and `evidence/baseline-latency-2026-11-05.json`.
+`archive/reports/STREAM_LATENCY.md` and `evidence/baseline-latency-2026-11-05.json`.
 
 The hardware test leaves the camera screen, checks that native levels continue
 advancing, and sends an explicitly labelled synthetic cry notification through
