@@ -428,8 +428,7 @@ class AppState extends ChangeNotifier {
   }) async {
     appVersion = (await PackageInfo.fromPlatform()).version;
     final dir = await getApplicationSupportDirectory();
-    final name = profile.isEmpty ? 'babylog.json' : 'babylog_$profile.json';
-    final state = AppState._(File('${dir.path}${Platform.pathSeparator}$name'));
+    final state = AppState._(await dataFile(dir, profile));
     final hadIds = await state._read();
     AppLanguage.use(state.language);
     state._rebuild();
@@ -455,6 +454,29 @@ class AppState extends ChangeNotifier {
   }
 
   String get dataFilePath => _file.path;
+
+  /// The data file for [profile] in [dir]: `nestling.json` or
+  /// `nestling_<profile>.json`. Installs from before the rename used
+  /// `babylog*.json`; that file is copied over once (via a temp file, so a
+  /// crash never leaves a half-written log) and the old file is left in place
+  /// as a backup.
+  static Future<File> dataFile(Directory dir, String profile) async {
+    String path(String app) => '${dir.path}${Platform.pathSeparator}'
+        '${profile.isEmpty ? '$app.json' : '${app}_$profile.json'}';
+    final file = File(path('nestling'));
+    final legacy = File(path('babylog'));
+    if (!await file.exists() && await legacy.exists()) {
+      try {
+        final tmp = await legacy.copy('${file.path}.tmp');
+        await tmp.rename(file.path);
+      } on FileSystemException catch (e) {
+        // Keep using the old file rather than starting with an empty log.
+        debugPrint('Could not migrate ${legacy.path}: $e');
+        return legacy;
+      }
+    }
+    return file;
+  }
 
   // ---------------------------------------------------------------- app lifecycle
 
@@ -1769,6 +1791,10 @@ class AppState extends ChangeNotifier {
   List<String> qrCodesFor(Peer? to) {
     final changes = _changesSince(to?.ackedSeq ?? 0, to?.deviceId ?? '');
     return QrTransfer.encode({
+      // Still the pre-rename marker on purpose: partners may run a version
+      // from before the Nestling rename, and those reject any other value.
+      // receiveQr accepts both; switch to 'nestling-qr' only once no
+      // supported version still requires the old one.
       'app': 'babylog-qr',
       'from': _me,
       'members': _members,
@@ -1791,7 +1817,7 @@ class AppState extends ChangeNotifier {
     bool acceptVersion = false,
   }) {
     final from = body['from'];
-    if (body['app'] != 'babylog-qr' ||
+    if (!const ['babylog-qr', 'nestling-qr'].contains(body['app']) ||
         from is! Map ||
         from['deviceId'] is! String) {
       throw SyncException('That is not a Nestling sync code');
@@ -1844,7 +1870,7 @@ class AppState extends ChangeNotifier {
 
   /// Everything shared (entries, pills, deletions) as a backup file.
   String exportBackup() => const JsonEncoder.withIndent(' ').convert({
-    'app': 'babylog',
+    'app': 'nestling',
     'v': 1,
     'appVersion': appVersion,
     'exportedAt': DateTime.now().toIso8601String(),
@@ -1870,7 +1896,8 @@ class AppState extends ChangeNotifier {
   importBackup(String text) {
     final j = jsonDecode(text);
     if (j is! Map<String, dynamic> ||
-        (j['app'] != 'babylog' &&
+        // 'babylog' is the marker of backups made before the Nestling rename.
+        (!const ['nestling', 'babylog'].contains(j['app']) &&
             !(j['deviceId'] is String && j['entries'] is List))) {
       throw const FormatException('This is not a Nestling backup file');
     }

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:baby_app/src/models.dart';
 import 'package:baby_app/src/store.dart';
+import 'package:baby_app/src/sync.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -37,6 +38,9 @@ void main() {
       server.listen((request) async {
         request.response.headers.contentType = ContentType.json;
         if (request.uri.path == '/info') {
+          // Both header names, so peers from before the rename understand it.
+          expect(request.headers.value('x-nestling-key'), '123456');
+          expect(request.headers.value('x-nestling-device'), app.deviceId);
           expect(request.headers.value('x-babylog-key'), '123456');
           expect(request.headers.value('x-babylog-device'), app.deviceId);
           request.response.write(
@@ -116,4 +120,65 @@ void main() {
       expect(sent.last['entries'], isEmpty);
     },
   );
+
+  group('mixed old and new versions', () {
+    test('pairing codes use the old scheme and both schemes are read', () {
+      final uri = PairInfo('192.168.1.23', 8766, '482913').toUri();
+      expect(uri, startsWith('babylog://pair?'));
+      for (final scheme in ['babylog', 'nestling']) {
+        final info = PairInfo.parse('$scheme://pair?h=10.0.0.2&p=8770&k=111222')!;
+        expect((info.host, info.port, info.key), ('10.0.0.2', 8770, '111222'));
+      }
+      expect(PairInfo.parse('other://pair?h=10.0.0.2&k=111222'), isNull);
+    });
+
+    test('the server reads old-only, new-only and both header names', () async {
+      final asked = <(String, String)>[];
+      final server = SyncServer();
+      await server.start(
+        anyPort: true,
+        onInfo: (key, id) {
+          asked.add((key, id));
+          return (status: HttpStatus.ok, body: {'deviceId': 'me'});
+        },
+        onSync: (_, _) async => (status: HttpStatus.ok, body: null),
+      );
+      final client = HttpClient();
+      addTearDown(() => client.close(force: true));
+      Future<void> ask(Map<String, String> headers) async {
+        final req = await client.get('127.0.0.1', server.port!, '/info');
+        headers.forEach(req.headers.set);
+        final res = await req.close();
+        await res.drain<void>();
+        expect(res.statusCode, HttpStatus.ok);
+      }
+
+      // A peer from before the rename.
+      await ask({'x-babylog-key': '1', 'x-babylog-device': 'old'});
+      // A possible future peer that only sends the new names.
+      await ask({'x-nestling-key': '2', 'x-nestling-device': 'new'});
+      // This version: both, with the new name preferred.
+      await ask({
+        'x-nestling-key': '3',
+        'x-nestling-device': 'now',
+        'x-babylog-key': 'x',
+        'x-babylog-device': 'x',
+      });
+      expect(asked, [('1', 'old'), ('2', 'new'), ('3', 'now')]);
+    });
+
+    test('getInfo reaches a server that only reads the old headers', () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      server.listen((request) async {
+        final ok = request.headers.value('x-babylog-key') == '123456' &&
+            request.headers.value('x-babylog-device') == 'me';
+        request.response.statusCode = ok ? HttpStatus.ok : HttpStatus.forbidden;
+        request.response.write(jsonEncode({'deviceId': 'old-phone'}));
+        await request.response.close();
+      });
+      final info = await getInfo('127.0.0.1', server.port, '123456', 'me');
+      expect(info['deviceId'], 'old-phone');
+    });
+  });
 }
