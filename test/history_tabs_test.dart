@@ -41,10 +41,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(
-      find.text('Everything that was logged, newest first'),
-      findsOneWidget,
-    );
+    // The log opens with its search field.
+    expect(find.byType(TextField), findsOneWidget);
     expect(find.byType(EntryTile), findsNWidgets(2));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Feeds'));
     await tester.pumpAndSettle();
