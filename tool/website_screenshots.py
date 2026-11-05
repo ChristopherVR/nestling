@@ -1,4 +1,4 @@
-"""Makes the phone screenshots on the website from the preview renders.
+"""Makes the phone screenshots on the website (site/images) from the renders.
 
 From the repository root (needs Pillow; the fonts step also needs fontTools
 and Windows' Segoe UI):
@@ -14,7 +14,9 @@ has no font fallback, so without them "3.3 → 6.5 kg" shows a box. The
 preview tests use these fonts when they exist.
 
 Without arguments, converts build/preview/web-*.png (or PREVIEW_OUT) to
-website/public/screenshots/<name>.webp.
+site/images/<name>.webp, and the camera guide images listed in CAMERA
+(docs/images/camera, rendered by test/camera_preview_test.dart) to
+site/images/camera-<name>.webp.
 """
 
 import os
@@ -23,8 +25,9 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCE = pathlib.Path(os.environ.get('PREVIEW_OUT', ROOT / 'build' / 'preview'))
-TARGET = ROOT / 'website' / 'public' / 'screenshots'
+TARGET = ROOT / 'site' / 'images'
 FONTS = ROOT / 'build' / 'preview-fonts'
+CAMERA = {'02-path': 'path', '12-done': 'done'}
 
 
 def fonts() -> int:
@@ -70,6 +73,11 @@ def convert() -> int:
         out = TARGET / f'{name}.webp'
         Image.open(png).convert('RGB').save(out, 'WEBP', quality=88, method=6)
         print(f'{png.name} -> {out.relative_to(ROOT)}')
+    for source, name in CAMERA.items():
+        png = ROOT / 'docs' / 'images' / 'camera' / f'{source}.png'
+        out = TARGET / f'camera-{name}.webp'
+        Image.open(png).convert('RGB').save(out, 'WEBP', quality=88, method=6)
+        print(f'{png.relative_to(ROOT)} -> {out.relative_to(ROOT)}')
     return 0
 
 
