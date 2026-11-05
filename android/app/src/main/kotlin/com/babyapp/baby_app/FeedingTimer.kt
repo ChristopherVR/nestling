@@ -18,6 +18,7 @@ import io.flutter.plugin.common.MethodChannel
 /** A user-started feeding timer. Each alarm schedules the next active-time
  * milestone, without a foreground service or a Dart engine in the background. */
 object FeedingTimer {
+    // Pre-rename prefs file name kept so a running timer survives the update.
     private const val PREFS = "babylog_feeding_timer"
     private const val ID = 2000000
     private const val INTERVAL = 5 * 60 * 1000L
@@ -35,7 +36,7 @@ object FeedingTimer {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
     fun register(context: Context, engine: FlutterEngine) {
-        MethodChannel(engine.dartExecutor.binaryMessenger, "babylog/feeding_timer").setMethodCallHandler { call, result ->
+        MethodChannel(engine.dartExecutor.binaryMessenger, "nestling/feeding_timer").setMethodCallHandler { call, result ->
             if (call.method != "schedule") { result.notImplemented(); return@setMethodCallHandler }
             try {
                 val origin = call.argument<Number>("origin")?.toLong() ?: 0L
@@ -73,7 +74,7 @@ object FeedingTimer {
                 manager.setAlarmClock(AlarmManager.AlarmClockInfo(next, open(context)), pending)
                 return
             } catch (e: SecurityException) {
-                android.util.Log.w("BabyLog", "Exact alarms not allowed, using an inexact one", e)
+                android.util.Log.w("Nestling", "Exact alarms not allowed, using an inexact one", e)
             }
         }
         manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
@@ -109,6 +110,6 @@ object FeedingTimer {
 class FeedingTimerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         try { FeedingTimer.receive(context, intent) }
-        catch (e: Exception) { android.util.Log.w("BabyLog", "Feeding reminder unavailable", e) }
+        catch (e: Exception) { android.util.Log.w("Nestling", "Feeding reminder unavailable", e) }
     }
 }

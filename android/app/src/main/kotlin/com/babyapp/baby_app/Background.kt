@@ -13,10 +13,11 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 
 /// One Flutter engine per process, shared by [MainActivity] and [SyncService],
-/// plus the `babylog/background` channel the Dart side uses to control them.
+/// plus the `nestling/background` channel the Dart side uses to control them.
 object Background {
     const val ENGINE_ID = "main"
-    private const val CHANNEL = "babylog/background"
+    private const val CHANNEL = "nestling/background"
+    // Pre-rename prefs file name kept so background sync stays enabled.
     private const val PREFS = "babylog_background"
     private const val KEY_ENABLED = "enabled"
     private const val KEY_CAMERA = "camera_monitoring"
@@ -113,7 +114,7 @@ object Background {
         } catch (e: Exception) {
             // Android can refuse to start it from the background; it is started
             // again next time the app opens.
-            android.util.Log.w("BabyLog", "Could not start sync service", e)
+            android.util.Log.w("Nestling", "Could not start sync service", e)
             return false
         }
     }
@@ -150,7 +151,7 @@ object Background {
 
     private fun keepAwake(context: Context, millis: Long) {
         val lock = wakeLock ?: (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
-            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "BabyLog:sync")
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Nestling:sync")
             .apply { setReferenceCounted(false) }
             .also { wakeLock = it }
         lock.acquire(millis)
@@ -164,7 +165,7 @@ object Background {
         if (on) {
             if (multicastLock?.isHeld == true) return
             val wifi = context.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
-            multicastLock = wifi.createMulticastLock("BabyLog:nanit").apply {
+            multicastLock = wifi.createMulticastLock("Nestling:nanit").apply {
                 setReferenceCounted(false)
                 acquire()
             }

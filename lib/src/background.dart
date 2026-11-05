@@ -8,7 +8,7 @@ import 'distribution.dart';
 /// Android only: a foreground service (see SyncService.kt) keeps the app's
 /// Dart engine, and with it the sync server, alive when the app is closed.
 class BackgroundSync {
-  static const _channel = MethodChannel('babylog/background');
+  static const _channel = MethodChannel('nestling/background');
 
   static bool get supported => Platform.isAndroid;
 

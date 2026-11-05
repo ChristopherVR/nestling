@@ -22,6 +22,8 @@ val playKeyAlias = playCredential("PLAY_UPLOAD_KEY_ALIAS", "keyAlias")
 val playKeyPassword = playCredential("PLAY_UPLOAD_KEY_PASSWORD", "keyPassword")
 
 android {
+    // Kept from before the Nestling rename: the Kotlin package and the
+    // GitHub-channel application ID must not change.
     namespace = "com.babyapp.baby_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

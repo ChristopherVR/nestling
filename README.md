@@ -20,7 +20,7 @@ Real sound alerts were verified on Windows and locked Android. Cry recognition,
 overnight reliability, breathing monitoring and in-app talk-back are not certified
 by these checks. Check your child independently and keep backups of your log.
 
-Use the signed APK from [Releases](https://github.com/ChristopherVR/baby-log/releases)
+Use the signed APK from [Releases](https://github.com/ChristopherVR/nestling/releases)
 to update Android in place. Do not uninstall your existing app. Developers should
 use the isolated `cameraTest` flavor and guarded test launcher for hardware tests.
 
@@ -63,9 +63,10 @@ for supported platforms, troubleshooting, test commands and remaining hardware c
 
 ## Install on Windows
 
-Download `BabyLog-<version>-windows-x64.zip` from
-[Releases](https://github.com/ChristopherVR/baby-log/releases), extract the entire ZIP,
-and run `baby_app.exe`. Keep the DLLs and `data` folder together with the executable.
+Download `Nestling-<version>-windows-x64.zip` from
+[Releases](https://github.com/ChristopherVR/nestling/releases), extract the entire ZIP,
+and run `baby_app.exe`. (Releases also carry `BabyLog-*` copies of the APK and ZIP, the names
+used before the rename, so older installs keep finding their updates.) Keep the DLLs and `data` folder together with the executable.
 The ZIP includes the Visual C++ runtime; Flutter, Visual Studio and Developer Mode are
 not required to run it.
 
@@ -159,7 +160,7 @@ For CI, configure these repository Actions secrets:
 `android/play-signing.properties` and the downloaded key without printing anything.
 
 When the keystore secret exists, every main release also builds and verifies a Play AAB using
-that release's shared version and notes, and keeps it as the `BabyLog-<version>-play-internal`
+that release's shared version and notes, and keeps it as the `Nestling-<version>-play-internal`
 run artifact. An absent `PLAY_UPLOAD_KEYSTORE` skips the Play job without affecting APK/Windows
 releases; a key that is configured but invalid or incomplete fails publication. The workflow
 verifies both the merged manifest and the AAB's upload certificate.
@@ -342,7 +343,7 @@ Every push to `main` runs static analysis, Flutter tests and versioning tests fi
 pass does GitHub Actions prepare one shared version and release notes, then build the Android APK
 and Windows x64 ZIP. Windows also runs the Flutter tests, including the Wi-Fi sync transport test.
 Both builds must succeed before the workflow publishes their artifacts together on the repository's
-[Releases](https://github.com/ChristopherVR/baby-log/releases) page.
+[Releases](https://github.com/ChristopherVR/nestling/releases) page.
 
 `pubspec.yaml` is the version baseline. CI advances the shared patch version and build number for each
 workflow run, updating the build checkout without adding bot commits to `main`. With baseline

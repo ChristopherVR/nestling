@@ -12,7 +12,7 @@ def main() -> None:
     missing = [name for name in names if not os.environ.get(name, "").strip()]
     if missing:
         raise SystemExit("Missing Play signing secrets: " + ", ".join(missing))
-    key = Path(os.environ["RUNNER_TEMP"]) / "baby-log-play-signing" / "upload.jks"
+    key = Path(os.environ["RUNNER_TEMP"]) / "nestling-play-signing" / "upload.jks"
     key.parent.mkdir(parents=True, exist_ok=True)
     key.write_bytes(base64.b64decode(os.environ["PLAY_UPLOAD_KEYSTORE"], validate=True))
     key.chmod(0o600)

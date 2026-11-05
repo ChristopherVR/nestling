@@ -51,6 +51,10 @@ app.*.map.json
 # Baby logs, WhatsApp imports, exports and local installers are private data.
 /import/
 /output/
+# Data files and backups; babylog*/baby-log-* are the pre-rename names.
+nestling.json
+nestling_*.json
+nestling-backup-*.json
 babylog*.json
 baby-log-backup-*.json
 *.broken-*.json

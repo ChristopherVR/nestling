@@ -33,17 +33,23 @@ class VersionMismatchException extends SyncException {
 }
 
 /// Pairing info shown in the QR code: `babylog://pair?h=<ip>&p=<port>&k=<code>`.
+///
+/// The scheme predates the Nestling rename. Codes still use `babylog://`
+/// because a partner's phone may run an older version that only scans that
+/// scheme; `nestling://` is accepted too, so a later version can switch.
 class PairInfo {
   final String host;
   final int port;
   final String key;
   PairInfo(this.host, this.port, this.key);
 
+  static const _schemes = ['babylog', 'nestling'];
+
   String toUri() => 'babylog://pair?h=$host&p=$port&k=$key';
 
   static PairInfo? parse(String text) {
     final uri = Uri.tryParse(text.trim());
-    if (uri == null || uri.scheme != 'babylog') return null;
+    if (uri == null || !_schemes.contains(uri.scheme)) return null;
     final h = uri.queryParameters['h'];
     final k = uri.queryParameters['k'];
     if (h == null || k == null) return null;
@@ -52,6 +58,20 @@ class PairInfo {
 }
 
 typedef SyncReply = ({int status, Map<String, dynamic>? body});
+
+/// `/info` request headers. Requests carry both the new `x-nestling-*` and
+/// the pre-rename `x-babylog-*` names, so peers on either version understand
+/// them; the server reads whichever is present, preferring the new name.
+const keyHeaders = ['x-nestling-key', 'x-babylog-key'];
+const deviceHeaders = ['x-nestling-device', 'x-babylog-device'];
+
+String _header(HttpHeaders headers, List<String> names) {
+  for (final name in names) {
+    final value = headers.value(name);
+    if (value != null) return value;
+  }
+  return '';
+}
 
 /// Answers requests from other devices while the app is open:
 /// `GET /info` (who are you, which version) and `POST /sync` (exchange data).
@@ -91,11 +111,12 @@ class SyncServer {
       try {
         SyncReply? reply;
         if (req.method == 'GET' && req.uri.path == '/info') {
-          reply = onInfo(req.headers.value('x-babylog-key') ?? '', req.headers.value('x-babylog-device') ?? '');
+          reply = onInfo(_header(req.headers, keyHeaders), _header(req.headers, deviceHeaders));
         } else if (req.method == 'POST' && req.uri.path == '/sync') {
           final body = jsonDecode(await utf8.decodeStream(req)) as Map<String, dynamic>;
           reply = await onSync(body, ip);
         } else if (req.uri.path == '/ping') {
+          // Not used by the app itself; kept as-is for anything probing it.
           req.response.write('babylog');
         } else {
           req.response.statusCode = HttpStatus.notFound;
@@ -140,8 +161,12 @@ Future<Map<String, dynamic>> getInfo(String host, int port, String key, String m
         {Duration connect = const Duration(seconds: 4), Duration total = const Duration(seconds: 20)}) =>
     _request(connect: connect, total: total, host, (client) async {
       final req = await client.get(host, port, '/info');
-      req.headers.set('x-babylog-key', key);
-      req.headers.set('x-babylog-device', myId);
+      for (final name in keyHeaders) {
+        req.headers.set(name, key);
+      }
+      for (final name in deviceHeaders) {
+        req.headers.set(name, myId);
+      }
       final res = await req.close();
       final text = await utf8.decodeStream(res);
       if (res.statusCode == HttpStatus.forbidden) throw SyncException('Wrong code');

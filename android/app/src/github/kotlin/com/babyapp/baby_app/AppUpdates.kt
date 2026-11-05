@@ -13,7 +13,7 @@ import java.io.File
 
 object AppUpdates {
     fun register(context: Context, engine: FlutterEngine) {
-        MethodChannel(engine.dartExecutor.binaryMessenger, "babylog/updates").setMethodCallHandler { call, result ->
+        MethodChannel(engine.dartExecutor.binaryMessenger, "nestling/updates").setMethodCallHandler { call, result ->
             if (call.method != "install") {
                 result.notImplemented()
                 return@setMethodCallHandler

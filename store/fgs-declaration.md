@@ -45,4 +45,4 @@ entry already being there when the other device is brought back. Recorded on two
 of the Play build (Play wording); a closing card describes the Android setting and its ongoing
 notification, which the recording itself does not show.
 
-https://github.com/ChristopherVR/baby-log/releases/download/v1.5.27/nestling-background-sync-demo.mp4
+https://github.com/ChristopherVR/nestling/releases/download/v1.5.27/nestling-background-sync-demo.mp4

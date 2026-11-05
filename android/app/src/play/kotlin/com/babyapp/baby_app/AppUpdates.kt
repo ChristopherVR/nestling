@@ -9,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 /** The Play variant has no APK installation code or installation provider. */
 object AppUpdates {
     fun register(context: Context, engine: FlutterEngine) {
-        MethodChannel(engine.dartExecutor.binaryMessenger, "babylog/updates").setMethodCallHandler { call, result ->
+        MethodChannel(engine.dartExecutor.binaryMessenger, "nestling/updates").setMethodCallHandler { call, result ->
             if (call.method != "openStore") {
                 result.notImplemented()
                 return@setMethodCallHandler

@@ -9,11 +9,15 @@ import 'package:path_provider/path_provider.dart';
 
 import 'distribution.dart';
 
-const releaseRepository = 'https://github.com/ChristopherVR/baby-log';
+const releaseRepository = 'https://github.com/ChristopherVR/nestling';
 
-/// The repository is being renamed to "nestling"; GitHub then hands out
-/// download links under the new name, so both are trusted.
-const _releasePaths = ['/ChristopherVR/baby-log/', '/ChristopherVR/nestling/'];
+/// The repository was renamed from "baby-log" to "nestling"; GitHub redirects
+/// the old name, and download links may carry either, so both are trusted.
+const _releasePaths = ['/ChristopherVR/nestling/', '/ChristopherVR/baby-log/'];
+
+/// Release APK names, preferred first. Installs from before the rename only
+/// look for `BabyLog-<version>.apk`, so CI publishes both names.
+const _apkPrefixes = ['Nestling', 'BabyLog'];
 
 /// Only stable, versioned APKs published by our release workflow are eligible.
 class AppRelease {
@@ -30,25 +34,29 @@ class AppRelease {
     }
     final version = tag.substring(1);
     if (!isNewer(version, installed)) return null;
-    for (final asset in json['assets'] as List? ?? []) {
-      if (asset['name'] != 'BabyLog-$version.apk') continue;
-      final url = Uri.tryParse(asset['browser_download_url'] as String? ?? '');
-      final size = asset['size'];
-      if (url == null ||
-          url.scheme != 'https' ||
-          url.host != 'github.com' ||
-          url.userInfo.isNotEmpty ||
-          !_releasePaths.any(
-            (repo) =>
-                url.path ==
-                '${repo}releases/download/$tag/BabyLog-$version.apk',
-          ) ||
-          size is! int ||
-          size <= 0 ||
-          size > 250 * 1024 * 1024) {
-        continue;
+    final assets = json['assets'] as List? ?? [];
+    for (final prefix in _apkPrefixes) {
+      final name = '$prefix-$version.apk';
+      for (final asset in assets) {
+        if (asset is! Map || asset['name'] != name) continue;
+        final url = Uri.tryParse(
+          asset['browser_download_url'] as String? ?? '',
+        );
+        final size = asset['size'];
+        if (url == null ||
+            url.scheme != 'https' ||
+            url.host != 'github.com' ||
+            url.userInfo.isNotEmpty ||
+            !_releasePaths.any(
+              (repo) => url.path == '${repo}releases/download/$tag/$name',
+            ) ||
+            size is! int ||
+            size <= 0 ||
+            size > 250 * 1024 * 1024) {
+          continue;
+        }
+        return AppRelease(version, url, size);
       }
-      return AppRelease(version, url, size);
     }
     return null;
   }
@@ -69,7 +77,7 @@ class AppRelease {
 
 class AppUpdates extends ChangeNotifier {
   static final instance = AppUpdates();
-  static const _channel = MethodChannel('babylog/updates');
+  static const _channel = MethodChannel('nestling/updates');
   bool get usesPlayStore => Distribution.play;
   AppRelease? available;
   bool checking = false;
@@ -98,12 +106,12 @@ class AppUpdates extends ChangeNotifier {
       final request = await client
           .getUrl(
             Uri.parse(
-              'https://api.github.com/repos/ChristopherVR/baby-log/releases/latest',
+              'https://api.github.com/repos/ChristopherVR/nestling/releases/latest',
             ),
           )
           .timeout(const Duration(seconds: 20));
       request.headers.set('Accept', 'application/vnd.github+json');
-      request.headers.set('User-Agent', 'BabyLog/${installed.version}');
+      request.headers.set('User-Agent', 'Nestling/${installed.version}');
       final response = await request.close().timeout(
         const Duration(seconds: 20),
       );
