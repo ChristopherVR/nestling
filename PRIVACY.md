@@ -3,7 +3,7 @@
 _Last updated: 5 November 2026_
 
 Nestling is a baby log for parents and caregivers: feeds, nappies, sleep, habits, routines and
-growth and pumping. It is built by an individual developer (ChristopherVR). This policy explains what the app
+growth and pumping. It is built by an individual developer. This policy explains what the app
 does with your information. In short: **your log stays on your own devices.**
 
 ## What the app stores
@@ -55,6 +55,11 @@ remove a device from the hub at any time in Settings.
   sync on your local network, including while the app is closed if you turn that on, and to
   discover and view your camera locally. Local camera viewing stops when its screen is closed
   or the app goes into the background.
+
+## How the app was made
+
+Nestling's code was written with the assistance of AI coding tools. This does not change how
+your data is handled: AI tools are not part of the app and receive none of your data.
 
 ## Children
 
