@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../localization.dart';
 import '../updates.dart';
+import 'theme.dart';
 
 Future<void> showAppUpdates(BuildContext context, {AppUpdates? updates}) {
   final service = updates ?? AppUpdates.instance;
@@ -43,8 +44,11 @@ class UpdateCard extends StatelessWidget {
             const LText(
               'Updates for this version are provided by Google Play.',
             ),
-            if (updates.message != null) LText(updates.message!),
-            const SizedBox(height: 8),
+            if (updates.message != null) ...[
+              const SizedBox(height: Space.sm),
+              LText(updates.message!),
+            ],
+            const SizedBox(height: Space.lg),
             FilledButton.icon(
               onPressed: updates.openStore,
               icon: const Icon(Icons.shop_outlined),
@@ -64,21 +68,23 @@ class UpdateCard extends StatelessWidget {
             if (updates.available != null)
               LText(
                 'New update available: ${updates.available!.version}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
             if (updates.message != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               LText(updates.message!),
             ],
             if (updates.downloading) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.lg),
               LinearProgressIndicator(value: updates.progress),
+              const SizedBox(height: Space.sm),
               LText('Downloading: ${(updates.progress * 100).round()}%'),
             ] else if (updates.available != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               const LText(
                 'Download from GitHub, then confirm installation in Android. Your logs stay on this device.',
               ),
+              const SizedBox(height: Space.lg),
               FilledButton.icon(
                 onPressed: updates.checking ? null : updates.install,
                 icon: const Icon(Icons.system_update_rounded),
@@ -86,8 +92,9 @@ class UpdateCard extends StatelessWidget {
               ),
             ],
             if (updates.checking) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.lg),
               const LinearProgressIndicator(),
+              const SizedBox(height: Space.sm),
               const LText('Checking for updates…'),
             ],
             if (!Platform.isAndroid)

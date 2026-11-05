@@ -401,17 +401,13 @@ class Kbd extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
     decoration: BoxDecoration(
-      color: Baby.card,
-      border: Border.all(color: Baby.borderStrong),
-      borderRadius: BorderRadius.circular(DesktopTokens.radiusSm - 1),
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(Corners.xs),
     ),
     child: LText(
       label,
-      style: TextStyle(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        color: Baby.muted,
-        height: 1.4,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     ),
   );

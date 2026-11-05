@@ -23,7 +23,7 @@ Future<bool> confirmVersionMismatch(BuildContext context, Peer p) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.warning_amber_rounded, color: Baby.warn, size: 36),
+      icon: Icon(Icons.warning_amber_rounded, color: context.nest.warn.color),
       title: const LText('Different app versions'),
       content: LText(
         'This phone has version ${AppState.appVersion}, ${p.name.isEmpty ? 'the other phone' : p.name} '
@@ -37,10 +37,6 @@ Future<bool> confirmVersionMismatch(BuildContext context, Peer p) async {
           child: const LText('Not now'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Baby.warn,
-            foregroundColor: Colors.white,
-          ),
           onPressed: () => Navigator.pop(ctx, true),
           child: const LText('Continue anyway'),
         ),
@@ -69,6 +65,9 @@ class PeerPage extends StatelessWidget {
     final mismatch =
         p.appVersion != null && !AppState.sameFeatures(p.appVersion);
     final here = app.counts;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final nest = context.nest;
 
     Future<void> sync() async {
       try {
@@ -94,71 +93,39 @@ class PeerPage extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             // Room for the phone's navigation buttons (e.g. Samsung) below the last item.
             padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              32 + MediaQuery.paddingOf(context).bottom,
+              Space.page,
+              Space.sm,
+              Space.page,
+              Space.xxl + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
+                child: ListTile(
+                  leading: const Icon(Icons.phone_android_rounded),
+                  title: LText(name, style: theme.textTheme.titleMedium),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconBubble(
-                        glyph: (s, c) => Icon(
-                          Icons.phone_android_rounded,
-                          size: s,
-                          color: c,
-                        ),
-                        color: Baby.primarySoft,
-                        iconColor: Baby.primary,
-                        size: 56,
+                      LText(
+                        p.host.isEmpty
+                            ? 'Address not known yet (synced by QR code)'
+                            : '${p.host}:${p.port}',
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            LText(
-                              name,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            LText(
-                              p.host.isEmpty
-                                  ? 'Address not known yet (synced by QR code)'
-                                  : '${p.host}:${p.port}',
-                              style: TextStyle(
-                                color: Baby.muted,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            _Status(peer: p),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: Space.xs),
+                      _Status(peer: p),
                     ],
                   ),
                 ),
               ),
               if (p.blockedVersion != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 _Banner(
-                  color: Baby.warn,
                   icon: Icons.pause_circle_outline_rounded,
                   title: 'Syncing is paused',
                   text:
                       'The two phones have different app versions, which may cause sync problems. '
                       'Install the same version on both, or continue anyway.',
                   action: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Baby.warn,
-                      foregroundColor: Colors.white,
-                    ),
                     onPressed: () async {
                       if (await confirmVersionMismatch(context, p) &&
                           context.mounted) {
@@ -169,9 +136,8 @@ class PeerPage extends StatelessWidget {
                   ),
                 ),
               ] else if (mismatch && p.acceptedVersion != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 _Banner(
-                  color: Baby.warn,
                   icon: Icons.warning_amber_rounded,
                   title: 'Syncing despite different versions',
                   text: 'You chose to continue. If entries look wrong, update both phones to the same version.',
@@ -182,7 +148,7 @@ class PeerPage extends StatelessWidget {
                 ),
               ],
               const SectionTitle('App version'),
-              ListCard(
+              _Group(
                 children: [
                   _Row(label: 'This phone', value: AppState.appVersion),
                   _Row(
@@ -194,7 +160,9 @@ class PeerPage extends StatelessWidget {
                             mismatch
                                 ? Icons.warning_amber_rounded
                                 : Icons.check_circle_rounded,
-                            color: mismatch ? Baby.warn : Baby.ok,
+                            color: mismatch
+                                ? nest.warn.color
+                                : nest.success.color,
                             size: 20,
                           ),
                   ),
@@ -203,7 +171,10 @@ class PeerPage extends StatelessWidget {
               const SectionTitle('What is shared'),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.lg,
+                    vertical: Space.md,
+                  ),
                   child: Column(
                     children: [
                       Row(
@@ -213,31 +184,51 @@ class PeerPage extends StatelessWidget {
                           SizedBox(width: 80, child: _Head(name)),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: Space.xs),
                       for (final (kind, label, glyph, color) in [
-                        ('feed', 'Feeds', Glyphs.feed, Baby.feed),
-                        ('sleep', 'Sleep', Glyphs.sleep, Baby.sleep),
-                        ('nappy', 'Nappies', Glyphs.nappy, Baby.nappy),
-                        ('pill', 'Pill doses', Glyphs.pill, Baby.pill),
-                        ('pump', 'Pumping', Glyphs.pump, Baby.pump),
-                        ('med', 'Pills', Glyphs.pill, Baby.pill),
-                        ('baby', 'Babies', Glyphs.baby, Baby.primary),
-                        ('routine', 'Routines', Glyphs.alarm, Baby.primary),
-                        ('completion', 'Routines done', Glyphs.heart, Baby.ok),
-                        ('growth', 'Growth entries', Glyphs.baby, Baby.primary),
+                        ('feed', 'Feeds', Glyphs.feed, nest.feed.color),
+                        ('sleep', 'Sleep', Glyphs.sleep, nest.sleep.color),
+                        ('nappy', 'Nappies', Glyphs.nappy, nest.nappy.color),
+                        ('pill', 'Pill doses', Glyphs.pill, nest.pill.color),
+                        ('pump', 'Pumping', Glyphs.pump, nest.pump.color),
+                        ('med', 'Pills', Glyphs.pill, nest.pill.color),
+                        (
+                          'baby',
+                          'Babies',
+                          Glyphs.baby,
+                          scheme.onSurfaceVariant,
+                        ),
+                        (
+                          'routine',
+                          'Routines',
+                          Glyphs.alarm,
+                          scheme.onSurfaceVariant,
+                        ),
+                        (
+                          'completion',
+                          'Routines done',
+                          Glyphs.heart,
+                          scheme.onSurfaceVariant,
+                        ),
+                        (
+                          'growth',
+                          'Growth entries',
+                          Glyphs.baby,
+                          scheme.onSurfaceVariant,
+                        ),
                       ])
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Space.sm,
+                          ),
                           child: Row(
                             children: [
                               glyph(20, color),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: Space.md),
                               Expanded(
                                 child: LText(
                                   label,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: theme.textTheme.bodyLarge,
                                 ),
                               ),
                               SizedBox(
@@ -258,32 +249,30 @@ class PeerPage extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  Space.xs,
+                  Space.sm,
+                  Space.xs,
+                  0,
+                ),
                 child: LText(
                   'Feeds, nappies, pill doses, pills and deletions are shared. Settings, reminders, '
                   'the theme and device names stay on each phone. The counts match once both phones are in sync.',
-                  style: TextStyle(
-                    color: Baby.muted,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ),
               const SectionTitle('Last sync'),
               if (p.last == null)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: LText(
-                      'Not synced yet',
-                      style: TextStyle(
-                        color: Baby.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.schedule_rounded),
+                    title: LText('Not synced yet'),
                   ),
                 )
               else
-                ListCard(
+                _Group(
                   children: [
                     _Row(
                       label: 'When',
@@ -317,16 +306,10 @@ class PeerPage extends StatelessWidget {
                 ),
               const SectionTitle('Recent changes synced'),
               if (p.history.isEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: LText(
-                      'Nothing has changed in a sync yet',
-                      style: TextStyle(
-                        color: Baby.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.history_rounded),
+                    title: LText('Nothing has changed in a sync yet'),
                   ),
                 )
               else
@@ -334,17 +317,10 @@ class PeerPage extends StatelessWidget {
                   children: [
                     for (final r in p.history.take(15))
                       ListTile(
-                        leading: IconBubble(
-                          glyph: (s, c) => Icon(
-                            r.outgoing
-                                ? Icons.north_east_rounded
-                                : Icons.south_west_rounded,
-                            size: s,
-                            color: c,
-                          ),
-                          color: Baby.primarySoft,
-                          iconColor: Baby.primary,
-                          size: 40,
+                        leading: Icon(
+                          r.outgoing
+                              ? Icons.north_east_rounded
+                              : Icons.south_west_rounded,
                         ),
                         title: LText(
                           [
@@ -352,7 +328,6 @@ class PeerPage extends StatelessWidget {
                               '${_kinds(r.newHere)} came in',
                             if (r.newThere > 0) '${r.newThere} sent',
                           ].join(' · '),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: LText(
                           '${whenLabel(r.at)} · started by ${r.outgoing ? 'this phone' : name}',
@@ -360,7 +335,7 @@ class PeerPage extends StatelessWidget {
                       ),
                   ],
                 ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Space.xl),
               FilledButton.icon(
                 icon: app.syncing
                     ? const SizedBox(
@@ -372,13 +347,13 @@ class PeerPage extends StatelessWidget {
                 label: const LText('Sync now'),
                 onPressed: app.syncing ? null : sync,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.qr_code_2_rounded),
                 label: const LText('Sync by QR code (no Wi-Fi needed)'),
                 onPressed: () => openQrSync(context, peer: p),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.wifi_find_rounded),
                 label: const LText('Find on this Wi-Fi'),
@@ -402,7 +377,7 @@ class PeerPage extends StatelessWidget {
                         }
                       },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.restart_alt_rounded),
                 label: const LText('Send everything again'),
@@ -421,9 +396,9 @@ class PeerPage extends StatelessWidget {
                         }
                       },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               TextButton.icon(
-                style: TextButton.styleFrom(foregroundColor: Baby.error),
+                style: TextButton.styleFrom(foregroundColor: scheme.error),
                 icon: const Icon(Icons.link_off_rounded),
                 label: const LText('Remove from hub'),
                 onPressed: () {
@@ -484,12 +459,24 @@ class _Status extends StatelessWidget {
       Color color,
       String text,
     ) = peer.blockedVersion != null
-        ? (Icons.pause_circle_rounded, Baby.warn, 'Paused: different versions')
+        ? (
+            Icons.pause_circle_rounded,
+            context.nest.warn.color,
+            'Paused: different versions',
+          )
         : peer.lastError != null
-        ? (Icons.sync_problem_rounded, Baby.warn, peer.lastError!)
+        ? (Icons.sync_problem_rounded, context.nest.warn.color, peer.lastError!)
         : peer.lastSync != null
-        ? (Icons.check_circle_rounded, Baby.ok, 'Synced ${ago(peer.lastSync!)}')
-        : (Icons.schedule_rounded, Baby.muted, 'Not synced yet');
+        ? (
+            Icons.check_circle_rounded,
+            context.nest.success.color,
+            'Synced ${ago(peer.lastSync!)}',
+          )
+        : (
+            Icons.schedule_rounded,
+            context.colors.onSurfaceVariant,
+            'Not synced yet',
+          );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -497,11 +484,12 @@ class _Status extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Icon(icon, size: 16, color: color),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: Space.sm),
         Expanded(
           child: LText(
             text,
-            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: context.colors.onSurface),
           ),
         ),
       ],
@@ -509,51 +497,67 @@ class _Status extends StatelessWidget {
   }
 }
 
+/// A notice about the sync state: a neutral card with a status icon, a
+/// short explanation and the one action that resolves it.
 class _Banner extends StatelessWidget {
   const _Banner({
-    required this.color,
     required this.icon,
     required this.title,
     required this.text,
     required this.action,
   });
-  final Color color;
   final IconData icon;
   final String title;
   final String text;
   final Widget action;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withValues(alpha: 0.4)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Space.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 8),
-            Expanded(
-              child: LText(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+            Row(
+              children: [
+                Icon(icon, color: context.nest.warn.color),
+                const SizedBox(width: Space.md),
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: LText(title, style: theme.textTheme.titleMedium),
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: Space.sm),
+            LText(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            const SizedBox(height: Space.md),
+            Align(alignment: AlignmentDirectional.centerEnd, child: action),
           ],
         ),
-        const SizedBox(height: 6),
-        LText(text, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 12),
-        Align(alignment: Alignment.centerRight, child: action),
-      ],
+      ),
+    );
+  }
+}
+
+/// Label/value rows in a card, without dividers.
+class _Group extends StatelessWidget {
+  const _Group({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: Space.xs),
+      child: Column(children: children),
     ),
   );
 }
@@ -565,28 +569,43 @@ class _Row extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    child: Row(
-      children: [
-        Expanded(
-          child: LText(
-            label,
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w700),
-          ),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.lg,
+          vertical: Space.md,
         ),
-        Flexible(
-          flex: 2,
-          child: LText(
-            value,
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: LText(
+                label,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: Space.md),
+            Flexible(
+              flex: 2,
+              child: LText(
+                value,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyLarge,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: Space.sm),
+              trailing!,
+            ],
+          ],
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _Head extends StatelessWidget {
@@ -596,14 +615,11 @@ class _Head extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LText(
     text,
-    textAlign: TextAlign.right,
+    textAlign: TextAlign.end,
     maxLines: 1,
     overflow: TextOverflow.ellipsis,
-    style: TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.w800,
-      color: Baby.muted,
-    ),
+    style: Theme.of(context).textTheme.labelMedium
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
   );
 }
 
@@ -614,7 +630,8 @@ class _Num extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LText(
     text,
-    textAlign: TextAlign.right,
-    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+    textAlign: TextAlign.end,
+    style: Theme.of(context).textTheme.titleMedium
+        ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
   );
 }

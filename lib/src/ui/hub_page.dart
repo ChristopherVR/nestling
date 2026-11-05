@@ -8,10 +8,8 @@ import 'settings_page.dart';
 import 'theme.dart';
 
 /// The family hub: every device that shares this log, with its sync status.
-void openHub(BuildContext context) => Navigator.push(
-  context,
-  MaterialPageRoute(builder: (_) => const HubPage()),
-);
+void openHub(BuildContext context) =>
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const HubPage()));
 
 /// Shows this device's code and the ways to add another device to the hub.
 void openAddDevice(BuildContext context) => Navigator.push(
@@ -23,30 +21,23 @@ const hubExplainer =
     'Everyone in the hub sees the same log. Add a device once, it then shares '
     'with everyone else automatically.';
 
-typedef _Status = ({IconData icon, Color color, Color soft, String text});
+typedef _Status = ({IconData icon, Color color, String text});
 
 _Status _statusOf(AppState app, Peer p) {
   if (p.blockedVersion != null) {
     return (
       icon: Icons.pause_circle_rounded,
       color: Baby.warn,
-      soft: Baby.peeSoft,
       text: 'Paused: different app version',
     );
   }
   if (app.syncing) {
-    return (
-      icon: Icons.sync_rounded,
-      color: Baby.primary,
-      soft: Baby.primarySoft,
-      text: 'Syncing',
-    );
+    return (icon: Icons.sync_rounded, color: Baby.primary, text: 'Syncing');
   }
   if (p.lastError != null) {
     return (
       icon: Icons.cloud_off_rounded,
       color: Baby.warn,
-      soft: Baby.peeSoft,
       text: p.unreachable || p.learnedFromHub
           ? 'Not reachable right now'
           : p.lastError!,
@@ -56,14 +47,12 @@ _Status _statusOf(AppState app, Peer p) {
     return (
       icon: Icons.check_circle_rounded,
       color: Baby.ok,
-      soft: Baby.nappySoft,
       text: 'Synced ${ago(p.lastSync!)}',
     );
   }
   return (
     icon: Icons.schedule_rounded,
     color: Baby.muted,
-    soft: Baby.primarySoft,
     text: p.learnedFromHub ? 'Waiting to connect' : 'Not synced yet',
   );
 }
@@ -85,41 +74,18 @@ class HubMembers extends StatelessWidget {
     return ListCard(
       children: [
         ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          leading: IconBubble(
-            glyph: (s, c) =>
-                Icon(Icons.phone_android_rounded, size: s, color: c),
-            color: Baby.primarySoft,
-            iconColor: Baby.primary,
-            size: 40,
-          ),
-          title: LText(
-            app.deviceName,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+          leading: const Icon(Icons.phone_android_rounded),
+          title: LText(app.deviceName),
           subtitle: LText(
-            detailed ? 'This device · version ${AppState.appVersion}' : 'This device',
+            detailed
+                ? 'This device · version ${AppState.appVersion}'
+                : 'This device',
           ),
         ),
         if (app.peers.isEmpty)
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            leading: IconBubble(
-              glyph: (s, c) => Icon(Icons.group_add_rounded, size: s, color: c),
-              color: Baby.primarySoft,
-              iconColor: Baby.muted,
-              size: 40,
-            ),
-            title: const LText(
-              'No other devices yet',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            leading: const Icon(Icons.devices_other_rounded),
+            title: const LText('No other devices yet'),
             subtitle: const LText('Add a device to share this log.'),
           ),
         for (final p in app.peers)
@@ -145,19 +111,15 @@ class _MemberTile extends StatelessWidget {
     final extra = [
       if (detailed && peer.appVersion != null)
         'Version ${versionLabel(peer.appVersion)}',
-      if (detailed && peer.lastSync != null) 'Last sync ${whenLabel(peer.lastSync!)}',
+      if (detailed && peer.lastSync != null)
+        'Last sync ${whenLabel(peer.lastSync!)}',
     ];
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: IconBubble(
-        glyph: (s, c) => Icon(st.icon, size: s, color: c),
-        color: st.soft,
-        iconColor: st.color,
-        size: 40,
-      ),
+      leading: Icon(st.icon, color: st.color),
       title: LText(
-        peer.name.isEmpty ? (peer.host.isEmpty ? 'Another device' : peer.host) : peer.name,
-        style: const TextStyle(fontWeight: FontWeight.w700),
+        peer.name.isEmpty
+            ? (peer.host.isEmpty ? 'Another device' : peer.host)
+            : peer.name,
       ),
       subtitle: LText([st.text, ...extra].join(' · ')),
       trailing: const Icon(Icons.chevron_right_rounded),
@@ -174,28 +136,37 @@ class HubSummary extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
-        child: LText(
-          hubExplainer,
-          style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-        ),
-      ),
+      const _Explainer(),
       const SectionTitle('Devices sharing this log'),
       const HubMembers(),
-      const SizedBox(height: 10),
+      const SizedBox(height: Space.lg),
       FilledButton.icon(
         icon: const Icon(Icons.group_add_rounded),
         label: const LText('Add a device'),
         onPressed: () => openAddDevice(context),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: Space.sm),
       OutlinedButton.icon(
         icon: const Icon(Icons.hub_rounded),
         label: const LText('Sync details'),
         onPressed: () => openHub(context),
       ),
     ],
+  );
+}
+
+/// [hubExplainer] as supporting text under a section title.
+class _Explainer extends StatelessWidget {
+  const _Explainer();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+    child: LText(
+      hubExplainer,
+      style: Theme.of(context).textTheme.bodyMedium
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    ),
   );
 }
 
@@ -221,37 +192,22 @@ class HubPage extends StatelessWidget {
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
-              16,
-              0,
-              16,
-              32 + MediaQuery.paddingOf(context).bottom,
+              Space.page,
+              Space.sm,
+              Space.page,
+              Space.xxl + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                child: LText(
-                  hubExplainer,
-                  style: TextStyle(
-                    color: Baby.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              const _Explainer(),
               const SectionTitle('Devices sharing this log'),
               const HubMembers(detailed: true),
               if (app.peers.isNotEmpty) ...[
                 const SectionTitle('Recent sync activity'),
                 if (recent.isEmpty)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: LText(
-                        'Nothing has changed in a sync yet',
-                        style: TextStyle(
-                          color: Baby.muted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  const Card(
+                    child: ListTile(
+                      leading: Icon(Icons.history_rounded),
+                      title: LText('Nothing has changed in a sync yet'),
                     ),
                   )
                 else
@@ -259,25 +215,18 @@ class HubPage extends StatelessWidget {
                     children: [
                       for (final (:peer, :record) in recent.take(10))
                         ListTile(
-                          leading: IconBubble(
-                            glyph: (s, c) => Icon(
-                              record.outgoing
-                                  ? Icons.north_east_rounded
-                                  : Icons.south_west_rounded,
-                              size: s,
-                              color: c,
-                            ),
-                            color: Baby.primarySoft,
-                            iconColor: Baby.primary,
-                            size: 40,
+                          leading: Icon(
+                            record.outgoing
+                                ? Icons.north_east_rounded
+                                : Icons.south_west_rounded,
                           ),
                           title: LText(
                             [
                               if (record.newHereTotal > 0)
                                 '${record.newHereTotal} came in',
-                              if (record.newThere > 0) '${record.newThere} sent',
+                              if (record.newThere > 0)
+                                '${record.newThere} sent',
                             ].join(' · '),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           subtitle: LText(
                             '${peer.name.isEmpty ? peer.host : peer.name} · ${whenLabel(record.at)}',
@@ -287,7 +236,7 @@ class HubPage extends StatelessWidget {
                     ],
                   ),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: Space.xl),
               FilledButton.icon(
                 icon: app.syncing
                     ? const SizedBox(
@@ -301,7 +250,7 @@ class HubPage extends StatelessWidget {
                     ? null
                     : () => _syncNow(context, app),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               OutlinedButton.icon(
                 icon: const Icon(Icons.group_add_rounded),
                 label: const LText('Add a device'),
@@ -326,10 +275,10 @@ class AddDevicePage extends StatelessWidget {
       maxWidth: 560,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          32 + MediaQuery.paddingOf(context).bottom,
+          Space.page,
+          Space.sm,
+          Space.page,
+          Space.xxl + MediaQuery.paddingOf(context).bottom,
         ),
         children: const [PairCard()],
       ),

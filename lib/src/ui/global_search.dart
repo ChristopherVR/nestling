@@ -441,12 +441,9 @@ class _Palette extends StatelessWidget {
             maxHeight: math.max(260, math.min(600, size.height * 0.8 - 40)),
           ),
           child: Material(
-            color: Baby.card,
-            elevation: 24,
-            shadowColor: Colors.black.withValues(alpha: 0.3),
+            color: context.colors.surfaceContainerHigh,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesktopTokens.radiusLg),
-              side: BorderSide(color: Baby.border),
+              borderRadius: BorderRadius.circular(Corners.xl),
             ),
             clipBehavior: Clip.antiAlias,
             child: const GlobalSearchView(palette: true),
@@ -535,13 +532,14 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final field = TextField(
       key: const ValueKey('global-search-field'),
       controller: _query,
       focusNode: _focus,
       autofocus: true,
       textInputAction: TextInputAction.search,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: tr('Search feeds, pills, routines, settings…'),
         border: InputBorder.none,
@@ -549,29 +547,37 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
         focusedBorder: InputBorder.none,
         filled: false,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(vertical: Space.lg),
       ),
       onChanged: (_) => setState(_run),
       onSubmitted: (_) => _choose(),
     );
     final header = Padding(
-      padding: EdgeInsets.fromLTRB(widget.palette ? 16 : 4, 0, 8, 0),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        widget.palette ? Space.lg : Space.xs,
+        0,
+        Space.sm,
+        0,
+      ),
       child: Row(
         children: [
           if (widget.palette)
-            Icon(Icons.search_rounded, color: Baby.muted, size: 20)
+            Icon(
+              Icons.search_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+            )
           else
             LIconButton(
               tooltip: 'Back',
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.pop(context),
             ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Space.sm),
           Expanded(child: field),
           if (_query.text.isNotEmpty)
             LIconButton(
               tooltip: 'Clear search',
-              icon: const Icon(Icons.close_rounded, size: 18),
+              icon: const Icon(Icons.close_rounded),
               onPressed: () => setState(() {
                 _query.clear();
                 _run();
@@ -580,7 +586,7 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
             )
           else if (widget.palette)
             const Padding(
-              padding: EdgeInsets.only(right: 6),
+              padding: EdgeInsetsDirectional.only(end: Space.sm),
               child: Kbd('Esc'),
             ),
         ],
@@ -603,41 +609,26 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           header,
-          Divider(height: 1, color: Baby.border),
+          const Divider(),
           Flexible(
             fit: widget.palette ? FlexFit.loose : FlexFit.tight,
             child: _results(),
           ),
-          if (widget.palette) ...[
-            Divider(height: 1, color: Baby.border),
-            _footer(),
-          ],
+          if (widget.palette) ...[const Divider(), _footer()],
         ],
       ),
     );
   }
 
   Widget _results() {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     if (_flat.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.search_off_rounded, size: 32, color: Baby.muted),
-            const SizedBox(height: 8),
-            LText(
-              'No results for “${_query.text.trim()}”',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            LText(
-              'Try another word, a date or a name.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Baby.muted),
-            ),
-          ],
+      return SingleChildScrollView(
+        child: EmptyState(
+          icon: Icons.search_off_rounded,
+          title: 'No results for “${_query.text.trim()}”',
+          text: 'Try another word, a date or a name.',
         ),
       );
     }
@@ -646,26 +637,29 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
     for (final g in _groups) {
       children.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(
+            Space.lg,
+            Space.lg,
+            Space.lg,
+            Space.xs,
+          ),
           child: Row(
             children: [
               Expanded(
-                child: LText(
-                  _query.text.trim().isEmpty && g.kind == SearchKind.entry
-                      ? 'Recent'
-                      : g.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                    color: Baby.muted,
+                child: Semantics(
+                  header: true,
+                  child: LText(
+                    _query.text.trim().isEmpty && g.kind == SearchKind.entry
+                        ? 'Recent'
+                        : g.label,
+                    style: theme.textTheme.titleSmall?.copyWith(color: muted),
                   ),
                 ),
               ),
               if (g.total > g.hits.length)
                 LText(
                   '${g.hits.length} of ${g.total}',
-                  style: TextStyle(fontSize: 12, color: Baby.muted),
+                  style: theme.textTheme.labelMedium?.copyWith(color: muted),
                 ),
             ],
           ),
@@ -691,29 +685,37 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
       child: ListView(
         controller: _scroll,
         shrinkWrap: widget.palette,
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: Space.sm),
         children: children,
       ),
     );
   }
 
   Widget _footer() {
+    final theme = Theme.of(context);
     Widget hint(String key, String label) => Padding(
-      padding: const EdgeInsets.only(right: 14),
+      padding: const EdgeInsetsDirectional.only(end: Space.lg),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Kbd(key),
-          const SizedBox(width: 6),
-          LText(label, style: TextStyle(fontSize: 12, color: Baby.muted)),
+          const SizedBox(width: Space.sm),
+          LText(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
-    return Container(
-      color: Baby.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.lg,
+        vertical: Space.sm,
+      ),
       child: Wrap(
-        runSpacing: 4,
+        runSpacing: Space.xs,
         children: [
           hint('↑ ↓', 'Navigate'),
           hint('Enter', 'Open'),
@@ -724,7 +726,7 @@ class _GlobalSearchViewState extends State<GlobalSearchView> {
   }
 }
 
-/// [text] with the matched [ranges] highlighted.
+/// [text] with the matched [ranges] in bold, as Google's own search does.
 Widget highlightedText(
   String text,
   List<MatchRange> ranges,
@@ -739,10 +741,7 @@ Widget highlightedText(
     spans.add(
       TextSpan(
         text: text.substring(r.start, r.end),
-        style: TextStyle(
-          backgroundColor: Baby.highlight,
-          fontWeight: FontWeight.w800,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
     at = r.end;
@@ -791,67 +790,28 @@ class _ResultRow extends StatelessWidget {
     Icons.photo_album_outlined,
   ];
 
-  Widget _leading() {
-    Widget icon(IconData data, Color soft, Color strong) => IconBubble(
-      glyph: (size, color) => Icon(data, size: size, color: color),
-      color: soft,
-      iconColor: strong,
-      size: 32,
-    );
+  /// A plain icon; only entries and pills keep their kind's colour.
+  Widget _leading(BuildContext context) {
+    final muted = context.colors.onSurfaceVariant;
+    Widget icon(IconData data) => Icon(data, color: muted);
     final item = hit.item;
     final data = item.data;
     return switch (item.kind) {
-      SearchKind.entry when data is Entry => Builder(
-        builder: (context) {
-          final look = lookOf(data);
-          return IconBubble(
-            glyph: look.glyph,
-            color: look.soft,
-            iconColor: look.strong,
-            size: 32,
-          );
-        },
-      ),
-      SearchKind.entry => icon(
-        Icons.check_circle_outline_rounded,
-        Baby.nappySoft,
-        Baby.ok,
-      ),
-      SearchKind.action => icon(
-        _actionIcons[item.id] ?? Icons.bolt_rounded,
-        Baby.hover,
-        Baby.ink,
-      ),
+      SearchKind.entry when data is Entry => lookOf(
+        data,
+      ).glyph(24, lookOf(data).strong),
+      SearchKind.entry => icon(Icons.check_circle_outline_rounded),
+      SearchKind.action => icon(_actionIcons[item.id] ?? Icons.bolt_rounded),
       SearchKind.page => icon(
         item.id == 'settings'
             ? Icons.settings_outlined
             : _pageIcons[int.parse(item.id.substring(4))],
-        Baby.hover,
-        Baby.ink,
       ),
-      SearchKind.baby => IconBubble(
-        glyph: Glyphs.baby,
-        color: Baby.feedSoft,
-        iconColor: Baby.feed,
-        size: 32,
-      ),
-      SearchKind.pill => IconBubble(
-        glyph: Glyphs.pill,
-        color: Baby.pillSoft,
-        iconColor: Baby.pill,
-        size: 32,
-      ),
-      SearchKind.routine => icon(
-        Icons.event_repeat_rounded,
-        Baby.primarySoft,
-        Baby.primary,
-      ),
-      SearchKind.growth => icon(
-        Icons.straighten_rounded,
-        Baby.nappySoft,
-        Baby.nappy,
-      ),
-      SearchKind.setting => icon(Icons.tune_rounded, Baby.hover, Baby.muted),
+      SearchKind.baby => Glyphs.baby(24, muted),
+      SearchKind.pill => Glyphs.pill(24, context.nest.pill.color),
+      SearchKind.routine => icon(Icons.event_repeat_rounded),
+      SearchKind.growth => icon(Icons.straighten_rounded),
+      SearchKind.setting => icon(Icons.tune_rounded),
     };
   }
 
@@ -868,6 +828,8 @@ class _ResultRow extends StatelessWidget {
         : DateFormat(
             date.year == DateTime.now().year ? 'd MMM, HH:mm' : 'd MMM yyyy',
           ).format(date);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return MouseRegion(
       onHover: (_) => onHover(),
       cursor: SystemMouseCursors.click,
@@ -875,16 +837,20 @@ class _ResultRow extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          constraints: const BoxConstraints(minHeight: 48),
+          margin: const EdgeInsets.symmetric(horizontal: Space.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Space.sm,
+            vertical: Space.sm,
+          ),
           decoration: BoxDecoration(
-            color: selected ? Baby.hover : null,
-            borderRadius: BorderRadius.circular(DesktopTokens.radius),
+            color: selected ? scheme.onSurface.withValues(alpha: 0.08) : null,
+            borderRadius: BorderRadius.circular(Corners.md),
           ),
           child: Row(
             children: [
-              _leading(),
-              const SizedBox(width: 12),
+              SizedBox(width: 24, child: Center(child: _leading(context))),
+              const SizedBox(width: Space.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -893,43 +859,37 @@ class _ResultRow extends StatelessWidget {
                     highlightedText(
                       item.title,
                       hit.titleRanges,
-                      TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: Baby.ink,
+                      theme.textTheme.bodyLarge!.copyWith(
+                        color: scheme.onSurface,
                       ),
                     ),
                     if (item.subtitle?.isNotEmpty ?? false)
                       highlightedText(
                         item.subtitle!,
                         hit.subtitleRanges,
-                        TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: Baby.muted,
+                        theme.textTheme.bodyMedium!.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                   ],
                 ),
               ),
               if (trailing != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: Space.md),
                 LText.raw(
                   trailing,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Baby.muted,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
               if (selected) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: Space.sm),
                 Icon(
                   Icons.keyboard_return_rounded,
                   size: 16,
-                  color: Baby.muted,
+                  color: scheme.onSurfaceVariant,
                 ),
               ],
             ],

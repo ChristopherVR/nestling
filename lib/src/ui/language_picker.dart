@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'common.dart';
+import 'theme.dart';
 
 class LanguagePicker extends StatelessWidget {
   const LanguagePicker({super.key, this.showLabel = true});
@@ -14,11 +15,14 @@ class LanguagePicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showLabel) ...[
-          const LText(
-            'Language',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          Semantics(
+            header: true,
+            child: LText(
+              'Language',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
         ],
         SegmentedButton<String>(
           segments: const [
