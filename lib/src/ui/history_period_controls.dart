@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../history_period.dart';
 import 'common.dart';
+import 'theme.dart';
 
 /// Shared, explicit time filters for the log and chart screens.
 class HistoryPeriodControls extends StatelessWidget {
@@ -50,62 +51,63 @@ class HistoryPeriodControls extends StatelessWidget {
       }
     }
 
+    final desktop = Desktop.of(context);
+    final theme = Theme.of(context);
+    final chips = <Widget>[
+      if (allowAll)
+        ChoiceChip(
+          label: const LText('All time'),
+          selected: period.start == null,
+          onSelected: (_) => changeDates(null, null),
+        ),
+      for (final (label, days, offset) in [
+        ('Today', 1, 0),
+        ('Yesterday', 1, 1),
+        ('7 days', 7, 0),
+        ('14 days', 14, 0),
+        ('30 days', 30, 0),
+      ])
+        Builder(
+          builder: (_) {
+            final end = DateTime(today.year, today.month, today.day - offset);
+            final start = DateTime(end.year, end.month, end.day - days + 1);
+            return ChoiceChip(
+              label: LText(label),
+              selected: period.start == start && period.end == end,
+              onSelected: (_) => changeDates(start, end),
+            );
+          },
+        ),
+      ActionChip(
+        avatar: const Icon(Icons.calendar_today_outlined),
+        label: const LText('Choose day'),
+        onPressed: () => pick(false),
+      ),
+      ActionChip(
+        avatar: const Icon(Icons.date_range_rounded),
+        label: const LText('Date range'),
+        onPressed: () => pick(true),
+      ),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            if (allowAll)
-              ChoiceChip(
-                label: const LText('All time'),
-                selected: period.start == null,
-                onSelected: (_) => changeDates(null, null),
-              ),
-            for (final (label, days, offset) in [
-              ('Today', 1, 0),
-              ('Yesterday', 1, 1),
-              ('7 days', 7, 0),
-              ('14 days', 14, 0),
-              ('30 days', 30, 0),
-            ])
-              Builder(
-                builder: (_) {
-                  final end = DateTime(
-                    today.year,
-                    today.month,
-                    today.day - offset,
-                  );
-                  final start = DateTime(
-                    end.year,
-                    end.month,
-                    end.day - days + 1,
-                  );
-                  return ChoiceChip(
-                    label: LText(label),
-                    selected: period.start == start && period.end == end,
-                    onSelected: (_) => changeDates(start, end),
-                  );
-                },
-              ),
-          ],
-        ),
-        Wrap(
-          spacing: 8,
-          children: [
-            TextButton.icon(
-              onPressed: () => pick(false),
-              icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: const LText('Choose day'),
+        // One row that scrolls sideways on phones, wrapping on wide windows.
+        if (desktop)
+          Wrap(spacing: Space.sm, runSpacing: Space.sm, children: chips)
+        else
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Row(
+              children: [
+                for (final (i, chip) in chips.indexed) ...[
+                  if (i > 0) const SizedBox(width: Space.sm),
+                  chip,
+                ],
+              ],
             ),
-            TextButton.icon(
-              onPressed: () => pick(true),
-              icon: const Icon(Icons.date_range_rounded, size: 18),
-              label: const LText('Date range'),
-            ),
-          ],
-        ),
+          ),
         if (period.start != null)
           Row(
             children: [
@@ -124,8 +126,8 @@ class HistoryPeriodControls extends StatelessWidget {
                   single
                       ? DateFormat('EEE d MMM yyyy').format(period.start!)
                       : '${DateFormat('d MMM yyyy').format(period.start!)} – ${DateFormat('d MMM yyyy').format(period.end!)}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  textAlign: single ? TextAlign.center : TextAlign.start,
+                  style: theme.textTheme.titleSmall,
                 ),
               ),
               if (single)
@@ -143,10 +145,10 @@ class HistoryPeriodControls extends StatelessWidget {
             ],
           ),
         if (showHour) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           HistoryHourPicker(period: period, onChanged: onChanged),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.sm),
       ],
     );
   }

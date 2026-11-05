@@ -57,10 +57,10 @@ Future<void> _openSheet(BuildContext context, Widget child) {
       constraints: BoxConstraints(maxHeight: maxHeight),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          20,
+          Space.xl,
           0,
-          20,
-          20 + max(media.viewInsets.bottom, media.viewPadding.bottom),
+          Space.xl,
+          Space.lg + max(media.viewInsets.bottom, media.viewPadding.bottom),
         ),
         child: _SheetScroll(child: child),
       ),
@@ -119,7 +119,7 @@ Future<void> showSheetDialog(
         child: scroll
             ? _SheetScroll(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+                  padding: const EdgeInsets.all(Space.xl),
                   child: child,
                 ),
               )
@@ -288,7 +288,9 @@ class _DeleteButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return TextButton.icon(
-      style: TextButton.styleFrom(foregroundColor: Baby.error),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.error,
+      ),
       icon: const Icon(Icons.delete_outline_rounded),
       label: const LText('Delete'),
       onPressed: () {
@@ -330,9 +332,24 @@ Future<bool> okToOverwrite(
   return ok == true;
 }
 
-Widget _label(String text) => Padding(
-  padding: const EdgeInsets.only(top: 18, bottom: 8),
-  child: LText(text, style: const TextStyle(fontWeight: FontWeight.w800)),
+Widget _label(String text) => Builder(
+  builder: (context) => Padding(
+    padding: const EdgeInsets.only(top: Space.xl, bottom: Space.sm),
+    child: LText(text, style: Theme.of(context).textTheme.titleSmall),
+  ),
+);
+
+/// The main Save button of a sheet: full width and 56dp tall. It uses the
+/// accent like every primary action; the kind's colour stays on the icon.
+Widget _saveButton({
+  required String label,
+  required VoidCallback? onPressed,
+  IconData icon = Icons.check_rounded,
+}) => FilledButton.icon(
+  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+  icon: Icon(icon),
+  label: LText(label),
+  onPressed: onPressed,
 );
 
 /// Asks for an amount in ml that is not one of the quick choices.
@@ -351,7 +368,10 @@ Future<int?> askMl(BuildContext context, int? initial) {
         controller: field,
         autofocus: true,
         keyboardType: TextInputType.number,
-        decoration: const LInputDecoration(labelText: 'Amount', suffixText: 'ml'),
+        decoration: const LInputDecoration(
+          labelText: 'Amount',
+          suffixText: 'ml',
+        ),
         onSubmitted: (_) => Navigator.pop(ctx, value()),
       ),
       actions: [
@@ -442,7 +462,6 @@ class _FeedSheetState extends State<FeedSheet> {
     ) => ChoiceChip(
       label: LText(label),
       selected: selected,
-      selectedColor: Baby.feedSoft,
       onSelected: onSelected,
     );
 
@@ -478,7 +497,7 @@ class _FeedSheetState extends State<FeedSheet> {
                   onTap: () => setState(() => side = f),
                 ),
               ),
-              if (f != FeedSide.bottle) const SizedBox(width: 8),
+              if (f != FeedSide.bottle) const SizedBox(width: Space.sm),
             ],
           ],
         ),
@@ -520,15 +539,18 @@ class _FeedSheetState extends State<FeedSheet> {
             ],
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: Space.lg),
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
-        const SizedBox(height: 20),
+        const SizedBox(height: Space.xl),
         Row(
           children: [
             if (editing) ...[_DeleteButton(widget.initial!), const Spacer()],
             if (!editing && !bottle && app.timerStart == null) ...[
               Expanded(
                 child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
                   icon: const Icon(Icons.timer_outlined),
                   label: const LText('Start timer'),
                   onPressed: () {
@@ -537,16 +559,11 @@ class _FeedSheetState extends State<FeedSheet> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Space.md),
             ],
             Expanded(
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Baby.feed,
-                  foregroundColor: Baby.onPrimary,
-                ),
-                icon: const Icon(Icons.check_rounded),
-                label: LText(editing ? 'Update' : 'Save'),
+              child: _saveButton(
+                label: editing ? 'Update' : 'Save',
                 onPressed: editing && !dirty ? null : save,
               ),
             ),
@@ -689,7 +706,7 @@ class _PumpSheetState extends State<PumpSheet> {
                   onTap: () => setState(() => side = f),
                 ),
               ),
-              if (f != FeedSide.right) const SizedBox(width: 8),
+              if (f != FeedSide.right) const SizedBox(width: Space.sm),
             ],
           ],
         ),
@@ -698,7 +715,7 @@ class _PumpSheetState extends State<PumpSheet> {
           Row(
             children: [
               Expanded(child: mlField(_left, 'Left')),
-              const SizedBox(width: 12),
+              const SizedBox(width: Space.md),
               Expanded(child: mlField(_right, 'Right')),
             ],
           )
@@ -716,25 +733,19 @@ class _PumpSheetState extends State<PumpSheet> {
               ChoiceChip(
                 label: LText('$v min'),
                 selected: minutes == v,
-                selectedColor: Baby.pumpSoft,
                 onSelected: (on) => setState(() => minutes = on ? v : null),
               ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: Space.lg),
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
-        const SizedBox(height: 20),
+        const SizedBox(height: Space.xl),
         Row(
           children: [
             if (editing) ...[_DeleteButton(widget.initial!), const Spacer()],
             Expanded(
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Baby.pump,
-                  foregroundColor: Baby.onPrimary,
-                ),
-                icon: const Icon(Icons.check_rounded),
-                label: LText(editing ? 'Update' : 'Save'),
+              child: _saveButton(
+                label: editing ? 'Update' : 'Save',
                 onPressed: editing && !dirty ? null : save,
               ),
             ),
@@ -810,19 +821,21 @@ class _NappySheetState extends State<NappySheet> {
                 child: Builder(
                   builder: (context) {
                     final look = nappyLook(k);
+                    final selected = initial != null && kind == k;
+                    final scheme = Theme.of(context).colorScheme;
                     return Material(
-                      color: look.soft,
+                      color: selected
+                          ? scheme.secondaryContainer
+                          : scheme.surfaceContainerHigh,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: Corners.card,
                         side: BorderSide(
-                          color: initial != null && kind == k
-                              ? Baby.ink
-                              : Colors.transparent,
+                          color: selected ? scheme.primary : Colors.transparent,
                           width: 2,
                         ),
                       ),
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(22),
                         onTap: () {
                           if (initial == null) {
                             pick(k);
@@ -831,22 +844,18 @@ class _NappySheetState extends State<NappySheet> {
                           }
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 22),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Space.xl,
+                            horizontal: Space.xs,
+                          ),
                           child: Column(
                             children: [
-                              IconBubble(
-                                glyph: look.glyph,
-                                color: Baby.card,
-                                iconColor: look.strong,
-                                size: 60,
-                              ),
-                              const SizedBox(height: 10),
+                              look.glyph(40, look.strong),
+                              const SizedBox(height: Space.md),
                               LText(
                                 nappyLabel(k),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
                             ],
                           ),
@@ -856,15 +865,15 @@ class _NappySheetState extends State<NappySheet> {
                   },
                 ),
               ),
-              if (k != NappyKind.both) const SizedBox(width: 10),
+              if (k != NappyKind.both) const SizedBox(width: Space.sm),
             ],
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: Space.xl),
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
         if (initial != null)
           Padding(
-            padding: const EdgeInsets.only(top: 20),
+            padding: const EdgeInsets.only(top: Space.xl),
             child: Row(
               children: [
                 _DeleteButton(initial),
@@ -909,7 +918,7 @@ class _PillDoseSheetState extends State<PillDoseSheet> {
             glyph: Glyphs.pill,
           ),
           WhenField(value: time, onChanged: (t) => setState(() => time = t)),
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xl),
           Row(
             children: [
               _DeleteButton(e),
@@ -968,21 +977,27 @@ class _SleepSheetState extends State<SleepSheet> {
         SheetHeader(
           title: initial == null ? 'Put down for a nap' : 'Edit sleep',
           glyph: Glyphs.sleep,
-          soft: Baby.pillSoft,
-          strong: Baby.pill,
+          soft: Baby.sleepSoft,
+          strong: Baby.sleep,
         ),
-        const LText('Nap started'),
+        _label('Nap started'),
         WhenField(
           value: start,
           onChanged: (t) => setState(() => start = t ?? start),
         ),
         if (end != null) ...[
-          const SizedBox(height: 16),
-          const LText('Nap ended'),
+          _label('Nap ended'),
           WhenField(value: end, onChanged: (t) => setState(() => end = t)),
         ],
-        if (error != null) LText(error!, style: TextStyle(color: Baby.error)),
-        const SizedBox(height: 20),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: LText(
+              error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        const SizedBox(height: Space.xl),
         Row(
           children: [
             if (initial != null) _DeleteButton(initial),

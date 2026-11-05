@@ -41,9 +41,13 @@ class _AlarmPageState extends State<AlarmPage> {
     final isFeed = info.kind == 'feed';
     final isRoutine = info.kind == 'routine';
     final med = app.meds.where((m) => m.id == info.medId).firstOrNull;
-    final soft = isFeed ? Baby.feedSoft : Baby.pillSoft;
-    final strong = isFeed ? Baby.feed : Baby.pill;
+    final strong = isRoutine
+        ? context.colors.primary
+        : isFeed
+        ? context.nest.feed.color
+        : context.nest.pill.color;
     final navigator = Navigator.of(context);
+    final text = Theme.of(context).textTheme;
 
     return PopScope(
       // Going back stops the alarm, like pressing Stop.
@@ -51,139 +55,142 @@ class _AlarmPageState extends State<AlarmPage> {
         if (didPop) app.reminders.stop(info);
       },
       child: Scaffold(
-        backgroundColor: soft,
         body: SafeArea(
           child: PageWidth(
             maxWidth: 560,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  IconBubble(
-                    glyph: isRoutine
-                        ? Glyphs.baby
-                        : isFeed
-                        ? Glyphs.feed
-                        : Glyphs.pill,
-                    color: Baby.card,
-                    iconColor: strong,
-                    size: 140,
-                  ),
-                  const SizedBox(height: 24),
-                  LText(
-                    hm(DateTime.now()),
-                    style: const TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  LText(
-                    info.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  LText(
-                    info.body,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 17,
-                      color: Baby.muted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (med != null)
-                    _Big(
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: strong,
-                          foregroundColor: Baby.onPrimary,
+            // Scrolls only when the text is very large; otherwise the
+            // buttons sit at the bottom, within reach of the thumb.
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(Space.xl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Spacer(),
+                        Center(
+                          child: (isRoutine
+                              ? Glyphs.baby
+                              : isFeed
+                              ? Glyphs.feed
+                              : Glyphs.pill)(56, strong),
                         ),
-                        icon: const Icon(Icons.check_rounded),
-                        label: const LText('Taken'),
-                        onPressed: () async {
-                          app.takePill(med);
-                          await _close();
-                        },
-                      ),
-                    ),
-                  if (isFeed)
-                    _Big(
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: strong,
-                          foregroundColor: Baby.onPrimary,
+                        const SizedBox(height: Space.xl),
+                        LText(
+                          hm(DateTime.now()),
+                          textAlign: TextAlign.center,
+                          style: text.displayLarge?.copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
                         ),
-                        icon: const Icon(Icons.edit_note_rounded),
-                        label: const LText('Log feed'),
-                        onPressed: () async {
-                          if (info.babyId != null &&
-                              !app.selectBaby(info.babyId!)) {
-                            showMessage(
-                              context,
-                              'Save or stop the feed timer before switching babies.',
-                            );
-                            return;
-                          }
-                          await _close();
-                          if (navigator.mounted) {
-                            showSheet(navigator.context, const FeedSheet());
-                          }
-                        },
-                      ),
-                    ),
-                  if (isRoutine)
-                    _Big(
-                      FilledButton.icon(
-                        icon: const Icon(Icons.event_repeat_rounded),
-                        label: const LText('View routines'),
-                        onPressed: () async {
-                          if (info.babyId != null &&
-                              !app.selectBaby(info.babyId!)) {
-                            showMessage(
-                              context,
-                              'Save or stop the feed timer before switching babies.',
-                            );
-                            return;
-                          }
-                          await _close();
-                          if (navigator.mounted) {
-                            navigator.push(
-                              MaterialPageRoute(
-                                builder: (_) => Scaffold(
-                                  appBar: AppBar(
-                                    title: const LText('Routines'),
-                                  ),
-                                  body: const PageWidth(child: RoutinesPage()),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  _Big(
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.snooze_rounded),
-                      label: LText('Snooze ${Reminders.snoozeMinutes} min'),
-                      onPressed: () => _close(snooze: true),
+                        const SizedBox(height: Space.sm),
+                        Semantics(
+                          header: true,
+                          child: LText(
+                            info.title,
+                            textAlign: TextAlign.center,
+                            style: text.headlineSmall,
+                          ),
+                        ),
+                        const SizedBox(height: Space.sm),
+                        LText(
+                          info.body,
+                          textAlign: TextAlign.center,
+                          style: text.bodyLarge?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (med != null)
+                          _Big(
+                            FilledButton.icon(
+                              icon: const Icon(Icons.check_rounded),
+                              label: const LText('Taken'),
+                              onPressed: () async {
+                                app.takePill(med);
+                                await _close();
+                              },
+                            ),
+                          ),
+                        if (isFeed)
+                          _Big(
+                            FilledButton.icon(
+                              icon: const Icon(Icons.edit_note_rounded),
+                              label: const LText('Log feed'),
+                              onPressed: () async {
+                                if (info.babyId != null &&
+                                    !app.selectBaby(info.babyId!)) {
+                                  showMessage(
+                                    context,
+                                    'Save or stop the feed timer before switching babies.',
+                                  );
+                                  return;
+                                }
+                                await _close();
+                                if (navigator.mounted) {
+                                  showSheet(
+                                    navigator.context,
+                                    const FeedSheet(),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        if (isRoutine)
+                          _Big(
+                            FilledButton.icon(
+                              icon: const Icon(Icons.event_repeat_rounded),
+                              label: const LText('View routines'),
+                              onPressed: () async {
+                                if (info.babyId != null &&
+                                    !app.selectBaby(info.babyId!)) {
+                                  showMessage(
+                                    context,
+                                    'Save or stop the feed timer before switching babies.',
+                                  );
+                                  return;
+                                }
+                                await _close();
+                                if (navigator.mounted) {
+                                  navigator.push(
+                                    MaterialPageRoute(
+                                      builder: (_) => Scaffold(
+                                        appBar: AppBar(
+                                          title: const LText('Routines'),
+                                        ),
+                                        body: const PageWidth(
+                                          child: RoutinesPage(),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        _Big(
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.snooze_rounded),
+                            label: LText(
+                              'Snooze ${Reminders.snoozeMinutes} min',
+                            ),
+                            onPressed: () => _close(snooze: true),
+                          ),
+                        ),
+                        _Big(
+                          TextButton.icon(
+                            icon: const Icon(Icons.alarm_off_rounded),
+                            label: const LText('Stop'),
+                            onPressed: _close,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  _Big(
-                    TextButton.icon(
-                      icon: const Icon(Icons.alarm_off_rounded),
-                      label: const LText('Stop'),
-                      onPressed: _close,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -198,7 +205,10 @@ class _Big extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 10),
-    child: SizedBox(width: double.infinity, height: 58, child: button),
+    padding: const EdgeInsets.only(top: Space.sm),
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 56),
+      child: button,
+    ),
   );
 }

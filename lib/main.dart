@@ -438,6 +438,16 @@ class _ShellState extends State<Shell> {
         onPressed: () => editRoutine(context),
       ),
     ],
+    ShellTabs.growth => [
+      FilledButton.icon(
+        icon: const Icon(Icons.add_rounded, size: 18),
+        label: const LText('Add a moment'),
+        onPressed: () => showSheet(
+          context,
+          GrowthEditor(baby: AppScope.of(context).activeBaby),
+        ),
+      ),
+    ],
     _ => const [],
   };
 
@@ -448,7 +458,6 @@ class _ShellState extends State<Shell> {
     Widget pages,
   ) => Scaffold(
     appBar: AppBar(
-      toolbarHeight: 68,
       // The Today hero already names the baby; the bar just says where you are.
       title: LText(
         [

@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../localization.dart';
 import '../store.dart';
+import 'theme.dart';
 
 class InstalledChangelog {
   const InstalledChangelog(this.version, this.notes);
@@ -54,9 +55,9 @@ Future<void> showInstalledChangelog(
             children: [
               LText(
                 'Version ${notes.version}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: Theme.of(ctx).textTheme.titleMedium,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               // Generated commit text is already prose, not a translation key.
               Text(notes.notes),
             ],

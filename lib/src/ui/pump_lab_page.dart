@@ -38,17 +38,16 @@ class PumpLabPage extends StatelessWidget {
           maxWidth: 720,
           child: ListView(
             padding: EdgeInsets.fromLTRB(
-              16,
+              Space.page,
               0,
-              16,
-              32 + MediaQuery.paddingOf(context).bottom,
+              Space.page,
+              Space.xxl + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               if (hub.problem != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.only(top: Space.md),
                   child: Card(
-                    color: Baby.warn.withValues(alpha: 0.12),
                     child: ListTile(
                       leading: Icon(
                         Icons.warning_amber_rounded,
@@ -66,6 +65,7 @@ class PumpLabPage extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const LText('Both'),
+                            const SizedBox(width: Space.sm),
                             Switch(value: hub.both, onChanged: hub.setBoth),
                           ],
                         )
@@ -107,7 +107,6 @@ class PumpLabPage extends StatelessWidget {
                           f.model == null
                               ? Icons.bluetooth_rounded
                               : Icons.water_drop_rounded,
-                          color: f.model == null ? Baby.muted : Baby.primary,
                         ),
                         title: Text(f.name),
                         subtitle: Text(
@@ -176,29 +175,34 @@ class _PumpCard extends StatelessWidget {
 
     Future<void> act(Future<void> Function(PumpSession s) f) =>
         hub.control(hub.both ? null : pump, f);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    const tabular = [FontFeature.tabularFigures()];
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: Space.md),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          Space.lg,
+          Space.sm,
+          Space.xs,
+          Space.lg,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: LText(
-                    pump.label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: LText(pump.label, style: theme.textTheme.titleMedium),
                 ),
                 if (status != null)
                   Text(
                     '${status.battery}%',
-                    style: TextStyle(color: Baby.muted),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontFeatures: tabular,
+                    ),
                   ),
                 LIconButton(
                   tooltip: 'Disconnect',
@@ -213,24 +217,32 @@ class _PumpCard extends StatelessWidget {
                 if (info != null)
                   'firmware ${info.firmwareVersion}, hardware ${info.hardwareVersion}',
               ].join('\n'),
-              style: TextStyle(color: Baby.muted, fontSize: 12),
+              style: theme.textTheme.bodySmall,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             if (pump.state == PumpLinkState.connecting)
               const LText('Connecting…')
             else if (pump.state == PumpLinkState.failed)
-              Text(pump.error ?? 'Failed', style: TextStyle(color: Baby.error))
+              Text(
+                pump.error ?? 'Failed',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.error,
+                ),
+              )
             else if (status != null) ...[
               Text(
                 '${tr(_stateName(status))} · ${tr(_modeName(status.mode))} · '
                 '${tr('level')} ${status.level} · ${_clock(status.totalSeconds)}'
                 '${status.milkMl > 0 ? ' · ${status.milkMl} ml' : ''}'
                 '${status.errorCode != 0 ? ' · ${tr('error')} ${status.errorCode}' : ''}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFeatures: tabular,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
               Wrap(
-                spacing: 8,
+                spacing: Space.sm,
+                runSpacing: Space.sm,
                 children: [
                   for (final m in modes)
                     ChoiceChip(
@@ -240,22 +252,24 @@ class _PumpCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Row(
                 children: [
-                  IconButton.filledTonal(
+                  IconButton.outlined(
                     tooltip: tr('Lower'),
                     icon: const Icon(Icons.remove_rounded),
                     onPressed: () => act((s) => s.changeLevel(-1)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: Space.md),
                     child: Text(
                       '${status.level} / ${s!.model.maxLevel}',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFeatures: tabular,
+                      ),
                     ),
                   ),
-                  IconButton.filledTonal(
+                  IconButton.outlined(
                     tooltip: tr('Higher'),
                     icon: const Icon(Icons.add_rounded),
                     onPressed: () => act((s) => s.changeLevel(1)),
@@ -271,9 +285,9 @@ class _PumpCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Space.xs),
               Wrap(
-                spacing: 8,
+                spacing: Space.sm,
                 children: [
                   TextButton.icon(
                     icon: const Icon(Icons.history_rounded),
@@ -308,16 +322,23 @@ class _PumpCard extends StatelessWidget {
       showDragHandle: true,
       builder: (context) => records.isEmpty
           ? const Padding(
-              padding: EdgeInsets.all(24),
+              padding: EdgeInsets.all(Space.xl),
               child: LText('The pump has no stored records.'),
             )
           : ListView(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.lg,
+                    0,
+                    Space.lg,
+                    Space.sm,
+                  ),
                   child: LText(
                     'Saved on this phone; the pump no longer has these.',
-                    style: TextStyle(color: Baby.muted),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 for (final r in records)

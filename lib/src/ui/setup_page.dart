@@ -170,10 +170,18 @@ class _SetupPageState extends State<SetupPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  Space.xl,
+                  Space.sm,
+                  Space.xl,
+                  Space.lg,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                    ),
                     onPressed: () => _go(_step + 1),
                     child: LText(
                       maxLines: 2,
@@ -237,7 +245,9 @@ class _TopBar extends StatelessWidget {
                       width: i == step ? 22 : 7,
                       height: 7,
                       decoration: BoxDecoration(
-                        color: i <= step ? Baby.primary : Baby.line,
+                        color: i <= step
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -271,20 +281,27 @@ class _Question extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+    padding: const EdgeInsets.fromLTRB(Space.xl, Space.xl, Space.xl, Space.lg),
     children: [
       Entrance(
-        child: LText(title, style: Theme.of(context).textTheme.headlineMedium),
+        child: Semantics(
+          header: true,
+          child: LText(
+            title,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+        ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: Space.sm),
       Entrance(
         index: 1,
         child: LText(
           text,
-          style: TextStyle(fontSize: 16, color: Baby.muted, height: 1.4),
+          style: Theme.of(context).textTheme.bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
-      const SizedBox(height: 28),
+      const SizedBox(height: Space.xxl),
       Entrance(index: 2, child: child),
     ],
   );
@@ -300,21 +317,13 @@ class _Welcome extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         Container(
-          height: (constraints.maxHeight * 0.5).clamp(240.0, 420.0),
-          margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Baby.hero,
-            ),
-            borderRadius: BorderRadius.circular(32),
-          ),
+          height: (constraints.maxHeight * 0.46).clamp(220.0, 400.0),
+          margin: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, 0),
           child: Stack(
             children: [
               Center(
                 child: FractionallySizedBox(
-                  heightFactor: 0.82,
+                  heightFactor: 0.72,
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: Loop(
@@ -327,7 +336,7 @@ class _Welcome extends StatelessWidget {
                         child: const CustomPaint(
                           painter: NestlingMark(
                             layer: MarkLayer.bare,
-                            sparkle: Colors.white,
+                            sparkle: Color(0xFFD0D5DA),
                           ),
                         ),
                       ),
@@ -347,31 +356,37 @@ class _Welcome extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+          padding: const EdgeInsets.fromLTRB(
+            Space.xl,
+            Space.xl,
+            Space.xl,
+            Space.sm,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Entrance(
                 index: 1,
-                child: LText(
-                  'Welcome to Nestling',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                child: Semantics(
+                  header: true,
+                  child: LText(
+                    'Welcome to Nestling',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: Space.sm),
               Entrance(
                 index: 2,
                 child: LText(
                   'Feeds, nappies, sleep and growth in one calm place, '
                   'shared with everyone who helps.',
-                  style: TextStyle(
-                    fontSize: 16.5,
-                    color: Baby.muted,
-                    height: 1.4,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: Space.xl),
               const Entrance(index: 3, child: LanguagePicker(showLabel: false)),
               const SizedBox(height: 4),
               Entrance(
@@ -411,7 +426,7 @@ class _Names extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const big = TextStyle(fontSize: 22, fontWeight: FontWeight.w600);
+    final big = Theme.of(context).textTheme.titleLarge;
     return _Question(
       title: 'What’s your baby’s name?',
       text: 'A first name or a nickname is fine.',
@@ -427,8 +442,8 @@ class _Names extends StatelessWidget {
             decoration: const LInputDecoration(
               hintText: 'e.g. Emma',
               contentPadding: EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 18,
+                horizontal: Space.lg,
+                vertical: Space.lg + 2,
               ),
             ),
           ),
@@ -444,8 +459,8 @@ class _Names extends StatelessWidget {
                   labelText: 'Another baby',
                   hintText: 'e.g. Noah',
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
+                    horizontal: Space.lg,
+                    vertical: Space.md + 2,
                   ),
                   suffixIcon: LIconButton(
                     tooltip: 'Remove',
@@ -502,20 +517,16 @@ class _Birthday extends StatelessWidget {
               onDateChanged: onChanged,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: Space.lg),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
+            duration: Motion.medium,
             child: v == null
                 ? const SizedBox(height: 24)
                 : LText(
                     babyAge(BabyProfile(name: name, dateOfBirth: v), today),
                     key: ValueKey(v),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Baby.primary,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
           ),
         ],
@@ -536,7 +547,7 @@ class _PhotoRing extends StatelessWidget {
     padding: const EdgeInsets.all(6),
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      gradient: LinearGradient(colors: Baby.hero),
+      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
     ),
     child: Stack(
       children: [
@@ -548,14 +559,17 @@ class _PhotoRing extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Baby.primary,
+                color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Baby.card, width: 3),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 3,
+                ),
               ),
               child: Icon(
                 Icons.photo_camera_rounded,
                 size: 22,
-                color: Baby.onPrimary,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),
@@ -594,7 +608,7 @@ class _Photo extends StatelessWidget {
               child: _PhotoRing(photo: photo, badge: true),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xl),
           OutlinedButton(
             onPressed: pick,
             child: LText(photo == null ? 'Choose a photo' : 'Change photo'),
@@ -637,7 +651,7 @@ class _FeedingStep extends StatelessWidget {
           ),
         ])
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: Space.sm),
             child: _ChoiceCard(
               glyph: glyph,
               title: title,
@@ -667,60 +681,66 @@ class _ChoiceCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    selected: selected,
-    child: PressScale(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      selected: selected,
+      button: true,
       child: Material(
-        color: selected ? Baby.feedSoft : Baby.card,
+        color: selected ? scheme.secondaryContainer : Baby.card,
+        animationDuration: Motion.short,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: Corners.card,
           side: BorderSide(
-            color: selected ? Baby.feed : Baby.line,
-            width: selected ? 2 : 1.5,
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: selected ? 2 : 1,
           ),
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: Corners.card,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Space.lg),
             child: Row(
               children: [
-                IconBubble(
-                  glyph: glyph,
-                  color: selected ? Baby.card : Baby.feedSoft,
-                  iconColor: Baby.feed,
-                  size: 52,
+                glyph(
+                  28,
+                  selected
+                      ? scheme.onSecondaryContainer
+                      : scheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Space.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      LText(title, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 2),
                       LText(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                        text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      LText(text, style: TextStyle(color: Baby.muted)),
                     ],
                   ),
                 ),
                 AnimatedOpacity(
                   opacity: selected ? 1 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(Icons.check_circle_rounded, color: Baby.feed),
+                  duration: Motion.short,
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: scheme.primary,
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _Done extends StatelessWidget {
@@ -739,7 +759,12 @@ class _Done extends StatelessWidget {
   Widget build(BuildContext context) {
     final b = birth;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+      padding: const EdgeInsets.fromLTRB(
+        Space.xl,
+        Space.xxl,
+        Space.xl,
+        Space.lg,
+      ),
       children: [
         if (photo != null)
           Center(
@@ -755,7 +780,7 @@ class _Done extends StatelessWidget {
                 child: CustomPaint(
                   painter: NestlingMark(
                     layer: MarkLayer.bare,
-                    sparkle: Color(0xFFF2C4CC),
+                    sparkle: Color(0xFFD0D5DA),
                   ),
                 ),
               ),
@@ -777,10 +802,8 @@ class _Done extends StatelessWidget {
             child: LText(
               babyAge(BabyProfile(name: name, dateOfBirth: b)),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Baby.primary,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -795,7 +818,9 @@ class _Done extends StatelessWidget {
                       'Reminders, sharing and themes are in Settings '
                       'whenever you want them.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Baby.muted, height: 1.4),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],

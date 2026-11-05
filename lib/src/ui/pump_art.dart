@@ -54,6 +54,7 @@ class PumpPicture extends StatelessWidget {
       FeedSide.right => tr('R'),
       _ => null,
     };
+    final pump = context.nest.pump;
     return Opacity(
       opacity: dimmed ? 0.55 : 1,
       child: SizedBox.square(
@@ -83,15 +84,17 @@ class PumpPicture extends StatelessWidget {
                   height: size * 0.36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Baby.pump,
+                    color: pump.color,
                     shape: BoxShape.circle,
                     border: Border.all(color: Baby.card, width: 2),
                   ),
+                  // Sized to the picture, so it does not follow text scale.
                   child: Text(
                     letter,
+                    textScaler: TextScaler.noScaling,
                     style: TextStyle(
-                      color: Baby.onPrimary,
-                      fontWeight: FontWeight.w800,
+                      color: pump.onColor,
+                      fontWeight: FontWeight.w600,
                       fontSize: size * 0.17,
                     ),
                   ),
@@ -221,7 +224,10 @@ class BatteryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = percent;
     final low = p != null && p < 15;
-    final color = low ? Baby.error : Baby.muted;
+    final theme = Theme.of(context);
+    final color = low
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurfaceVariant;
     final icon = switch (p) {
       null => Icons.battery_unknown_rounded,
       >= 90 => Icons.battery_full_rounded,
@@ -237,10 +243,10 @@ class BatteryChip extends StatelessWidget {
         const SizedBox(width: 2),
         Text(
           p == null ? '–' : '$p%',
-          style: TextStyle(
+          style: theme.textTheme.labelLarge?.copyWith(
             color: color,
-            fontWeight: FontWeight.w600,
             fontStyle: lastKnown ? FontStyle.italic : null,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],
@@ -255,24 +261,29 @@ Future<PumpModel?> pickPumpModel(BuildContext context, {PumpModel? current}) =>
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const LText(
-                'Which pump is it?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Semantics(
+                header: true,
+                child: LText(
+                  'Which pump is it?',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Space.xs),
               LText(
                 'Momcozy pumps that work with Nestling.',
-                style: TextStyle(color: Baby.muted),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.lg),
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: Space.sm,
+                runSpacing: Space.sm,
                 children: [
                   for (final m in const [
                     PumpModel.m5Pro,
@@ -286,18 +297,17 @@ Future<PumpModel?> pickPumpModel(BuildContext context, {PumpModel? current}) =>
                       child: ChoiceChip(
                         showCheckmark: false,
                         selected: m == current,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        selectedColor: Baby.pumpSoft,
+                        padding: const EdgeInsets.symmetric(vertical: Space.sm),
                         label: SizedBox(
                           width: 80,
                           child: Column(
                             children: [
                               PumpPicture(model: m, size: 44),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: Space.xs),
                               Text(
                                 pumpModelName(m),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 12),
+                                style: Theme.of(context).textTheme.labelMedium,
                               ),
                             ],
                           ),

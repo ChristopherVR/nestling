@@ -49,8 +49,6 @@ class _PumpPageState extends State<PumpPage> {
         return Scaffold(
           appBar: AppBar(title: const LText('Pumping')),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: Baby.pump,
-            foregroundColor: Baby.onPrimary,
             icon: const Icon(Icons.edit_note_rounded),
             label: const LText('Log by hand'),
             onPressed: () => showSheet(context, const PumpSheet()),
@@ -59,9 +57,9 @@ class _PumpPageState extends State<PumpPage> {
             maxWidth: 720,
             child: ListView(
               padding: EdgeInsets.fromLTRB(
-                16,
-                8,
-                16,
+                Space.page,
+                Space.sm,
+                Space.page,
                 96 + MediaQuery.paddingOf(context).bottom,
               ),
               children: [
@@ -106,19 +104,18 @@ class _FinishedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = hub.finished!;
     return Card(
-      color: Baby.pumpSoft,
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
-        leading: Glyphs.pump(28, Baby.pump),
-        title: const LText(
+        leading: Glyphs.pump(24, Baby.pump),
+        title: LText(
           'Session finished',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: LText(
           '${hm(f.time)} · ${f.durationMin ?? 0} min'
           '${f.amountMl != null ? ' · ${f.amountMl} ml' : ''}',
         ),
         trailing: FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Baby.pump),
           onPressed: () {
             final d = hub.takeFinished();
             if (d != null) savePumpDraft(context, d);
@@ -138,38 +135,37 @@ class _PumpsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final saved = app.pumpDevices;
+    final theme = Theme.of(context);
     if (saved.isEmpty) {
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Space.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Glyphs.pump(28, Baby.pump),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  Glyphs.pump(24, Baby.pump),
+                  const SizedBox(width: Space.lg),
+                  Expanded(
                     child: LText(
                       'Connect your Momcozy pumps',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: theme.textTheme.titleMedium,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               LText(
                 'Control them from here and save each session with how long '
                 'it took and how much you pumped. Switch the pumps on and '
                 'close the Momcozy app first.',
-                style: TextStyle(color: Baby.muted),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.lg),
               FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: Baby.pump),
                 icon: const Icon(Icons.bluetooth_searching_rounded),
                 label: const LText('Find pumps'),
                 onPressed: () => _showFinder(context),
@@ -220,15 +216,12 @@ class _PumpRow extends StatelessWidget {
     final name = side == null
         ? info['name'] as String? ?? 'Pump'
         : sideLabel(side);
-    final (text, color) = switch (p?.state) {
-      PumpLinkState.connecting => ('Connecting…', Baby.muted),
-      PumpLinkState.ready when s?.runState == PumpRunState.running => (
-        'Pumping',
-        Baby.pump,
-      ),
-      PumpLinkState.ready => ('Connected', Baby.ok),
-      PumpLinkState.failed => (p!.error ?? 'Not connected', Baby.muted),
-      null => ('Not connected', Baby.muted),
+    final text = switch (p?.state) {
+      PumpLinkState.connecting => 'Connecting…',
+      PumpLinkState.ready when s?.runState == PumpRunState.running => 'Pumping',
+      PumpLinkState.ready => 'Connected',
+      PumpLinkState.failed => p!.error ?? 'Not connected',
+      null => 'Not connected',
     };
     final ready = p?.state == PumpLinkState.ready;
     return ListTile(
@@ -238,15 +231,14 @@ class _PumpRow extends StatelessWidget {
         milkMl: s?.milkMl,
         running: s?.runState == PumpRunState.running,
         dimmed: !ready,
-        size: 46,
+        size: 40,
       ),
-      title: LText(name, style: const TextStyle(fontWeight: FontWeight.w700)),
+      title: LText(name),
       subtitle: LText(
         [
           text,
           if (ready && (s?.milkMl ?? 0) > 0) '${s!.milkMl} ml',
         ].join(' · '),
-        style: TextStyle(color: color),
       ),
       trailing: ready
           ? BatteryChip(s?.battery)
@@ -308,6 +300,7 @@ class _LiveCard extends StatelessWidget {
     final ready = hub.ready.toList()
       ..sort((a, b) => (a.side?.index ?? 9).compareTo(b.side?.index ?? 9));
     final together = hub.both || ready.length == 1;
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -317,7 +310,8 @@ class _LiveCard extends StatelessWidget {
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const LText('Both together'),
+                    LText('Both together', style: theme.textTheme.bodyMedium),
+                    const SizedBox(width: Space.sm),
                     Switch(value: hub.both, onChanged: hub.setBoth),
                   ],
                 )
@@ -325,17 +319,14 @@ class _LiveCard extends StatelessWidget {
         ),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Space.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
                   child: _LiveClock(
-                    style: TextStyle(
-                      fontSize: 44,
-                      fontWeight: FontWeight.w700,
-                      color: Baby.pump,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      fontFeatures: _tabular,
                     ),
                   ),
                 ),
@@ -343,15 +334,12 @@ class _LiveCard extends StatelessWidget {
                   _Controls(hub: hub, pumps: ready, target: null)
                 else
                   for (final p in ready) ...[
-                    const Divider(height: 28),
-                    LText(
-                      p.label,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    const Divider(height: Space.xl),
+                    LText(p.label, style: theme.textTheme.titleSmall),
                     _Controls(hub: hub, pumps: [p], target: p),
                   ],
                 if (hub.run.active) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.check_rounded),
                     label: const LText('Finish and save'),
@@ -403,6 +391,7 @@ class _Controls extends StatelessWidget {
     Future<void> send(Future<void> Function(PumpSession s) f) =>
         hub.control(target, f);
 
+    final theme = Theme.of(context);
     final levels = {for (final s in sessions) s.shownLevel};
     final levelText = levels.length == 1
         ? '${levels.first}'
@@ -414,7 +403,7 @@ class _Controls extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         SegmentedButton<PumpMode>(
           showSelectedIcon: false,
           segments: [
@@ -427,10 +416,10 @@ class _Controls extends StatelessWidget {
             if (v.isNotEmpty) send((s) => s.setMode(v.first));
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.lg),
         Row(
           children: [
-            IconButton.filledTonal(
+            IconButton.outlined(
               iconSize: 28,
               tooltip: tr('Lower'),
               icon: const Icon(Icons.remove_rounded),
@@ -441,19 +430,20 @@ class _Controls extends StatelessWidget {
                 children: [
                   Text(
                     levelText,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontFeatures: _tabular,
                     ),
                   ),
                   LText(
                     'Suction level, 1–${model.maxLevel}',
-                    style: TextStyle(color: Baby.muted, fontSize: 12),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
-            IconButton.filledTonal(
+            IconButton.outlined(
               iconSize: 28,
               tooltip: tr('Higher'),
               icon: const Icon(Icons.add_rounded),
@@ -461,13 +451,9 @@ class _Controls extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.lg),
         FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: Baby.pump,
-            foregroundColor: Baby.onPrimary,
-            minimumSize: const Size.fromHeight(52),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
           icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded),
           label: LText(running ? 'Pause' : 'Start'),
           onPressed: () => send((s) => running ? s.pause() : s.resume()),
@@ -475,10 +461,12 @@ class _Controls extends StatelessWidget {
         for (final (p, s) in statuses)
           if (s.errorCode != 0)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: Space.sm),
               child: LText(
                 '${p.label}: error ${s.errorCode}',
-                style: TextStyle(color: Baby.error),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
               ),
             ),
       ],
@@ -583,13 +571,14 @@ class _StatsCard extends StatelessWidget {
     final top = ml.values.fold(0, (a, b) => a > b ? a : b);
     final week = ml.values.fold(0, (a, b) => a + b);
     final daysWith = count.values.where((c) => c > 0).length;
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionTitle('This week'),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Space.lg),
             child: Column(
               children: [
                 Row(
@@ -607,7 +596,7 @@ class _StatsCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 SizedBox(
                   height: 90,
                   child: Row(
@@ -616,7 +605,9 @@ class _StatsCard extends StatelessWidget {
                       for (final d in days)
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Space.xs,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -630,17 +621,22 @@ class _StatsCard extends StatelessWidget {
                                         color: d == today
                                             ? Baby.pump
                                             : Baby.pump.withValues(alpha: 0.45),
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(
+                                          Corners.xs,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: Space.xs),
                                 Text(
                                   DateFormat.E().format(d),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Baby.muted,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.clip,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: d == today
+                                        ? theme.colorScheme.onSurface
+                                        : theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -666,27 +662,35 @@ class _Stat extends StatelessWidget {
   final String title, value, detail;
 
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Column(
-      children: [
-        LText(title, style: TextStyle(color: Baby.muted, fontSize: 12)),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Baby.pump,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Column(
+        children: [
+          LText(
+            title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall,
           ),
-        ),
-        LText(
-          detail,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Baby.muted, fontSize: 11),
-        ),
-      ],
-    ),
-  );
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleLarge?.copyWith(fontFeatures: _tabular),
+          ),
+          LText(
+            detail,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+const _tabular = [FontFeature.tabularFigures()];
 
 /// Finds pumps nearby and connects the one tapped; it is remembered.
 Future<void> _showFinder(BuildContext context) {
@@ -705,21 +709,30 @@ Future<void> _showFinder(BuildContext context) {
           final pumps = hub.found.values
               .where((f) => manual != null || f.model != null)
               .toList();
+          final theme = Theme.of(context);
+          final muted = theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          );
           return SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                Space.lg,
+                0,
+                Space.lg,
+                Space.lg,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
-                      const Expanded(
-                        child: LText(
-                          'Pumps nearby',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: LText(
+                            'Pumps nearby',
+                            style: theme.textTheme.titleLarge,
                           ),
                         ),
                       ),
@@ -737,19 +750,27 @@ Future<void> _showFinder(BuildContext context) {
                   ),
                   if (hub.problem != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: LText(
-                        hub.problem!,
-                        style: TextStyle(color: Baby.warn),
+                      padding: const EdgeInsets.only(top: Space.sm),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: Baby.warn,
+                          ),
+                          const SizedBox(width: Space.sm),
+                          Expanded(child: LText(hub.problem!, style: muted)),
+                        ],
                       ),
                     ),
                   if (pumps.isEmpty && !hub.scanning)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: Space.lg),
                       child: LText(
                         'No pumps found. Switch them on, close the Momcozy app '
                         'and look again.',
-                        style: TextStyle(color: Baby.muted),
+                        style: muted,
                       ),
                     ),
                   for (final f in pumps)
@@ -766,7 +787,7 @@ Future<void> _showFinder(BuildContext context) {
                       ),
                       onTap: () => hub.connect(f.id, f.name, model: manual),
                     ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   if (manual == null)
                     OutlinedButton.icon(
                       icon: const Icon(Icons.add_rounded),
@@ -784,7 +805,7 @@ Future<void> _showFinder(BuildContext context) {
                       'Showing every Bluetooth device. Tap your '
                       '${pumpModelName(manual!)}; it is usually named “M5 Smart” '
                       'or after the model.',
-                      style: TextStyle(color: Baby.muted),
+                      style: muted,
                     ),
                   TextButton(
                     onPressed: () {
@@ -827,42 +848,51 @@ class _PumpLiveCardState extends State<PumpLiveCard> {
       }
       if (started == null) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.only(bottom: Space.md),
           child: _FinishedCard(hub: hub),
         );
       }
+      final theme = Theme.of(context);
+      final muted = theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontFeatures: _tabular,
+      );
       final ready = hub.ready.toList()
         ..sort((a, b) => (a.side?.index ?? 9).compareTo(b.side?.index ?? 9));
       final running = ready.any(
         (p) => p.session?.shownState == PumpRunState.running,
       );
       return Padding(
-        padding: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.only(bottom: Space.md),
         child: Card(
-          color: Baby.pumpSoft,
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
-            borderRadius: BorderRadius.circular(20),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PumpPage()),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                Space.lg,
+                Space.md,
+                Space.md,
+                Space.md,
+              ),
               child: Row(
                 children: [
-                  Glyphs.pump(32, Baby.pump),
-                  const SizedBox(width: 12),
+                  Glyphs.pump(24, Baby.pump),
+                  const SizedBox(width: Space.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         LText(
                           running ? 'Pumping' : 'Paused',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: theme.textTheme.titleMedium,
                         ),
                         Row(
                           children: [
-                            _LiveClock(style: TextStyle(color: Baby.muted)),
+                            _LiveClock(style: muted),
                             Flexible(
                               child: Text(
                                 [
@@ -872,7 +902,7 @@ class _PumpLiveCardState extends State<PumpLiveCard> {
                                         '${p.session!.shownLevel}',
                                 ].join(' · '),
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Baby.muted),
+                                style: muted,
                               ),
                             ),
                           ],
@@ -881,7 +911,6 @@ class _PumpLiveCardState extends State<PumpLiveCard> {
                     ),
                   ),
                   IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: Baby.pump),
                     tooltip: tr(running ? 'Pause' : 'Start'),
                     icon: Icon(
                       running ? Icons.pause_rounded : Icons.play_arrow_rounded,
@@ -951,14 +980,11 @@ class PumpDetailPage extends StatelessWidget {
         final hardware =
             session?.info?.hardwareVersion ?? info['hardware'] as int?;
 
-        Widget row(String label, String value) => ListTile(
-          dense: true,
-          title: LText(label, style: TextStyle(color: Baby.muted)),
-          trailing: Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        );
+        final theme = Theme.of(context);
+        final scheme = theme.colorScheme;
+        // Settings-style rows: the name, with its value underneath.
+        Widget row(String label, String value) =>
+            ListTile(title: LText(label), subtitle: Text(value));
 
         return Scaffold(
           appBar: AppBar(title: LText(title)),
@@ -966,15 +992,15 @@ class PumpDetailPage extends StatelessWidget {
             maxWidth: 720,
             child: ListView(
               padding: EdgeInsets.fromLTRB(
-                16,
-                8,
-                16,
-                32 + MediaQuery.paddingOf(context).bottom,
+                Space.page,
+                Space.sm,
+                Space.page,
+                Space.xxl + MediaQuery.paddingOf(context).bottom,
               ),
               children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(Space.xl),
                     child: Column(
                       children: [
                         PumpPicture(
@@ -985,21 +1011,23 @@ class PumpDetailPage extends StatelessWidget {
                           dimmed: !ready,
                           size: 120,
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: Space.md),
                         LText(
                           state,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: ready ? Baby.ink : Baby.muted,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: ready
+                                ? scheme.onSurface
+                                : scheme.onSurfaceVariant,
                           ),
                         ),
                         if (!ready && seen != null)
                           LText(
                             'Last connected ${dayLabel(seen)} ${hm(seen)}',
-                            style: TextStyle(color: Baby.muted),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: Space.lg),
                         Row(
                           children: [
                             _Stat(
@@ -1022,21 +1050,24 @@ class PumpDetailPage extends StatelessWidget {
                           ],
                         ),
                         if (battery != null) ...[
-                          const SizedBox(height: 14),
+                          const SizedBox(height: Space.lg),
                           Row(
                             children: [
                               BatteryChip(battery, lastKnown: !ready),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: Space.sm),
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(
+                                    Corners.xs,
+                                  ),
                                   child: LinearProgressIndicator(
-                                    minHeight: 8,
+                                    minHeight: 6,
                                     value: battery / 100,
                                     color: battery < 15
-                                        ? Baby.error
+                                        ? scheme.error
                                         : Baby.pump,
-                                    backgroundColor: Baby.pumpSoft,
+                                    backgroundColor:
+                                        scheme.surfaceContainerHighest,
                                   ),
                                 ),
                               ),
@@ -1061,24 +1092,15 @@ class PumpDetailPage extends StatelessWidget {
                 ListCard(
                   children: [
                     ListTile(
-                      dense: true,
-                      title: LText(
-                        'Model',
-                        style: TextStyle(color: Baby.muted),
+                      title: const LText('Model'),
+                      subtitle: Text(
+                        [
+                          pumpModelName(_modelOf(p, info)),
+                          if (info['modelOverride'] != null)
+                            tr('Chosen by you'),
+                        ].join(' · '),
                       ),
-                      subtitle: info['modelOverride'] == null
-                          ? null
-                          : const LText('Chosen by you'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            pumpModelName(_modelOf(p, info)),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          Icon(Icons.chevron_right_rounded, color: Baby.muted),
-                        ],
-                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () async {
                         final m = await pickPumpModel(
                           context,
@@ -1107,11 +1129,16 @@ class PumpDetailPage extends StatelessWidget {
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.xs,
+                    Space.sm,
+                    Space.xs,
+                    0,
+                  ),
                   child: LText(
                     'Firmware updates come from Momcozy: install them with the '
                     'Momcozy app, then check here that both pumps match.',
-                    style: TextStyle(color: Baby.muted, fontSize: 13),
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
                 const SectionTitle('Actions'),
@@ -1176,14 +1203,10 @@ class PumpDetailPage extends StatelessWidget {
                             hub.connect(id, info['name'] as String? ?? 'Pump'),
                       ),
                     ListTile(
-                      leading: Icon(
-                        Icons.delete_outline_rounded,
-                        color: Baby.error,
-                      ),
-                      title: LText(
-                        'Forget this pump',
-                        style: TextStyle(color: Baby.error),
-                      ),
+                      iconColor: scheme.error,
+                      textColor: scheme.error,
+                      leading: const Icon(Icons.delete_outline_rounded),
+                      title: const LText('Forget this pump'),
                       onTap: () async {
                         await hub.forget(id);
                         if (context.mounted) Navigator.pop(context);

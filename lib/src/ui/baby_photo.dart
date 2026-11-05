@@ -97,13 +97,15 @@ class _BabyPhotoState extends State<BabyPhoto> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // A neutral placeholder: the photo, not the frame, is the content.
     final placeholder = ColoredBox(
-      color: Baby.primarySoft,
+      color: scheme.surfaceContainerHigh,
       child: Center(
         child: Icon(
           Icons.child_care_rounded,
           size: widget.size.clamp(24, 100) * .5,
-          color: Baby.primary,
+          color: scheme.onSurfaceVariant,
         ),
       ),
     );
@@ -111,7 +113,9 @@ class _BabyPhotoState extends State<BabyPhoto> {
       label: tr('Baby photo'),
       image: true,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.square ? 22 : widget.size),
+        borderRadius: BorderRadius.circular(
+          widget.square ? Corners.lg : widget.size,
+        ),
         child: SizedBox(
           width: widget.size,
           height: widget.size,

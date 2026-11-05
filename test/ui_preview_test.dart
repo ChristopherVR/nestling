@@ -70,7 +70,9 @@ Future<void> _loadFonts() async {
     Uri.file('$_root/.dart_tool/package_config.json')
         .resolve(symbols['rootUri'] as String),
   ).path;
-  await _loadFont('Roboto', ['$icons/roboto-regular.ttf']);
+  await _loadFont('Roboto', [
+    for (final w in ['regular', 'medium', 'bold']) '$icons/roboto-$w.ttf',
+  ]);
   await _loadFont('MaterialIcons', ['$icons/materialicons-regular.otf']);
   for (final style in ['Outlined', 'Rounded', 'Sharp']) {
     await _loadFont('packages/material_symbols_icons/MaterialSymbols$style', [
@@ -137,60 +139,78 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('setup', (tester) async {
-    await start(tester);
-    expect(find.byType(SetupPage), findsOneWidget);
-    for (var i = 0; i < 7; i++) {
-      await snap(tester, 'setup-$i');
-      final field = find.byType(TextField);
-      if (field.evaluate().isNotEmpty) {
-        await tester.enterText(field.first, 'Mia');
-        FocusManager.instance.primaryFocus?.unfocus();
-        await tester.pumpAndSettle();
-        await snap(tester, 'setup-$i-filled');
+  for (final dark in [false, true]) {
+    final suffix = dark ? '-dark' : '';
+    testWidgets('setup$suffix', (tester) async {
+      if (dark) app.setAppearance('dark');
+      await start(tester);
+      expect(find.byType(SetupPage), findsOneWidget);
+      for (var i = 0; i < 7; i++) {
+        await snap(tester, 'setup-$i$suffix');
+        final field = find.byType(TextField);
+        if (field.evaluate().isNotEmpty) {
+          await tester.enterText(field.first, 'Mia');
+          FocusManager.instance.primaryFocus?.unfocus();
+          await tester.pumpAndSettle();
+          await snap(tester, 'setup-$i-filled$suffix');
+        }
+        if (find.byType(SetupPage).evaluate().isEmpty) break;
+        await next(tester);
       }
-      if (find.byType(SetupPage).evaluate().isEmpty) break;
-      await next(tester);
-    }
-    await snap(tester, 'after-setup');
-    debugDisableShadows = true;
-  });
+      await snap(tester, 'after-setup$suffix');
+      debugDisableShadows = true;
+    });
 
-  testWidgets('screens', (tester) async {
-    _seed(app, now);
-    await start(tester);
-    await snap(tester, 'today');
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
-    await snap(tester, 'today-scrolled');
-    for (final tab in ['History', 'Growth']) {
-      final nav = find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text(tab),
-      );
-      if (nav.evaluate().isEmpty) continue;
-      await tester.tap(nav);
-      await snap(tester, tab.toLowerCase());
-    }
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Today'),
-      ),
-    );
-    await tester.pumpAndSettle();
-    unawaited(
-      showSheet(tester.element(find.byType(HomePage)), const FeedSheet()),
-    );
-    await snap(tester, 'feed-sheet');
-    debugDisableShadows = true;
-  });
+    testWidgets('screens$suffix', (tester) async {
+      _seed(app, DateTime.now());
+      app.saveMed(Medication(name: 'Vitamin D', count: 1, startMinutes: 540));
+      if (dark) app.setAppearance('dark');
+      await start(tester);
+      await snap(tester, 'today$suffix');
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+      await snap(tester, 'today-scrolled$suffix');
+      Future<void> tab(String label) async {
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text(label),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      for (final label in ['History', 'Pills', 'Routines', 'Growth']) {
+        await tab(label);
+        await snap(tester, '${label.toLowerCase()}$suffix');
+      }
+      await tab('History');
+      await tester.tap(find.text('Charts'));
+      await snap(tester, 'history-charts$suffix');
+      await tester.tap(find.text('Activity log'));
+      await tab('Today');
+      final home = tester.element(find.byType(HomePage));
+      for (final (name, sheet) in [
+        ('feed', const FeedSheet() as Widget),
+        ('nappy', const NappySheet()),
+        ('sleep', const SleepSheet()),
+      ]) {
+        unawaited(showSheet(home, sheet));
+        await snap(tester, '$name-sheet$suffix');
+        Navigator.of(home).pop();
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byTooltip('Settings'));
+      await snap(tester, 'settings$suffix');
+      debugDisableShadows = true;
+    });
+  }
   testWidgets('pump', (tester) async {
-    _seed(app, now);
+    _seed(app, DateTime.now());
     for (final (h, l, r) in [(7, 70, 55), (11, 60, 50), (15, 80, 65)]) {
       app.addEntry(
         Entry(
           type: EntryType.pump,
-          time: now.subtract(Duration(hours: h)),
+          time: DateTime.now().subtract(Duration(hours: h)),
           side: FeedSide.both,
           durationMin: 18,
           leftMl: l,
@@ -236,7 +256,7 @@ void main() {
   ]) {
     testWidgets(name, (tester) async {
       final at = DateTime(2026, 10, 31, hour, 20);
-      _seed(app, at);
+      _seed(app, DateTime.now());
       app.setAppearance(appearance);
       if (name == 'night-light') app.setNightLight(true);
       debugDisableShadows = false;
@@ -255,7 +275,7 @@ void main() {
   }
 
   testWidgets('desktop', (tester) async {
-    _seed(app, now);
+    _seed(app, DateTime.now());
     debugDisableShadows = false;
     addTearDown(tester.view.reset);
     tester.view.devicePixelRatio = 1;

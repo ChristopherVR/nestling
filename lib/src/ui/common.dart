@@ -401,17 +401,13 @@ class Kbd extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
     decoration: BoxDecoration(
-      color: Baby.card,
-      border: Border.all(color: Baby.borderStrong),
-      borderRadius: BorderRadius.circular(DesktopTokens.radiusSm - 1),
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(Corners.xs),
     ),
     child: LText(
       label,
-      style: TextStyle(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        color: Baby.muted,
-        height: 1.4,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     ),
   );
@@ -433,13 +429,15 @@ class PageWidth extends StatelessWidget {
   );
 }
 
+/// An icon on a tinted circle: the signature of each kind of entry, used in
+/// lists, sheet headers and stat cards.
 class IconBubble extends StatelessWidget {
   const IconBubble({
     super.key,
     required this.glyph,
     required this.color,
     required this.iconColor,
-    this.size = 44,
+    this.size = 40,
   });
   final Glyph glyph;
   final Color color;
@@ -451,11 +449,8 @@ class IconBubble extends StatelessWidget {
     width: size,
     height: size,
     alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(size * 0.32),
-    ),
-    child: glyph(size * 0.52, iconColor),
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    child: glyph(size * 0.5, iconColor),
   );
 }
 
@@ -475,14 +470,17 @@ class Counts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(fontWeight: FontWeight.w800, color: Baby.muted);
+    final style = Theme.of(context).textTheme.labelLarge?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
     Widget item(Glyph g, Color c, String n) => Padding(
-      padding: const EdgeInsets.only(left: 12),
+      padding: const EdgeInsetsDirectional.only(start: Space.md),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          g(17, c),
-          const SizedBox(width: 3),
+          g(16, c),
+          const SizedBox(width: Space.xs),
           LText(n, style: style),
         ],
       ),
@@ -502,6 +500,7 @@ class Counts extends StatelessWidget {
   }
 }
 
+/// A section heading above a card or list (Material list subheader).
 class SectionTitle extends StatelessWidget {
   const SectionTitle(this.text, {super.key, this.trailing});
   final String text;
@@ -509,33 +508,29 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = Desktop.of(context);
-    return Padding(
-      padding: desktop
-          ? const EdgeInsets.fromLTRB(2, 20, 2, 8)
-          : const EdgeInsets.fromLTRB(4, 22, 4, 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: LText(
-              text,
-              style: desktop
-                  ? TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                      color: Baby.muted,
-                    )
-                  : TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
-                      color: Baby.ink,
-                    ),
+    final theme = Theme.of(context);
+    return Semantics(
+      header: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Space.xs,
+          Space.xl,
+          Space.xs,
+          Space.sm,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: LText(
+                text,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
             ),
-          ),
-          ?trailing,
-        ],
+            ?trailing,
+          ],
+        ),
       ),
     );
   }
@@ -566,16 +561,19 @@ class _PressScaleState extends State<PressScale> {
       onPointerUp: (_) => _set(false),
       onPointerCancel: (_) => _set(false),
       child: AnimatedScale(
-        scale: _down && !still ? 0.97 : 1,
-        duration: still ? Duration.zero : const Duration(milliseconds: 150),
-        curve: Curves.easeOutCubic,
+        scale: _down && !still ? 0.98 : 1,
+        duration: still ? Duration.zero : Motion.short,
+        curve: Motion.enter,
         child: widget.child,
       ),
     );
   }
 }
 
-/// Big pastel tile for the main actions on the Today screen.
+/// A quick-log button: a neutral tonal button with the kind's icon, a label
+/// and a live hint ("Next: Right", "Due now"). At least 72dp tall, so it is
+/// easy to hit one-handed in the dark. Only the icon carries the kind's
+/// colour; [soft] is kept for callers but no longer painted.
 class ActionTile extends StatelessWidget {
   const ActionTile({
     super.key,
@@ -596,118 +594,70 @@ class ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Desktop.of(context)) return _desktop(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final desktop = Desktop.of(context);
     return PressScale(
       child: Material(
-        type: MaterialType.transparency,
+        color: scheme.surfaceContainerHigh,
+        borderRadius: Corners.card,
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
-            child: Column(
-              children: [
-                // Shrinks to fit four across on the narrowest phones.
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final size = constraints.maxWidth.clamp(36.0, 62.0);
-                    return Container(
-                      width: size,
-                      height: size,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: soft,
-                        shape: BoxShape.circle,
-                      ),
-                      child: glyph(size * 0.48, strong),
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                LText(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
-                    color: Baby.ink,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOutCubic,
-                  child: LText(
-                    hint,
-                    key: ValueKey(hint),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Baby.muted,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: desktop ? 64 : 72),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                Space.lg,
+                Space.md,
+                Space.md,
+                Space.md,
+              ),
+              child: Row(
+                children: [
+                  glyph(24, strong),
+                  const SizedBox(width: Space.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LText(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                        AnimatedSwitcher(
+                          duration: Motion.medium,
+                          switchInCurve: Motion.enter,
+                          layoutBuilder: (current, previous) => Stack(
+                            alignment: AlignmentDirectional.centerStart,
+                            children: [...previous, ?current],
+                          ),
+                          child: LText(
+                            hint,
+                            key: ValueKey(hint),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-
-  /// Compact bordered button: icon square, label and hint side by side.
-  Widget _desktop(BuildContext context) => Material(
-    color: Baby.card,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(DesktopTokens.radiusLg),
-      side: BorderSide(color: Baby.border),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: onTap,
-      hoverColor: soft.withValues(alpha: 0.6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            IconBubble(glyph: glyph, color: soft, iconColor: strong, size: 40),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LText(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Baby.ink,
-                    ),
-                  ),
-                  LText(
-                    hint,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: strong,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 /// One logged entry as a row: icon, title/detail, time.
@@ -725,6 +675,8 @@ class EntryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final look = lookOf(entry);
     final elsewhere = app.loggedElsewhere(entry);
     final detail = [
@@ -735,102 +687,99 @@ class EntryTile extends StatelessWidget {
     final desktop = Desktop.of(context);
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: desktop
-            ? const EdgeInsets.symmetric(horizontal: 14, vertical: 9)
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            IconBubble(
-              glyph: look.glyph,
-              color: look.soft,
-              iconColor: look.strong,
-              size: desktop ? 34 : 40,
-            ),
-            SizedBox(width: desktop ? 12 : 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LText(
-                    entryTitle(entry),
-                    style: TextStyle(
-                      fontSize: desktop ? 14.5 : 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (detail.isNotEmpty)
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: desktop ? 56 : 72),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: Space.lg,
+            vertical: desktop ? Space.sm : Space.md,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: Center(child: look.glyph(24, look.strong)),
+              ),
+              const SizedBox(width: Space.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     LText(
-                      detail,
-                      style: TextStyle(
-                        color: Baby.muted,
-                        fontWeight: FontWeight.w600,
+                      entryTitle(entry),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  if (duplicate)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.content_copy_rounded,
-                          size: 14,
-                          color: Baby.warn,
+                    if (detail.isNotEmpty)
+                      LText(
+                        detail,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
-                        const SizedBox(width: 4),
-                        LText(
-                          'Possible duplicate from the other phone',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Baby.warn,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      ),
+                    if (duplicate)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.content_copy_rounded,
+                              size: 14,
+                              color: Baby.warn,
+                            ),
+                            const SizedBox(width: Space.xs),
+                            Flexible(
+                              child: LText(
+                                'Possible duplicate from the other phone',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: Baby.warn,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                ],
+                      ),
+                  ],
+                ),
               ),
-            ),
-            LText(
-              showDay && !sameDay(entry.time, DateTime.now())
-                  ? DateFormat('EEE d MMM, HH:mm').format(entry.time)
-                  : hm(entry.time),
-              style: TextStyle(
-                fontSize: desktop ? 13.5 : 15,
-                fontWeight: FontWeight.w700,
-                color: Baby.muted,
-                fontFeatures: const [FontFeature.tabularFigures()],
+              const SizedBox(width: Space.md),
+              LText(
+                showDay && !sameDay(entry.time, DateTime.now())
+                    ? DateFormat('EEE d MMM, HH:mm').format(entry.time)
+                    : hm(entry.time),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Card holding a list of rows separated by thin lines.
+/// Card holding a list of rows separated by inset dividers.
 class ListCard extends StatelessWidget {
   const ListCard({super.key, required this.children});
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      children: [
-        for (var i = 0; i < children.length; i++) ...[
-          if (i > 0)
-            Desktop.of(context)
-                ? Divider(color: Baby.border)
-                : Divider(
-                    indent: 70,
-                    endIndent: 16,
-                    color: Baby.line.withValues(alpha: 0.6),
-                  ),
-          children[i],
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const Divider(indent: 56),
+            children[i],
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 /// Title row at the top of every bottom sheet, with a close button.
@@ -851,37 +800,37 @@ class SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final desktop = Desktop.of(context);
     return Padding(
-      padding: EdgeInsets.only(bottom: desktop ? 14 : 16),
+      padding: const EdgeInsets.only(bottom: Space.lg),
       child: Row(
         children: [
           if (glyph != null) ...[
-            IconBubble(
-              glyph: glyph!,
-              color: soft ?? Baby.pillSoft,
-              iconColor: strong ?? Baby.pill,
-              size: desktop ? 38 : 48,
-            ),
-            SizedBox(width: desktop ? 12 : 14),
+            glyph!(28, strong ?? Baby.pill),
+            const SizedBox(width: Space.md),
           ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                LText(
-                  title,
-                  style: TextStyle(
-                    fontSize: desktop ? 18 : 22,
-                    fontWeight: FontWeight.w800,
+                Semantics(
+                  header: true,
+                  child: LText(
+                    title,
+                    style: desktop
+                        ? theme.textTheme.titleLarge
+                        : theme.textTheme.headlineSmall,
                   ),
                 ),
                 if (subtitle != null)
-                  LText(
-                    subtitle!,
-                    style: TextStyle(
-                      color: Baby.muted,
-                      fontWeight: FontWeight.w600,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: LText(
+                      subtitle!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
               ],
@@ -898,7 +847,9 @@ class SheetHeader extends StatelessWidget {
   }
 }
 
-/// Selectable option tile (feed side, appearance, schedule type...).
+/// Selectable option tile (feed side, appearance, schedule type...). The
+/// selected one gets the accent's selected state (secondary container and a
+/// 2dp primary outline); [color] and [glyphColor] are kept for callers.
 class OptionTile extends StatelessWidget {
   const OptionTile({
     super.key,
@@ -921,60 +872,73 @@ class OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final desktop = Desktop.of(context);
-    final radius = desktop ? DesktopTokens.radius + 2 : 20.0;
-    return Material(
-      color: selected ? color : Baby.card,
-      animationDuration: const Duration(milliseconds: 200),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(radius),
-        side: BorderSide(
-          color: selected
-              ? (glyphColor ?? Baby.primary).withValues(alpha: 0.55)
-              : desktop
-              ? Baby.border
-              : Baby.line,
-          width: desktop && !selected ? 1 : 1.5,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(radius),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: desktop ? 10 : 14,
-            horizontal: 6,
+    final accent = scheme.primary;
+    final radius = BorderRadius.circular(desktop ? Corners.md : Corners.lg);
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: selected ? scheme.secondaryContainer : Colors.transparent,
+        animationDuration: Motion.short,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(
+            color: selected ? accent : scheme.outlineVariant,
+            width: selected ? 2 : 1,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (glyph != null) ...[
-                glyph!(26, glyphColor ?? Baby.ink),
-                const SizedBox(height: 4),
-              ],
-              LText(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+        ),
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: glyph == null ? 48 : (desktop ? 64 : 76),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: desktop ? Space.sm : Space.md,
+                horizontal: Space.xs,
               ),
-              if (badge != null || glyph != null)
-                SizedBox(
-                  height: 16,
-                  child: badge == null
-                      ? null
-                      : LText(
-                          badge!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Baby.feed,
-                          ),
-                        ),
-                ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (glyph != null) ...[
+                    glyph!(
+                      24,
+                      selected
+                          ? scheme.onSecondaryContainer
+                          : scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: Space.xs),
+                  ],
+                  LText(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: selected
+                          ? scheme.onSecondaryContainer
+                          : scheme.onSurface,
+                    ),
+                  ),
+                  if (badge != null || glyph != null)
+                    SizedBox(
+                      height: 16,
+                      child: badge == null
+                          ? null
+                          : LText(
+                              badge!,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: accent,
+                              ),
+                            ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -993,13 +957,15 @@ class WhenField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = value;
+    final theme = Theme.of(context);
     return Row(
       children: [
-        const LText('When', style: TextStyle(fontWeight: FontWeight.w800)),
-        const SizedBox(width: 14),
+        LText('When', style: theme.textTheme.titleSmall),
+        const SizedBox(width: Space.lg),
         Expanded(
           child: Wrap(
-            spacing: 8,
+            spacing: Space.sm,
+            runSpacing: Space.xs,
             children: [
               ChoiceChip(
                 label: const LText('Now'),
@@ -1007,7 +973,11 @@ class WhenField extends StatelessWidget {
                 onSelected: (_) => onChanged(null),
               ),
               ChoiceChip(
-                avatar: Icon(Icons.schedule_rounded, size: 18, color: Baby.ink),
+                avatar: Icon(
+                  Icons.schedule_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 label: LText(v == null ? 'Earlier' : whenLabel(v)),
                 selected: v != null,
                 onSelected: (_) async {
@@ -1020,7 +990,7 @@ class WhenField extends StatelessWidget {
         ),
         LIconButton(
           tooltip: 'Pick date',
-          icon: Icon(Icons.calendar_month_rounded, color: Baby.muted),
+          icon: const Icon(Icons.calendar_month_rounded),
           onPressed: () async {
             final base = v ?? DateTime.now();
             final d = await showDatePicker(
@@ -1037,6 +1007,59 @@ class WhenField extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// A centred empty, error or first-use state: icon, title, a line of help
+/// and an optional action.
+class EmptyState extends StatelessWidget {
+  const EmptyState({
+    super.key,
+    required this.icon,
+    this.title,
+    this.text,
+    this.action,
+  });
+  final IconData icon;
+  final String? title;
+  final String? text;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.xl,
+        vertical: Space.xxl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 40, color: scheme.onSurfaceVariant),
+          if (title != null) ...[
+            const SizedBox(height: Space.lg),
+            LText(
+              title!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium,
+            ),
+          ],
+          if (text != null) ...[
+            SizedBox(height: title == null ? Space.lg : Space.xs),
+            LText(
+              text!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          if (action != null) ...[const SizedBox(height: Space.lg), action!],
+        ],
+      ),
     );
   }
 }

@@ -49,24 +49,27 @@ class _QrSyncPageState extends State<QrSyncPage> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final peer = app.peers.where((p) => p.deviceId == peerId).firstOrNull;
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const LText('Sync by QR code')),
       body: PageWidth(
         maxWidth: 560,
         child: ListView(
           padding: EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            32 + MediaQuery.paddingOf(context).bottom,
+            Space.page,
+            Space.sm,
+            Space.page,
+            Space.xxl + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
             LText(
               'For when the phones are not on the same Wi-Fi. One phone shows its code and the other scans '
               'it, then swap so both have everything.',
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: Space.lg),
             if (_canScan)
               SegmentedButton<bool>(
                 segments: const [
@@ -87,22 +90,21 @@ class _QrSyncPageState extends State<QrSyncPage> {
                   scanned = null;
                 }),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             if (scanned != null) ...[
               Card(
-                color: Baby.nappySoft,
                 child: ListTile(
-                  leading: Icon(Icons.check_circle_rounded, color: Baby.ok),
-                  title: LText(
-                    scanned!,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  leading: Icon(
+                    Icons.check_circle_rounded,
+                    color: context.nest.success.color,
                   ),
+                  title: LText(scanned!),
                   subtitle: const LText(
                     'Now show your code so the other phone gets your changes too.',
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
             ],
             if (showing)
               _ShowCodes(
@@ -177,11 +179,11 @@ class _ShowCodesState extends State<_ShowCodes> {
     if (list.length > QrTransfer.maxParts) {
       return Card(
         child: ListTile(
-          leading: Icon(Icons.info_outline_rounded, color: Baby.warn),
-          title: const LText(
-            'Too much to send by QR code',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          leading: Icon(
+            Icons.info_outline_rounded,
+            color: context.nest.warn.color,
           ),
+          title: const LText('Too much to send by QR code'),
           subtitle: LText(
             'This would take ${list.length} codes. Connect both phones to the same Wi-Fi once; '
             'after that, QR codes only need to carry new changes.',
@@ -190,6 +192,11 @@ class _ShowCodesState extends State<_ShowCodes> {
       );
     }
     final who = widget.peer?.name;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final note = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
     return Column(
       children: [
         LText(
@@ -197,15 +204,15 @@ class _ShowCodesState extends State<_ShowCodes> {
               ? 'On the other phone: Sync by QR code, then Scan theirs'
               : 'Let $who scan this',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleMedium,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         // Dark on white so it scans well in dark mode too.
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(Space.lg),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(Corners.lg),
           ),
           child: QrImageView(
             data: list[index],
@@ -213,25 +220,25 @@ class _ShowCodesState extends State<_ShowCodes> {
             errorCorrectionLevel: QrErrorCorrectLevel.L,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         if (list.length > 1) ...[
           LText(
             'Code ${index + 1} of ${list.length}. Keep the camera on it until it says done.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w700),
+            style: note,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           Wrap(
             alignment: WrapAlignment.center,
-            spacing: 4,
-            runSpacing: 4,
+            spacing: Space.xs,
+            runSpacing: Space.xs,
             children: [
               for (var i = 0; i < list.length; i++)
                 Container(
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: i == index ? Baby.primary : Baby.line,
+                    color: i == index ? scheme.primary : scheme.outlineVariant,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -241,7 +248,7 @@ class _ShowCodesState extends State<_ShowCodes> {
           LText(
             'Includes ${widget.peer == null ? 'everything' : 'all changes since you last synced'}.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w700),
+            style: note,
           ),
       ],
     );
@@ -285,11 +292,12 @@ class _ScanState extends State<_Scan> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Corners.lg),
           child: SizedBox(
             height: 340,
             child: MobileScanner(
@@ -310,27 +318,29 @@ class _ScanState extends State<_Scan> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         LText(
           collector.total == 0
               ? 'Point the camera at the code on the other phone'
               : 'Got ${collector.received} of ${collector.total} codes',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleMedium,
         ),
         if (collector.total > 1) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           LinearProgressIndicator(
             value: collector.received / collector.total,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(Corners.xs),
           ),
         ],
         if (problem != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: Space.sm),
           LText(
             problem!,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Baby.warn, fontWeight: FontWeight.w700),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.error,
+            ),
           ),
         ],
       ],
@@ -342,7 +352,7 @@ Future<bool> _confirmVersion(BuildContext context, String theirVersion) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.warning_amber_rounded, color: Baby.warn, size: 36),
+      icon: Icon(Icons.warning_amber_rounded, color: context.nest.warn.color),
       title: const LText('Different app versions'),
       content: LText(
         'This phone has version ${AppState.appVersion}, the other phone has '
@@ -354,10 +364,6 @@ Future<bool> _confirmVersion(BuildContext context, String theirVersion) async {
           child: const LText('Not now'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Baby.warn,
-            foregroundColor: Colors.white,
-          ),
           onPressed: () => Navigator.pop(ctx, true),
           child: const LText('Continue anyway'),
         ),

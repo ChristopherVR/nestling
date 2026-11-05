@@ -76,11 +76,7 @@ class HistoryPageState extends State<HistoryPage>
             controller: _tabs,
             isScrollable: desktop,
             tabAlignment: desktop ? TabAlignment.start : null,
-            labelColor: Baby.primary,
-            unselectedLabelColor: Baby.muted,
-            indicatorColor: Baby.primary,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w800),
-            dividerColor: desktop ? Baby.border : Baby.line,
+            indicatorSize: TabBarIndicatorSize.tab,
             tabs: desktop
                 ? const [
                     Tab(
@@ -105,14 +101,8 @@ class HistoryPageState extends State<HistoryPage>
                     ),
                   ]
                 : const [
-                    Tab(
-                      icon: Icon(Icons.list_alt_rounded),
-                      child: LText('Activity log', maxLines: 1),
-                    ),
-                    Tab(
-                      icon: Icon(Icons.bar_chart_rounded),
-                      child: LText('Charts', maxLines: 1),
-                    ),
+                    Tab(child: LText('Activity log', maxLines: 1)),
+                    Tab(child: LText('Charts', maxLines: 1)),
                   ],
           ),
         ),
@@ -147,7 +137,12 @@ class _ChartsTabState extends State<_ChartsTab>
         physics: const AlwaysScrollableScrollPhysics(),
         padding: Desktop.of(context)
             ? const EdgeInsets.fromLTRB(24, 16, 24, 32)
-            : const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            : const EdgeInsets.fromLTRB(
+                Space.page,
+                Space.lg,
+                Space.page,
+                Space.xxl,
+              ),
         children: const [HistoryCharts()],
       ),
     );
@@ -286,12 +281,18 @@ class _ActivityLogState extends State<_ActivityLog>
     final rows = _cachedRows;
 
     final desktop = Desktop.of(context);
-    final cardRadius = Radius.circular(desktop ? 12 : 20);
+    final cardRadius = const Radius.circular(Corners.lg);
+    final scheme = Theme.of(context).colorScheme;
     final list = ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: desktop
           ? const EdgeInsets.fromLTRB(24, 8, 24, 32)
-          : const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          : const EdgeInsets.fromLTRB(
+              Space.page,
+              Space.lg,
+              Space.page,
+              Space.xxl,
+            ),
       itemCount: rows.length + 1,
       itemBuilder: (context, i) {
         if (i == 0) {
@@ -312,15 +313,18 @@ class _ActivityLogState extends State<_ActivityLog>
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              if (!first) Divider(indent: desktop ? 0 : 70),
+              if (!first) const Divider(indent: 56),
               Dismissible(
                 key: ValueKey(e.id),
                 direction: DismissDirection.endToStart,
                 background: Container(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 24),
-                  child: const Icon(Icons.delete_outline_rounded),
+                  color: scheme.errorContainer,
+                  alignment: AlignmentDirectional.centerEnd,
+                  padding: const EdgeInsetsDirectional.only(end: Space.xl),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    color: scheme.onErrorContainer,
+                  ),
                 ),
                 onDismissed: (_) {
                   app.deleteEntry(e);
@@ -346,7 +350,9 @@ class _ActivityLogState extends State<_ActivityLog>
           key: const ValueKey('history-filters'),
           width: 340,
           decoration: BoxDecoration(
-            border: Border(right: BorderSide(color: Baby.border)),
+            border: BorderDirectional(
+              end: BorderSide(color: scheme.outlineVariant),
+            ),
           ),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(24, 16, 20, 24),
@@ -362,7 +368,8 @@ class _ActivityLogState extends State<_ActivityLog>
     if (grouping == Grouping.type) {
       return LText(
         '${items.length}',
-        style: TextStyle(fontWeight: FontWeight.w800, color: Baby.muted),
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       );
     }
     final feedMin = items.fold<int>(
@@ -401,59 +408,33 @@ class _ActivityLogState extends State<_ActivityLog>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (shown.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: Column(
-              children: [
-                IconBubble(
-                  glyph: (size, color) => Icon(
-                    nothingLogged
-                        ? Icons.history_rounded
-                        : Icons.search_off_rounded,
-                    size: size,
-                    color: color,
-                  ),
-                  color: Baby.primarySoft,
-                  iconColor: Baby.primary,
-                  size: 64,
-                ),
-                const SizedBox(height: 16),
-                LText(
-                  nothingLogged
-                      ? 'Nothing logged yet'
-                      : searching
-                      ? 'Nothing matches "${_search.text}"'
-                      : 'No entries match these filters',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                LText(
-                  nothingLogged
-                      ? 'Feeds, nappies, sleep and pills you log on the Today screen will show up here.'
-                      : 'Try another day, or show everything.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Baby.muted),
-                ),
-                if (!nothingLogged && _hasFilters) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton(
+          EmptyState(
+            icon: nothingLogged
+                ? Icons.history_rounded
+                : Icons.search_off_rounded,
+            title: nothingLogged
+                ? 'Nothing logged yet'
+                : searching
+                ? 'Nothing matches "${_search.text}"'
+                : 'No entries match these filters',
+            text: nothingLogged
+                ? 'Feeds, nappies, sleep and pills you log on the Today screen will show up here.'
+                : 'Try another day, or show everything.',
+            action: !nothingLogged && _hasFilters
+                ? OutlinedButton(
                     onPressed: _reset,
                     child: const LText('Show everything'),
-                  ),
-                ],
-              ],
-            ),
+                  )
+                : null,
           )
         else
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: Space.xs),
             child: LText(
               '${shown.length} found',
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
       ],
@@ -469,14 +450,42 @@ class _ActivityLogState extends State<_ActivityLog>
     final searching = _search.text.isNotEmpty;
     final extras =
         (period.hour != null ? 1 : 0) + (grouping != Grouping.day ? 1 : 0);
+    final search = TextField(
+      controller: _search,
+      onChanged: (_) => setState(() {}),
+      textInputAction: TextInputAction.search,
+      decoration: LInputDecoration(
+        hintText: 'Search, e.g. poo, left, iron, monday',
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: searching
+            ? LIconButton(
+                tooltip: 'Clear',
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => setState(_search.clear),
+              )
+            : null,
+        contentPadding: const EdgeInsets.symmetric(vertical: Space.md),
+        border: desktop
+            ? null
+            : const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(Corners.xl)),
+                borderSide: BorderSide.none,
+              ),
+        enabledBorder: desktop
+            ? null
+            : const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(Corners.xl)),
+                borderSide: BorderSide.none,
+              ),
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            const Expanded(
-              child: LText('Everything that was logged, newest first'),
-            ),
+            Expanded(child: search),
+            const SizedBox(width: Space.xs),
             PopupMenuButton<String>(
               tooltip: 'Export and import',
               icon: const Icon(Icons.more_vert_rounded),
@@ -514,7 +523,7 @@ class _ActivityLogState extends State<_ActivityLog>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.md),
         _chipRow(desktop, [
           for (final (type, label, glyph, color) in [
             (null, 'All', null, null),
@@ -527,7 +536,7 @@ class _ActivityLogState extends State<_ActivityLog>
               (EntryType.pump, 'Pumping', Glyphs.pump, Baby.pump),
           ])
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: Space.sm),
               child: ChoiceChip(
                 avatar: glyph?.call(18, color!),
                 label: LText(label),
@@ -536,41 +545,12 @@ class _ActivityLogState extends State<_ActivityLog>
               ),
             ),
         ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         HistoryPeriodControls(
           period: period,
           allowAll: true,
           showHour: false,
           onChanged: (value) => setState(() => period = value),
-        ),
-        TextField(
-          controller: _search,
-          onChanged: (_) => setState(() {}),
-          textInputAction: TextInputAction.search,
-          decoration: LInputDecoration(
-            hintText: 'Search, e.g. poo, left, iron, monday',
-            prefixIcon: Icon(Icons.search_rounded, color: Baby.muted),
-            suffixIcon: searching
-                ? LIconButton(
-                    tooltip: 'Clear',
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => setState(_search.clear),
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            border: desktop
-                ? null
-                : OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide(color: Baby.line),
-                  ),
-            enabledBorder: desktop
-                ? null
-                : OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide(color: Baby.line),
-                  ),
-          ),
         ),
         Align(
           alignment: AlignmentDirectional.centerStart,
@@ -606,10 +586,7 @@ class _ActivityLogState extends State<_ActivityLog>
                       children: [
                         LText(
                           'Group by',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: Baby.muted,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(width: 10),
                         Expanded(

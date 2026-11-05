@@ -15,6 +15,8 @@ String repeatLabel(Routine r) => r.weekdays.length == 7
     ? tr('Every day')
     : r.weekdays.map((d) => tr(_days[d - 1])).join(', ');
 
+/// The selected baby, shown quietly under the app bar: photo, a plain
+/// dropdown with the name, and edit / add buttons.
 class BabyPicker extends StatelessWidget {
   const BabyPicker({super.key});
 
@@ -22,67 +24,69 @@ class BabyPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsetsDirectional.fromSTEB(4, 2, 10, 2),
-              decoration: BoxDecoration(
-                color: Baby.card,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Baby.line),
-              ),
-              child: Row(
-                children: [
-                  BabyPhoto(photo: app.activeBaby.photo, size: 32),
-                  const SizedBox(width: 8),
-                  Expanded(child: _babyDropdown(context, app)),
-                ],
-              ),
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        Space.page,
+        0,
+        Space.xs,
+        Space.xs,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          children: [
+            BabyPhoto(photo: app.activeBaby.photo, size: 32),
+            const SizedBox(width: Space.md),
+            Expanded(child: _babyDropdown(context, app)),
+            const SizedBox(width: Space.xs),
+            LIconButton(
+              tooltip: 'Edit profile',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => editBabyProfile(context),
             ),
-          ),
-          const SizedBox(width: 4),
-          LIconButton(
-            tooltip: 'Edit profile',
-            icon: Icon(Icons.edit_outlined, color: Baby.muted),
-            onPressed: () => editBabyProfile(context),
-          ),
-          LIconButton(
-            tooltip: 'Add baby',
-            icon: Icon(Icons.person_add_alt_1_outlined, color: Baby.muted),
-            onPressed: () => _babyName(context),
-          ),
-        ],
+            LIconButton(
+              tooltip: 'Add baby',
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              onPressed: () => _babyName(context),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _babyDropdown(BuildContext context, AppState app) =>
-      DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: app.activeBabyId,
-          items: [
-            for (final b in app.babies)
-              DropdownMenuItem(
-                value: b.id,
-                child: LText.raw(
-                  b.name.isEmpty ? tr('Baby') : b.name,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (id) {
-            if (id != null && !app.selectBaby(id)) {
-              showMessage(
-                context,
-                'Save or stop the feed timer before switching babies.',
-              );
-            }
-          },
+  Widget _babyDropdown(BuildContext context, AppState app) {
+    final theme = Theme.of(context);
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        isExpanded: true,
+        value: app.activeBabyId,
+        style: theme.textTheme.titleMedium,
+        borderRadius: BorderRadius.circular(Corners.xs),
+        icon: Icon(
+          Icons.arrow_drop_down_rounded,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
-      );
+        items: [
+          for (final b in app.babies)
+            DropdownMenuItem(
+              value: b.id,
+              child: LText.raw(
+                b.name.isEmpty ? tr('Baby') : b.name,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+        onChanged: (id) {
+          if (id != null && !app.selectBaby(id)) {
+            showMessage(
+              context,
+              'Save or stop the feed timer before switching babies.',
+            );
+          }
+        },
+      ),
+    );
+  }
 }
 
 /// Asks for a name and adds a baby (it becomes the selected one).
@@ -164,118 +168,138 @@ class RoutinesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final theme = Theme.of(context);
     final routines = app.routines;
-    return PullToSync(
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    // On desktop "Add routine" is in the top bar.
+    final desktop = Desktop.of(context);
+    return Scaffold(
+      floatingActionButton: desktop
+          ? null
+          : FloatingActionButton.extended(
+              heroTag: 'add-routine',
+              icon: const Icon(Icons.add_rounded),
+              label: const LText('Add routine'),
+              onPressed: () => editRoutine(context),
+            ),
+      body: PullToSync(
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            Space.page,
+            0,
+            Space.page,
+            desktop ? Space.xxl : 96,
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Space.xs,
+                Space.sm,
+                Space.xs,
+                Space.xs,
+              ),
+              child: Semantics(
+                header: true,
+                child: LText(
+                  'A little rhythm for ${app.babyName.isEmpty ? tr('your baby') : app.babyName}',
+                  style: theme.textTheme.headlineSmall,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Space.xs,
+                0,
+                Space.xs,
+                Space.lg,
+              ),
+              child: LText(
+                'Plan bath time, bedtime and the little things you do together.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            if (routines.isEmpty)
+              Card(
+                child: EmptyState(
+                  icon: Icons.bathtub_outlined,
+                  title: 'Make bath time part of the day',
+                  text: 'Choose a time and the days that suit your family. Each baby has their own routines.',
+                  action: OutlinedButton.icon(
+                    onPressed: () =>
+                        editRoutine(context, suggested: tr('Bath time')),
+                    icon: const Icon(Icons.bathtub_outlined),
+                    label: const LText('Set up bath time'),
+                  ),
+                ),
+              ),
+            for (final r in routines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Space.md),
+                child: _RoutineCard(routine: r),
+              ),
+            const SizedBox(height: Space.sm),
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(Icons.history_rounded),
+                title: const LText('Routine history'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => openRoutineHistory(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoutineCard extends StatelessWidget {
+  const _RoutineCard({required this.routine});
+  final Routine routine;
+
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    final r = routine;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: LText(
-              'A little rhythm for ${app.babyName.isEmpty ? tr('your baby') : app.babyName}',
-              style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
+          ListTile(
+            leading: Icon(
+              r.name.toLowerCase().contains('bath')
+                  ? Icons.bathtub_outlined
+                  : Icons.event_repeat_rounded,
+            ),
+            title: LText.raw(
+              r.name,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            subtitle: LText(
+              '${minutesOfDay(r.minutes)} · ${repeatLabel(r)}${r.notes.isEmpty ? '' : '\n${r.notes}'}',
+            ),
+            isThreeLine: r.notes.isNotEmpty,
+            trailing: LIconButton(
+              tooltip: 'Edit ${r.name}',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => editRoutine(context, initial: r),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 18),
-            child: LText(
-              'Plan bath time, bedtime and the little things you do together.',
-              style: TextStyle(color: Baby.muted),
+          RoutineActions(routine: r),
+          const Divider(),
+          SwitchListTile.adaptive(
+            title: LText(r.enabled ? 'Routine active' : 'Routine paused'),
+            subtitle: LText(
+              app.routineRemindsHere(r)
+                  ? 'Reminders on this device'
+                  : 'Reminders off on this device',
             ),
+            value: r.enabled,
+            onChanged: (on) => app.saveRoutine(r.copyWith(enabled: on)),
           ),
-          FilledButton.icon(
-            icon: const Icon(Icons.add_rounded),
-            label: const LText('Add routine'),
-            onPressed: () => editRoutine(context),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => openRoutineHistory(context),
-              icon: const Icon(Icons.history_rounded),
-              label: const LText('Routine history'),
-            ),
-          ),
-          if (routines.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Icon(Icons.bathtub_outlined, size: 52, color: Baby.primary),
-                    const SizedBox(height: 12),
-                    const LText(
-                      'Make bath time part of the day',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    const LText(
-                      'Choose a time and the days that suit your family. Each baby has their own routines.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          editRoutine(context, suggested: tr('Bath time')),
-                      icon: const Icon(Icons.bathtub_outlined),
-                      label: const LText('Set up bath time'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          for (final r in routines)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(
-                        r.name.toLowerCase().contains('bath')
-                            ? Icons.bathtub_outlined
-                            : Icons.event_repeat_rounded,
-                        color: r.enabled ? Baby.primary : Baby.muted,
-                      ),
-                      title: LText.raw(
-                        r.name,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      subtitle: LText(
-                        '${minutesOfDay(r.minutes)} · ${repeatLabel(r)}${r.notes.isEmpty ? '' : '\n${r.notes}'}',
-                      ),
-                      isThreeLine: r.notes.isNotEmpty,
-                      trailing: LIconButton(
-                        tooltip: 'Edit ${r.name}',
-                        icon: const Icon(Icons.edit_outlined),
-                        onPressed: () => editRoutine(context, initial: r),
-                      ),
-                    ),
-                    RoutineActions(routine: r),
-                    SwitchListTile.adaptive(
-                      dense: true,
-                      title: LText(
-                        r.enabled ? 'Routine active' : 'Routine paused',
-                      ),
-                      subtitle: LText(
-                        app.routineRemindsHere(r)
-                            ? 'Reminders on this device'
-                            : 'Reminders off on this device',
-                      ),
-                      value: r.enabled,
-                      onChanged: (on) =>
-                          app.saveRoutine(r.copyWith(enabled: on)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -296,37 +320,31 @@ class RoutinePreview extends StatelessWidget {
     }).toList()..sort((a, b) => a.$2.compareTo(b.$2));
     final next = upcoming.firstOrNull;
     final recent = app.routineHistory().firstOrNull;
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            leading: Icon(Icons.event_repeat_rounded, color: Baby.primary),
-            title: LText(
-              next == null
-                  ? 'Plan your baby’s routines'
-                  : 'Next: ${next.$1.name}',
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            subtitle: LText(
-              next == null
-                  ? 'Set up bath time, bedtime and more'
-                  : '${dayLabel(next.$2)} · ${hm(next.$2)}',
-            ),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: onOpen,
+    return ListCard(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.event_repeat_rounded),
+          title: LText(
+            next == null
+                ? 'Plan your baby’s routines'
+                : 'Next: ${next.$1.name}',
           ),
-          if (recent != null)
-            ListTile(
-              leading: Icon(Icons.check_circle_outline_rounded, color: Baby.ok),
-              title: LText(
-                'Last ${recent.routineName.toLowerCase()}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              subtitle: LText(completionLabel(recent)),
-              onTap: () => openRoutineHistory(context),
-            ),
-        ],
-      ),
+          subtitle: LText(
+            next == null
+                ? 'Set up bath time, bedtime and more'
+                : '${dayLabel(next.$2)} · ${hm(next.$2)}',
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: onOpen,
+        ),
+        if (recent != null)
+          ListTile(
+            leading: const Icon(Icons.check_circle_outline_rounded),
+            title: LText('Last ${recent.routineName.toLowerCase()}'),
+            subtitle: LText(completionLabel(recent)),
+            onTap: () => openRoutineHistory(context),
+          ),
+      ],
     );
   }
 }
@@ -379,13 +397,16 @@ class _RoutineEditorState extends State<_RoutineEditor> {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final theme = Theme.of(context);
+    final desktop = Desktop.of(context);
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          24 +
+          Space.xl,
+          // The phone sheet already has a drag handle above.
+          desktop ? Space.xl : Space.sm,
+          Space.xl,
+          Space.xl +
               MediaQuery.viewInsetsOf(context).bottom +
               MediaQuery.paddingOf(context).bottom,
         ),
@@ -395,16 +416,18 @@ class _RoutineEditorState extends State<_RoutineEditor> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              LText(
-                widget.initial == null
-                    ? 'A new little routine'
-                    : 'Edit routine',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
+              Semantics(
+                header: true,
+                child: LText(
+                  widget.initial == null
+                      ? 'A new little routine'
+                      : 'Edit routine',
+                  style: desktop
+                      ? theme.textTheme.titleLarge
+                      : theme.textTheme.headlineSmall,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Space.xl),
               LTextFormField(
                 controller: _name,
                 maxLength: 80,
@@ -418,7 +441,8 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                     : null,
               ),
               Wrap(
-                spacing: 8,
+                spacing: Space.sm,
+                runSpacing: Space.sm,
                 children: [
                   for (final name in ['Bath time', 'Bedtime', 'Tummy time'])
                     ActionChip(
@@ -427,15 +451,15 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                     ),
                 ],
               ),
+              const SizedBox(height: Space.sm),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule_rounded),
                 title: const LText('Time'),
                 trailing: LText(
                   minutesOfDay(_minutes),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
                 onTap: () async {
@@ -451,11 +475,9 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                   }
                 },
               ),
-              const LText(
-                'Repeat on',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
+              LText('Repeat on', style: theme.textTheme.titleSmall),
+              const SizedBox(height: Space.sm),
               FormField<bool>(
                 validator: (_) =>
                     _weekdays.isEmpty ? 'Choose at least one day' : null,
@@ -463,7 +485,8 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(
-                      spacing: 8,
+                      spacing: Space.sm,
+                      runSpacing: Space.sm,
                       children: [
                         for (var d = 1; d <= 7; d++)
                           FilterChip(
@@ -481,16 +504,19 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                       ],
                     ),
                     if (field.hasError)
-                      LText(
-                        field.errorText!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      Padding(
+                        padding: const EdgeInsets.only(top: Space.xs),
+                        child: LText(
+                          field.errorText!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
                         ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.xl),
               LTextFormField(
                 controller: _notes,
                 maxLength: 500,
@@ -512,7 +538,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                         app.routineRemindsHere(widget.initial!)),
                 onChanged: (on) => setState(() => _remind = on),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.lg),
               FilledButton(
                 onPressed: () async {
                   if (!_form.currentState!.validate()) return;
@@ -539,8 +565,12 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                 },
                 child: const LText('Save routine'),
               ),
-              if (widget.initial != null)
+              if (widget.initial != null) ...[
+                const SizedBox(height: Space.sm),
                 TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
                   icon: const Icon(Icons.delete_outline_rounded),
                   label: const LText('Delete routine'),
                   onPressed: () async {
@@ -558,6 +588,7 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                     );
                   },
                 ),
+              ],
             ],
           ),
         ),

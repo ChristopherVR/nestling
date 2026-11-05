@@ -75,88 +75,69 @@ class _HomePageState extends State<HomePage> {
     final today = app.entriesOn(DateTime.now());
 
     final nap = app.activeSleep;
-    final overview = <Widget>[
-      _BabyHero(app: app),
-      const SizedBox(height: 14),
-      if (app.timerStart != null) ...[
-        _TimerCard(app: app),
-        const SizedBox(height: 14),
-      ],
-      const PumpLiveCard(),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _Guided(
-                  on: app.tourPending && _guideStep(app) == _Guide.feed,
-                  child: ActionTile(
-                    glyph: app.bottleFirst ? Glyphs.bottle : Glyphs.feed,
-                    label: 'Feed',
-                    hint: app.suggestedSide != null
-                        ? 'Next: ${sideLabel(app.suggestedSide!)}'
-                        : 'Log a feed',
-                    soft: Baby.feedSoft,
-                    strong: Baby.feed,
-                    onTap: () => showSheet(context, const FeedSheet()),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: _Guided(
-                  on: app.tourPending && _guideStep(app) == _Guide.nappy,
-                  child: ActionTile(
-                    glyph: Glyphs.nappy,
-                    label: 'Nappy',
-                    hint: 'Pee or poo',
-                    soft: Baby.nappySoft,
-                    strong: Baby.nappy,
-                    onTap: () => showSheet(context, const NappySheet()),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ActionTile(
-                  glyph: Glyphs.sleep,
-                  label: nap == null ? 'Sleep' : 'End nap',
-                  hint: nap == null
-                      ? 'Start a nap'
-                      : duration(DateTime.now().difference(nap.time)),
-                  soft: Baby.sleepSoft,
-                  strong: Baby.sleep,
-                  onTap: () => _napTap(context, app),
-                ),
-              ),
-              Expanded(
-                child: ActionTile(
-                  glyph: Glyphs.pill,
-                  label: 'Pill',
-                  hint: _pillHint(app),
-                  soft: Baby.pillSoft,
-                  strong: Baby.pill,
-                  onTap: () => _pillTap(context, app),
-                ),
-              ),
-              if (app.pumpOnToday) Expanded(child: _pumpTile(context, app)),
-            ],
-          ),
+    final quick = <Widget>[
+      _Guided(
+        on: app.tourPending && _guideStep(app) == _Guide.feed,
+        child: ActionTile(
+          glyph: app.bottleFirst ? Glyphs.bottle : Glyphs.feed,
+          label: 'Feed',
+          hint: app.suggestedSide != null
+              ? 'Next: ${sideLabel(app.suggestedSide!)}'
+              : 'Log a feed',
+          soft: Baby.feedSoft,
+          strong: Baby.feed,
+          onTap: () => showSheet(context, const FeedSheet()),
         ),
       ),
+      _Guided(
+        on: app.tourPending && _guideStep(app) == _Guide.nappy,
+        child: ActionTile(
+          glyph: Glyphs.nappy,
+          label: 'Nappy',
+          hint: 'Pee or poo',
+          soft: Baby.nappySoft,
+          strong: Baby.nappy,
+          onTap: () => showSheet(context, const NappySheet()),
+        ),
+      ),
+      ActionTile(
+        glyph: Glyphs.sleep,
+        label: nap == null ? 'Sleep' : 'End nap',
+        hint: nap == null
+            ? 'Start a nap'
+            : duration(DateTime.now().difference(nap.time)),
+        soft: Baby.sleepSoft,
+        strong: Baby.sleep,
+        onTap: () => _napTap(context, app),
+      ),
+      ActionTile(
+        glyph: Glyphs.pill,
+        label: 'Pill',
+        hint: _pillHint(app),
+        soft: Baby.pillSoft,
+        strong: Baby.pill,
+        onTap: () => _pillTap(context, app),
+      ),
+      if (app.pumpOnToday) _pumpTile(context, app),
+    ];
+    final overview = <Widget>[
+      if (app.timerStart != null) ...[
+        _TimerCard(app: app),
+        const SizedBox(height: Space.md),
+      ],
+      const SizedBox(height: Space.sm),
+      _StatusCard(app: app),
+      const SizedBox(height: Space.lg),
+      const PumpLiveCard(),
+      _QuickGrid(children: quick),
       if (app.cameraOnToday) ...[
-        const SizedBox(height: 14),
+        const SizedBox(height: Space.md),
         const CameraTodayCard(),
       ],
       if (app.tourPending) ...[
-        const SizedBox(height: 14),
+        const SizedBox(height: Space.md),
         _FirstLogGuide(app: app),
       ],
-      ..._tips(context, app),
-      const SizedBox(height: 14),
-      RoutinePreview(onOpen: widget.onSeeRoutines),
-      const SizedBox(height: 14),
-      _ReminderRow(app: app),
     ];
     final activity = <Widget>[
       SectionTitle(
@@ -176,14 +157,10 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       if (today.isEmpty)
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: LText(
-              'Nothing logged yet today.\nTap Feed, Nappy or Pill above to start.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-            ),
+        const Card(
+          child: EmptyState(
+            icon: Icons.edit_note_rounded,
+            text: 'Nothing logged yet today.\nTap Feed, Nappy or Pill above to start.',
           ),
         )
       else
@@ -193,6 +170,7 @@ class _HomePageState extends State<HomePage> {
               EntryTile(entry: e, onTap: () => editEntry(context, e)),
           ],
         ),
+      const SizedBox(height: Space.xs),
       Align(
         child: TextButton.icon(
           onPressed: widget.onSeeHistory,
@@ -201,6 +179,13 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     ];
+    final plan = <Widget>[
+      ..._tips(context, app),
+      const SectionTitle('Plan'),
+      RoutinePreview(onOpen: widget.onSeeRoutines),
+      const SizedBox(height: Space.md),
+      _ReminderRow(app: app),
+    ];
     if (Desktop.of(context)) {
       return _desktop(context, app, today, activity);
     }
@@ -208,7 +193,12 @@ class _HomePageState extends State<HomePage> {
       builder: (context, constraints) => PullToSync(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+          padding: EdgeInsets.fromLTRB(
+            Space.page,
+            Space.xs,
+            Space.page,
+            Space.xxl + MediaQuery.paddingOf(context).bottom,
+          ),
           children: [
             if (constraints.maxWidth >= 900)
               Row(
@@ -218,10 +208,10 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: overview,
+                      children: [...overview, ...plan],
                     ),
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: Space.xl),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -233,6 +223,7 @@ class _HomePageState extends State<HomePage> {
             else ...[
               ...overview,
               ...activity,
+              ...plan,
             ],
           ],
         ),
@@ -285,7 +276,7 @@ class _HomePageState extends State<HomePage> {
           _LastFeedCard(app: app),
           _LastNappyCard(app: app),
           _StatCard(
-            title: nap == null ? 'SLEEP' : 'SLEEPING',
+            title: nap == null ? 'Sleep' : 'Sleeping',
             value: nap == null ? 'Awake' : _agoShort(nap.time),
             detail: nap == null
                 ? 'Put down for a nap'
@@ -296,7 +287,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () => _napTap(context, app),
           ),
           _StatCard(
-            title: 'NEXT PILL',
+            title: 'Next pill',
             value: next == null
                 ? 'None'
                 : next.$2.isBefore(now)
@@ -439,6 +430,33 @@ class _HomePageState extends State<HomePage> {
   );
 }
 
+/// Quick-log tiles two to a row; an odd last tile spans the full width.
+class _QuickGrid extends StatelessWidget {
+  const _QuickGrid({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var i = 0; i < children.length; i += 2) ...[
+        if (i > 0) const SizedBox(height: Space.sm),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: children[i]),
+              if (i + 1 < children.length) ...[
+                const SizedBox(width: Space.sm),
+                Expanded(child: children[i + 1]),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
 class _TimerCard extends StatefulWidget {
   const _TimerCard({required this.app});
   final AppState app;
@@ -465,36 +483,58 @@ class _TimerCardState extends State<_TimerCard> {
   @override
   Widget build(BuildContext context) {
     final app = widget.app;
+    final theme = Theme.of(context);
+    final feed = context.nest.feed;
     final elapsed = app.feedElapsed();
     final mm = elapsed.inMinutes.toString().padLeft(2, '0');
     final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
     return Card(
-      color: Baby.feedSoft,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.lg,
+          Space.lg,
+          Space.sm,
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            LText(
-              app.timerPaused
-                  ? 'A little burping break'
-                  : 'Feeding since ${hm(app.timerStart!)}',
-              style: TextStyle(fontWeight: FontWeight.w700, color: Baby.feed),
+            Row(
+              children: [
+                Glyphs.feed(20, feed.color),
+                const SizedBox(width: Space.sm),
+                Expanded(
+                  child: LText(
+                    app.timerPaused
+                        ? 'A little burping break'
+                        : 'Feeding since ${hm(app.timerStart!)}',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            LText(
-              '$mm:$ss',
-              style: const TextStyle(
-                fontSize: 60,
-                fontWeight: FontWeight.w800,
-                fontFeatures: [FontFeature.tabularFigures()],
+            const SizedBox(height: Space.xs),
+            Semantics(
+              liveRegion: false,
+              label: tr('Active feeding time'),
+              child: LText(
+                '$mm:$ss',
+                style: theme.textTheme.displayLarge?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
             LText(
               app.timerPaused
                   ? 'Timer paused · take your time'
                   : 'Active feeding time',
-              style: TextStyle(color: Baby.feed),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.lg),
             Row(
               children: [
                 for (final s in const [
@@ -510,25 +550,34 @@ class _TimerCardState extends State<_TimerCard> {
                       onTap: () => app.switchTimerSide(s),
                     ),
                   ),
-                  if (s != FeedSide.both) const SizedBox(width: 8),
+                  if (s != FeedSide.both) const SizedBox(width: Space.sm),
                 ],
               ],
             ),
-            const SizedBox(height: 12),
-            FilledButton.tonalIcon(
-              onPressed: () => app.timerPaused
-                  ? app.resumeFeedTimer()
-                  : app.pauseFeedTimer(),
-              icon: Icon(
-                app.timerPaused
-                    ? Icons.play_arrow_rounded
-                    : Icons.pause_rounded,
-              ),
-              label: LText(
-                app.timerPaused ? 'Resume feeding' : 'Pause to burp',
-              ),
+            const SizedBox(height: Space.md),
+            _ButtonPair(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => app.timerPaused
+                      ? app.resumeFeedTimer()
+                      : app.pauseFeedTimer(),
+                  icon: Icon(
+                    app.timerPaused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                  ),
+                  label: LText(
+                    app.timerPaused ? 'Resume feeding' : 'Pause to burp',
+                  ),
+                ),
+                FilledButton.icon(
+                  icon: const Icon(Icons.stop_rounded),
+                  label: const LText('Stop & save'),
+                  onPressed: () => app.stopFeedTimer(),
+                ),
+              ],
             ),
-            SwitchListTile.adaptive(
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const LText('Every 5 minutes'),
               subtitle: const LText('Remind me during active feeding'),
@@ -539,48 +588,40 @@ class _TimerCardState extends State<_TimerCard> {
               valueListenable: app.reminders.timerProblem,
               builder: (_, problem, _) => problem == null
                   ? const SizedBox.shrink()
-                  : LText(problem, style: TextStyle(color: Baby.error)),
-            ),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () async {
-                    final discard = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const LText('Discard this feed?'),
-                        content: const LText(
-                          'The timer will stop without saving a feed.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const LText('Keep feeding'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const LText('Discard'),
-                          ),
-                        ],
+                  : LText(
+                      problem,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
                       ),
-                    );
-                    if (discard == true) app.stopFeedTimer(save: false);
-                  },
-                  child: const LText('Cancel'),
-                ),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Baby.feed,
-                    foregroundColor: Baby.onPrimary,
-                  ),
-                  icon: const Icon(Icons.stop_rounded),
-                  label: const LText('Stop & save'),
-                  onPressed: () => app.stopFeedTimer(),
-                ),
-              ],
+                    ),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                onPressed: () async {
+                  final discard = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const LText('Discard this feed?'),
+                      content: const LText(
+                        'The timer will stop without saving a feed.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const LText('Keep feeding'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const LText('Discard'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (discard == true) app.stopFeedTimer(save: false);
+                },
+                child: const LText('Cancel'),
+              ),
             ),
           ],
         ),
@@ -589,6 +630,40 @@ class _TimerCardState extends State<_TimerCard> {
   }
 }
 
+/// Two buttons side by side with equal widths; stacked when large text or a
+/// narrow screen would squeeze their labels.
+class _ButtonPair extends StatelessWidget {
+  const _ButtonPair({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+      if (constraints.maxWidth < 340 * scale) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, child) in children.indexed) ...[
+              if (i > 0) const SizedBox(height: Space.sm),
+              child,
+            ],
+          ],
+        );
+      }
+      return Row(
+        children: [
+          for (final (i, child) in children.indexed) ...[
+            if (i > 0) const SizedBox(width: Space.sm),
+            Expanded(child: child),
+          ],
+        ],
+      );
+    },
+  );
+}
+
+/// A status card on the desktop Today grid.
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.title,
@@ -610,139 +685,64 @@ class _StatCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) =>
-      Desktop.of(context) ? _desktop(context) : _phone(context);
-
-  /// Neutral bordered card; the kind's colour is the accent.
-  Widget _desktop(BuildContext context) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: LText(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Baby.muted,
-                      letterSpacing: 0.4,
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ),
-                if (glyph != null)
-                  IconBubble(
-                    glyph: glyph!,
-                    color: soft,
-                    iconColor: color,
-                    size: 30,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            LText(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: hero ? 30 : 26,
-                height: 1.1,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                color: hero ? color : Baby.ink,
-              ),
-            ),
-            const SizedBox(height: 4),
-            LText(
-              detail,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: Baby.muted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _phone(BuildContext context) => Card(
-    color: soft,
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, hero ? 20 : 16, 20, hero ? 20 : 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(Space.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  LText(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                      letterSpacing: 0.4,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    switchInCurve: Curves.easeOutCubic,
-                    child: Align(
-                      key: ValueKey(value),
-                      alignment: Alignment.centerLeft,
-                      child: LText(
-                        value,
-                        style: TextStyle(
-                          fontSize: hero ? 44 : 26,
-                          height: 1.1,
-                          fontWeight: FontWeight.w800,
-                        ),
+                  if (glyph != null) ...[
+                    glyph!(18, color),
+                    const SizedBox(width: Space.sm),
+                  ],
+                  Expanded(
+                    child: LText(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  LText(
-                    detail,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Baby.muted,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-            ),
-            if (glyph != null) ...[
-              const SizedBox(width: 12),
-              IconBubble(
-                glyph: glyph!,
-                color: Baby.card,
-                iconColor: color,
-                size: hero ? 56 : 48,
+              const SizedBox(height: Space.sm),
+              LText(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    (hero
+                            ? theme.textTheme.headlineLarge
+                            : theme.textTheme.headlineSmall)
+                        ?.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+              ),
+              const SizedBox(height: Space.xs),
+              LText(
+                detail,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ],
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 String _agoShort(DateTime t) {
@@ -758,7 +758,7 @@ class _LastFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final last = app.lastFeed;
     return _StatCard(
-      title: 'SINCE LAST FEED',
+      title: 'Since last feed',
       color: Baby.feed,
       soft: Baby.feedSoft,
       hero: true,
@@ -784,7 +784,7 @@ class _LastNappyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final last = app.lastNappy;
     return _StatCard(
-      title: 'SINCE LAST NAPPY',
+      title: 'Last nappy',
       color: Baby.nappy,
       soft: Baby.nappySoft,
       glyph: Glyphs.nappy,
@@ -815,238 +815,166 @@ class _ReminderRow extends StatelessWidget {
     } else {
       text = 'Feed was due at ${hm(at)}';
     }
-    final desktop = Desktop.of(context);
-    final radius = BorderRadius.circular(desktop ? DesktopTokens.radiusLg : 22);
-    return Material(
-      color: Baby.card,
-      elevation: desktop || Baby.dark ? 0 : 1,
-      shadowColor: Theme.of(context).cardTheme.shadowColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: desktop ? BorderSide(color: Baby.border) : BorderSide.none,
-      ),
-      child: InkWell(
-        borderRadius: radius,
-        onTap: () => showFeedReminderSheet(context),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            children: [
-              Icon(
-                app.feedReminderOn
-                    ? Icons.alarm_on_rounded
-                    : Icons.alarm_off_rounded,
-                color: app.feedReminderOn ? Baby.feed : Baby.muted,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: LText(
-                  text,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Baby.muted),
-            ],
-          ),
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        leading: Icon(
+          app.feedReminderOn ? Icons.alarm_on_rounded : Icons.alarm_off_rounded,
+          color: app.feedReminderOn ? Baby.feed : null,
         ),
+        title: LText(text),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () => showFeedReminderSheet(context),
       ),
     );
   }
 }
 
-/// The top of Today: the baby's photo, name and age, then the time since
-/// the last feed (the number that matters at 3 am), the last nappy and sleep.
-class _BabyHero extends StatelessWidget {
-  const _BabyHero({required this.app});
+/// The top of Today, as plain text: who, then the time since the last feed
+/// (the number that matters at 3 am), then the last nappy and sleep as
+/// list rows. No card: the type hierarchy carries it.
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({required this.app});
   final AppState app;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: Baby.hero,
-        ),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      child: LayoutBuilder(
-        builder: (context, constraints) => _content(
-          context,
-          wide:
-              constraints.maxWidth >=
-              320 * MediaQuery.textScalerOf(context).scale(1),
-        ),
-      ),
-    );
-  }
-
-  Widget _content(BuildContext context, {required bool wide}) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final baby = app.activeBaby;
     final name = baby.name.trim();
     final last = app.lastFeed;
     final nappy = app.lastNappy;
     final nap = app.activeSleep;
-    final soft = Baby.ink.withValues(alpha: 0.62);
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Semantics(
-              button: true,
-              label: tr('Edit profile'),
-              child: GestureDetector(
-                onTap: () => editBabyProfile(context),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: Baby.card.withValues(alpha: 0.85),
-                    shape: BoxShape.circle,
-                  ),
-                  child: BabyPhoto(photo: baby.photo, size: 50),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+          child: Row(
+            children: [
+              Semantics(
+                button: true,
+                label: tr('Edit profile'),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => editBabyProfile(context),
+                  child: BabyPhoto(photo: baby.photo, size: 40),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LText.raw(
-                    name.isEmpty ? tr('Your baby') : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.4,
+              const SizedBox(width: Space.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LText.raw(
+                      name.isEmpty ? tr('Your baby') : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
                     ),
-                  ),
-                  if (baby.dateOfBirth != null)
-                    LText(
-                      babyAge(baby),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: soft,
-                      ),
-                    )
-                  else
-                    GestureDetector(
-                      onTap: () => editBabyProfile(context),
-                      child: LText(
-                        'Add a birthday',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Baby.primary,
+                    if (baby.dateOfBirth != null)
+                      LText(babyAge(baby), style: muted)
+                    else
+                      InkWell(
+                        onTap: () => editBabyProfile(context),
+                        child: LText(
+                          'Add a birthday',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: scheme.primary,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-            // The greeting is a nicety: it gives way on narrow screens.
-            if (wide) ...[
-              const SizedBox(width: 8),
-              LText(
-                greeting(),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: soft,
+                  ],
                 ),
               ),
             ],
-          ],
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: Space.lg),
         Semantics(
           button: last != null,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
+          child: InkWell(
+            borderRadius: Corners.tile,
             onTap: last == null ? null : () => editEntry(context, last),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LText(
-                  'Since last feed',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: soft,
-                  ),
-                ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOutCubic,
-                  layoutBuilder: (current, previous) => Stack(
-                    alignment: AlignmentDirectional.centerStart,
-                    children: [...previous, ?current],
-                  ),
-                  child: LText(
-                    last == null ? 'No feeds yet' : _agoShort(last.time),
-                    key: ValueKey(last?.time),
-                    style: TextStyle(
-                      fontSize: last == null ? 30 : 42,
-                      height: 1.15,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1,
-                      color: Baby.ink,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.xs,
+                vertical: Space.sm,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LText(
+                    'Last feed',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
-                ),
-                LText(
-                  last == null
-                      ? 'Tap Feed below when the next one starts'
-                      : [
-                          last.side == null ? 'Breast' : sideLabel(last.side!),
-                          hm(last.time),
-                          ?entryDetail(last),
-                        ].join(' · '),
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: soft,
+                  AnimatedSwitcher(
+                    duration: Motion.medium,
+                    switchInCurve: Motion.enter,
+                    layoutBuilder: (current, previous) => Stack(
+                      alignment: AlignmentDirectional.centerStart,
+                      children: [...previous, ?current],
+                    ),
+                    child: LText(
+                      last == null ? 'No feeds yet' : ago(last.time),
+                      key: ValueKey(last?.time),
+                      style:
+                          (last == null
+                                  ? theme.textTheme.headlineSmall
+                                  : theme.textTheme.displaySmall)
+                              ?.copyWith(
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  LText(
+                    last == null
+                        ? 'Tap Feed below when the next one starts'
+                        : [
+                            last.side == null
+                                ? 'Breast'
+                                : sideLabel(last.side!),
+                            hm(last.time),
+                            ?entryDetail(last),
+                          ].join(' · '),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _HeroStat(
-                glyph: Glyphs.nappy,
-                color: Baby.nappy,
-                label: 'Last nappy',
-                value: nappy == null ? 'None yet' : ago(nappy.time),
-                onTap: nappy == null
-                    ? () => showSheet(context, const NappySheet())
-                    : () => editEntry(context, nappy),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _HeroStat(
-                glyph: Glyphs.sleep,
-                color: Baby.sleep,
-                label: nap == null ? 'Sleep' : 'Sleeping',
-                value: nap == null
-                    ? 'Awake'
-                    : duration(DateTime.now().difference(nap.time)),
-                onTap: () => _napTap(context, app),
-              ),
-            ),
-          ],
+        const SizedBox(height: Space.sm),
+        _MiniStat(
+          glyph: Glyphs.nappy,
+          color: Baby.nappy,
+          label: 'Last nappy',
+          value: nappy == null
+              ? 'None yet'
+              : '${ago(nappy.time)} · ${nappyLabel(nappy.nappy ?? NappyKind.pee)}',
+          onTap: nappy == null
+              ? () => showSheet(context, const NappySheet())
+              : () => editEntry(context, nappy),
+        ),
+        _MiniStat(
+          glyph: Glyphs.sleep,
+          color: Baby.sleep,
+          label: nap == null ? 'Sleep' : 'Sleeping',
+          value: nap == null
+              ? 'Awake'
+              : duration(DateTime.now().difference(nap.time)),
+          onTap: () => _napTap(context, app),
         ),
       ],
     );
@@ -1062,9 +990,9 @@ void _napTap(BuildContext context, AppState app) {
   }
 }
 
-/// A small frosted tile inside the hero.
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({
+/// A secondary figure under the last feed: icon, label, value.
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
     required this.glyph,
     required this.color,
     required this.label,
@@ -1078,49 +1006,46 @@ class _HeroStat extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Baby.card.withValues(alpha: Baby.dark ? 0.35 : 0.7),
-    borderRadius: BorderRadius.circular(18),
-    child: InkWell(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: Corners.tile,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-        child: Row(
-          children: [
-            glyph(22, color),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LText(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Baby.muted,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Space.xs,
+            vertical: Space.sm,
+          ),
+          child: Row(
+            children: [
+              glyph(20, color),
+              const SizedBox(width: Space.md),
+              // Label left, value right; the value wraps below at large
+              // text sizes instead of squeezing.
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: Space.md,
+                  children: [
+                    LText(label, style: theme.textTheme.bodyLarge),
+                    LText(
+                      value,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
-                  ),
-                  LText(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// The steps of the first-log guide, worked out from what has been logged.
@@ -1142,6 +1067,7 @@ class _Guided extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!on) return child;
+    final primary = Theme.of(context).colorScheme.primary;
     return Loop(
       period: const Duration(milliseconds: 900),
       cycles: 6,
@@ -1150,9 +1076,9 @@ class _Guided extends StatelessWidget {
       builder: (context, t) => DecoratedBox(
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: Corners.card,
           border: Border.all(
-            color: Baby.primary.withValues(alpha: 0.35 + 0.5 * t),
+            color: primary.withValues(alpha: 0.4 + 0.6 * t),
             width: 2,
           ),
         ),
@@ -1170,6 +1096,8 @@ class _FirstLogGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final step = _guideStep(app);
     final (title, text) = switch (step) {
       _Guide.feed => (
@@ -1189,44 +1117,50 @@ class _FirstLogGuide extends StatelessWidget {
     };
     final index = _Guide.values.indexOf(step);
     return Card(
-      color: Baby.primarySoft,
-      elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 8, 6),
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.lg,
+          Space.sm,
+          Space.xs,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                for (var i = 0; i < _Guide.values.length; i++)
-                  Container(
-                    margin: const EdgeInsetsDirectional.only(end: 4),
-                    width: i == index ? 18 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i <= index
-                          ? Baby.primary
-                          : Baby.primary.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(3),
+            Semantics(
+              value: '${index + 1} / ${_Guide.values.length}',
+              child: Row(
+                children: [
+                  for (var i = 0; i < _Guide.values.length; i++)
+                    AnimatedContainer(
+                      duration: Motion.medium,
+                      margin: const EdgeInsetsDirectional.only(end: Space.xs),
+                      width: i == index ? 20 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: i <= index
+                            ? scheme.primary
+                            : scheme.primary.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: Space.md),
             Padding(
-              padding: const EdgeInsetsDirectional.only(end: 10),
+              padding: const EdgeInsetsDirectional.only(end: Space.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  LText(title, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: Space.xs),
                   LText(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                    text,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  LText(text, style: const TextStyle(height: 1.35)),
                 ],
               ),
             ),
@@ -1252,8 +1186,6 @@ List<Widget> _tips(BuildContext context, AppState app) {
     if (app.peers.isEmpty && app.lastFeed != null && app.tipShown('share'))
       _TipCard(
         glyph: Glyphs.heart,
-        color: Baby.primary,
-        soft: Baby.primarySoft,
         title: 'Share with your partner',
         text: 'Both phones keep the same log over your home Wi‑Fi.',
         dismiss: 'Not now',
@@ -1264,14 +1196,12 @@ List<Widget> _tips(BuildContext context, AppState app) {
           openAddDevice(context);
         },
       ),
-  ].expand((tip) => [const SizedBox(height: 14), tip]).toList();
+  ].expand((tip) => [const SizedBox(height: Space.md), tip]).toList();
 }
 
 class _TipCard extends StatelessWidget {
   const _TipCard({
     required this.glyph,
-    required this.color,
-    required this.soft,
     required this.title,
     required this.text,
     required this.dismiss,
@@ -1280,8 +1210,6 @@ class _TipCard extends StatelessWidget {
     required this.onAction,
   });
   final Glyph glyph;
-  final Color color;
-  final Color soft;
   final String title;
   final String text;
   final String dismiss;
@@ -1290,51 +1218,53 @@ class _TipCard extends StatelessWidget {
   final VoidCallback onAction;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 8, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconBubble(glyph: glyph, color: soft, iconColor: color, size: 40),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LText(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.lg,
+          Space.sm,
+          Space.xs,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(end: Space.sm),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LText(title, style: theme.textTheme.titleMedium),
+                        const SizedBox(height: Space.xs),
+                        LText(
+                          text,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      LText(text, style: TextStyle(color: Baby.muted)),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Wrap(
-            alignment: WrapAlignment.end,
-            children: [
-              TextButton(
-                onPressed: onDismiss,
-                style: TextButton.styleFrom(foregroundColor: Baby.muted),
-                child: LText(dismiss),
-              ),
-              TextButton(onPressed: onAction, child: LText(action)),
-            ],
-          ),
-        ],
+              ],
+            ),
+            Wrap(
+              alignment: WrapAlignment.end,
+              children: [
+                TextButton(onPressed: onDismiss, child: LText(dismiss)),
+                TextButton(onPressed: onAction, child: LText(action)),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

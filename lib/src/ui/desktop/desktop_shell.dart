@@ -40,10 +40,8 @@ class DesktopSidebar extends StatelessWidget {
     return Container(
       key: const ValueKey('desktop-sidebar'),
       width: width,
-      decoration: BoxDecoration(
-        color: Baby.sidebar,
-        border: Border(right: BorderSide(color: Baby.border)),
-      ),
+      // A navigation drawer/rail on the low surface container; no border.
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       // Fills the height; scrolls when the window is too short.
       child: CustomScrollView(
         slivers: [
@@ -120,15 +118,11 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+    padding: const EdgeInsets.fromLTRB(Space.lg, Space.sm, Space.lg, Space.sm),
     child: LText(
       text,
-      style: TextStyle(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.4,
-        color: Baby.muted,
-      ),
+      style: Theme.of(context).textTheme.titleSmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 }
@@ -140,15 +134,13 @@ class _Brand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logo = Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: Baby.hero),
-        borderRadius: BorderRadius.circular(DesktopTokens.radius),
-      ),
-      child: const CustomPaint(
-        painter: NestlingMark(layer: MarkLayer.bare, sparkle: Colors.white),
+    const logo = SizedBox.square(
+      dimension: 32,
+      child: CustomPaint(
+        painter: NestlingMark(
+          layer: MarkLayer.bare,
+          sparkle: Color(0x00000000),
+        ),
       ),
     );
     if (!expanded) return Center(child: logo);
@@ -162,12 +154,7 @@ class _Brand extends StatelessWidget {
             profile.isEmpty ? 'Nestling' : 'Nestling [$profile]',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.2,
-              color: Baby.ink,
-            ),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
       ],
@@ -325,7 +312,11 @@ class _SidebarItemState extends State<SidebarItem> {
   @override
   Widget build(BuildContext context) {
     final selected = widget.selected;
-    final color = selected ? Baby.ink : Baby.muted;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final color = selected
+        ? scheme.onSecondaryContainer
+        : scheme.onSurfaceVariant;
     final item = Semantics(
       selected: selected,
       button: true,
@@ -333,67 +324,55 @@ class _SidebarItemState extends State<SidebarItem> {
         onTap: widget.onTap,
         onHover: (v) => setState(() => _hover = v),
         onFocusChange: (v) => setState(() => _focus = v),
-        borderRadius: BorderRadius.circular(DesktopTokens.radius),
+        customBorder: const StadiumBorder(),
         hoverColor: Colors.transparent,
         focusColor: Colors.transparent,
         highlightColor: Colors.transparent,
+        // Material 3 navigation drawer item: a stadium indicator in the
+        // secondary container when selected, a state layer on hover.
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          height: 38,
-          padding: EdgeInsets.symmetric(horizontal: widget.expanded ? 10 : 0),
-          decoration: BoxDecoration(
+          duration: Motion.short,
+          height: 48,
+          padding: EdgeInsets.symmetric(
+            horizontal: widget.expanded ? Space.lg : 0,
+          ),
+          decoration: ShapeDecoration(
             color: selected
-                ? Baby.card
+                ? scheme.secondaryContainer
                 : _hover
-                ? Baby.hover
+                ? scheme.onSurface.withValues(alpha: 0.08)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(DesktopTokens.radius),
-            border: Border.all(
-              color: _focus
-                  ? Baby.ring
-                  : selected
-                  ? Baby.border
-                  : Colors.transparent,
-              width: _focus ? 2 : 1,
+            shape: StadiumBorder(
+              side: _focus
+                  ? BorderSide(color: scheme.primary, width: 2)
+                  : BorderSide.none,
             ),
           ),
           child: widget.expanded
               ? Row(
                   children: [
-                    Icon(
-                      widget.icon,
-                      size: 19,
-                      color: selected ? Baby.primary : color,
-                    ),
-                    const SizedBox(width: 10),
+                    Icon(widget.icon, size: 24, color: color),
+                    const SizedBox(width: Space.md),
                     Expanded(
                       child: LText(
                         widget.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: selected
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: color,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: selected ? color : scheme.onSurface,
                         ),
                       ),
                     ),
                     if (_hover && widget.shortcut != null)
                       LText.raw(
                         widget.shortcut!,
-                        style: TextStyle(fontSize: 11.5, color: Baby.muted),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 )
-              : Center(
-                  child: Icon(
-                    widget.icon,
-                    size: 20,
-                    color: selected ? Baby.primary : color,
-                  ),
-                ),
+              : Center(child: Icon(widget.icon, size: 24, color: color)),
         ),
       ),
     );
@@ -489,11 +468,8 @@ class DesktopTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     height: DesktopTokens.topBarHeight + 8,
-    padding: const EdgeInsets.symmetric(horizontal: 24),
-    decoration: BoxDecoration(
-      color: Baby.surface,
-      border: Border(bottom: BorderSide(color: Baby.border)),
-    ),
+    padding: const EdgeInsets.symmetric(horizontal: Space.pageWide),
+    color: Theme.of(context).colorScheme.surface,
     child: Row(
       children: [
         Expanded(
@@ -505,22 +481,15 @@ class DesktopTopBar extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                  color: Baby.ink,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               if (subtitle != null)
                 LText(
                   subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Baby.muted,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
             ],

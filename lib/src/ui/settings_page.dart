@@ -49,15 +49,17 @@ class SyncChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final scheme = context.colors;
+    final nest = context.nest;
     final (Color color, String label) = app.peers.isEmpty
-        ? (Baby.primary, 'Share')
+        ? (scheme.onSurfaceVariant, 'Share')
         : app.syncing
-        ? (Baby.primary, 'Syncing')
+        ? (scheme.primary, 'Syncing')
         : app.syncPausedForVersion
-        ? (Baby.warn, 'Sync paused')
+        ? (nest.warn.color, 'Sync paused')
         : app.syncHasError
-        ? (Baby.warn, 'Not synced')
-        : (Baby.ok, app.lastSync == null ? 'Paired' : 'Synced');
+        ? (nest.warn.color, 'Not synced')
+        : (nest.success.color, app.lastSync == null ? 'Paired' : 'Synced');
     if (compact) {
       return LIconButton(
         tooltip: label,
@@ -70,7 +72,7 @@ class SyncChip extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsetsDirectional.only(end: Space.xs),
       child: ActionChip(
         avatar: Icon(
           app.peers.isEmpty ? Icons.people_alt_rounded : Icons.circle,
@@ -101,14 +103,13 @@ class AppearancePicker extends StatelessWidget {
           Expanded(
             child: OptionTile(
               glyph: glyph,
-              glyphColor: Baby.primary,
               label: appearanceLabel(value),
               selected: app.appearance == value,
-              color: Baby.pillSoft,
+              color: Colors.transparent,
               onTap: () => app.setAppearance(value),
             ),
           ),
-          if (value != 'system') const SizedBox(width: 10),
+          if (value != 'system') const SizedBox(width: Space.sm),
         ],
       ],
     );
@@ -130,41 +131,35 @@ class RingStylePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     // The Play build only has normal notifications.
     if (Distribution.play) return const SizedBox.shrink();
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: OptionTile(
-                glyph: (s, c) =>
-                    Icon(Icons.notifications_rounded, size: s, color: c),
-                glyphColor: Baby.primary,
-                label: 'Notification',
-                selected: !alarm,
-                color: Baby.pillSoft,
-                onTap: () => onChanged(false),
-              ),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(
+              value: false,
+              icon: Icon(Icons.notifications_rounded),
+              label: LText('Notification'),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OptionTile(
-                glyph: (s, c) => Icon(Icons.alarm_rounded, size: s, color: c),
-                glyphColor: Baby.feed,
-                label: 'Alarm',
-                selected: alarm,
-                color: Baby.feedSoft,
-                onTap: () => onChanged(true),
-              ),
+            ButtonSegment(
+              value: true,
+              icon: Icon(Icons.alarm_rounded),
+              label: LText('Alarm'),
             ),
           ],
+          selected: {alarm},
+          showSelectedIcon: false,
+          onSelectionChanged: (v) => onChanged(v.single),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         LText(
           alarm
               ? 'Rings with your alarm sound until you stop or snooze it, even on silent, and shows on the lock screen.'
               : 'A normal notification with your notification sound.',
-          style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -179,22 +174,22 @@ Future<void> _showPillRingSheet(BuildContext context) => showSheet(
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SheetHeader(
+          const SheetHeader(
             title: 'Pill reminders',
             subtitle: 'How they ring on this phone',
-            glyph: Glyphs.pill,
           ),
           if (Distribution.play)
             LText(
               'Pill reminders show as normal notifications.',
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.onSurfaceVariant),
             )
           else
             RingStylePicker(
               alarm: app.pillAlarm,
               onChanged: (v) => app.setReminderAlarm(pill: v),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
         ],
       );
     },
@@ -207,47 +202,41 @@ class FeedReminderOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final heading = Theme.of(context).textTheme.titleSmall;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
           child: SwitchListTile(
-            secondary: Icon(Icons.alarm_rounded, color: Baby.feed),
-            title: const LText(
-              'Remind me to feed',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            secondary: const Icon(Icons.alarm_rounded),
+            title: const LText('Remind me to feed'),
             subtitle: const LText('Counted from the start of the last feed'),
             value: app.feedReminderOn,
             onChanged: (v) => app.setFeedReminder(on: v),
           ),
         ),
-        const SizedBox(height: 14),
-        const LText(
-          'How long after a feed?',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        const SizedBox(height: Space.xl),
+        Semantics(
+          header: true,
+          child: LText('How long after a feed?', style: heading),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: Space.sm,
+          runSpacing: Space.sm,
           children: [
             for (final m in const [90, 120, 150, 180, 210, 240, 300])
               ChoiceChip(
                 label: LText(feedIntervalLabel(m)),
                 selected: app.feedReminderOn && app.feedReminderMinutes == m,
-                selectedColor: Baby.feedSoft,
                 onSelected: (_) => app.setFeedReminder(on: true, minutes: m),
               ),
           ],
         ),
         if (!Distribution.play) ...[
-          const SizedBox(height: 18),
-          const LText(
-            'How it rings',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.xl),
+          Semantics(header: true, child: LText('How it rings', style: heading)),
+          const SizedBox(height: Space.sm),
           RingStylePicker(
             alarm: app.feedAlarm,
             onChanged: (v) => app.setReminderAlarm(feed: v),
@@ -269,12 +258,9 @@ Future<void> showFeedReminderSheet(BuildContext context) => showSheet(
           SheetHeader(
             title: 'Feed reminder',
             subtitle: name.isEmpty ? null : 'For $name',
-            glyph: Glyphs.alarm,
-            soft: Baby.feedSoft,
-            strong: Baby.feed,
           ),
           const FeedReminderOptions(),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
         ],
       );
     },
@@ -283,14 +269,14 @@ Future<void> showFeedReminderSheet(BuildContext context) => showSheet(
 
 Future<void> _showAppearanceSheet(BuildContext context) => showSheet(
   context,
-  Column(
+  const Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      SheetHeader(title: 'Appearance', glyph: Glyphs.dark),
-      const AppearancePicker(),
-      const SizedBox(height: 16),
-      const NightLightSwitch(),
-      const SizedBox(height: 8),
+      SheetHeader(title: 'Appearance'),
+      AppearancePicker(),
+      SizedBox(height: Space.lg),
+      NightLightSwitch(),
+      SizedBox(height: Space.sm),
     ],
   ),
 );
@@ -305,20 +291,13 @@ class NightLightSwitch extends StatelessWidget {
     final app = AppScope.of(context);
     return Card(
       child: SwitchListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
-        secondary: const _Badge(Icons.nightlight_round),
-        title: const LText(
-          'Night light',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        secondary: const Icon(Icons.nightlight_round),
+        title: const LText('Night light'),
+        subtitle: const LText(
+          'Dims the colours from 6 pm to 6 am so the screen is gentle in a dark room.\n'
+          'It is a softer light theme, not dark mode. Choose Dark above for dark all day.',
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: LText(
-            'Dims the colours from 6 pm to 6 am so the screen is gentle in a dark room.\n'
-            'It is a softer light theme, not dark mode. Choose Dark above for dark all day.',
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-          ),
-        ),
+        isThreeLine: true,
         value: app.nightLight,
         onChanged: app.setNightLight,
       ),
@@ -326,30 +305,20 @@ class NightLightSwitch extends StatelessWidget {
   }
 }
 
-/// Round tinted icon badge used on settings rows.
-class _Badge extends StatelessWidget {
-  const _Badge(this.icon, {this.tone});
-  final IconData icon;
-
-  /// 0 purple (default), 1 orange, 2 green, 3 yellow, 4 brown.
-  final int? tone;
+/// Supporting text under a settings section.
+class _Footer extends StatelessWidget {
+  const _Footer(this.text);
+  final String text;
 
   @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (tone) {
-      1 => (Baby.feedSoft, Baby.feed),
-      2 => (Baby.nappySoft, Baby.nappy),
-      3 => (Baby.peeSoft, Baby.pee),
-      4 => (Baby.pooSoft, Baby.poo),
-      _ => (Baby.pillSoft, Baby.primary),
-    };
-    return IconBubble(
-      glyph: (s, c) => Icon(icon, size: s, color: c),
-      color: bg,
-      iconColor: fg,
-      size: 40,
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(Space.xs, Space.sm, Space.xs, 0),
+    child: LText(
+      text,
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: context.colors.onSurfaceVariant),
+    ),
+  );
 }
 
 class SettingsPage extends StatefulWidget {
@@ -406,7 +375,7 @@ class _SettingsPageState extends State<SettingsPage> {
       (
         terms: ['Language', 'English', 'Afrikaans'],
         child: const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(Space.lg),
           child: LanguagePicker(showLabel: false),
         ),
       ),
@@ -423,20 +392,15 @@ class _SettingsPageState extends State<SettingsPage> {
           terms: ['Add a baby', 'Another baby', 'Twins'],
           child: _Tile(
             icon: Icons.person_add_alt_1_rounded,
-            tone: 2,
             title: 'Add a baby',
             value: '',
             onTap: () => _addBaby(context, app),
           ),
         ),
       ],
-      footer: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-        child: LText(
-          'Tap a baby to change their name, birthday or photo. '
-          'The selected baby is the one you see on the other tabs.',
-          style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-        ),
+      footer: const _Footer(
+        'Tap a baby to change their name, birthday or photo. '
+        'The selected baby is the one you see on the other tabs.',
       ),
     );
     addSection(
@@ -447,7 +411,6 @@ class _SettingsPageState extends State<SettingsPage> {
             terms: ['Allow exact reminders', 'Alarms & reminders'],
             child: _Tile(
               icon: Icons.alarm_on_rounded,
-              tone: 1,
               title: 'Allow exact reminders',
               subtitle: 'Without this, Android can delay reminders by several minutes',
               value: '',
@@ -469,7 +432,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
           child: _Tile(
             icon: Icons.alarm_rounded,
-            tone: 1,
             title: 'Feed reminder',
             subtitle: app.babyName.isEmpty ? null : 'For ${app.babyName}',
             value: app.feedReminderOn
@@ -491,15 +453,11 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ],
-      footer: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-        child: LText(
-          app.babies.length > 1
-              ? 'The feed reminder is kept for each baby: it follows the selected baby. '
-                    'Which pills remind you, and when, is set per pill on the Pills tab.'
-              : 'Which pills remind you, and when, is set per pill on the Pills tab.',
-          style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-        ),
+      footer: _Footer(
+        app.babies.length > 1
+            ? 'The feed reminder is kept for each baby: it follows the selected baby. '
+                  'Which pills remind you, and when, is set per pill on the Pills tab.'
+            : 'Which pills remind you, and when, is set per pill on the Pills tab.',
       ),
     );
     addSection('Appearance', [
@@ -507,7 +465,6 @@ class _SettingsPageState extends State<SettingsPage> {
         terms: ['Theme', 'Light', 'Dark', 'Match phone'],
         child: _Tile(
           icon: Baby.dark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-          tone: 3,
           title: 'Theme',
           value: appearanceLabel(app.appearance),
           onTap: () => _showAppearanceSheet(context),
@@ -521,15 +478,10 @@ class _SettingsPageState extends State<SettingsPage> {
           'Dims the colours from 6 pm to 6 am so the screen is gentle in a dark room.',
         ],
         child: SwitchListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-          secondary: const _Badge(Icons.nightlight_round),
-          title: const LText(
-            'Night light',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          subtitle: LText(
+          secondary: const Icon(Icons.nightlight_round),
+          title: const LText('Night light'),
+          subtitle: const LText(
             'Dims the colours from 6 pm to 6 am so the screen is gentle in a dark room.',
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
           ),
           value: app.nightLight,
           onChanged: app.setNightLight,
@@ -540,16 +492,11 @@ class _SettingsPageState extends State<SettingsPage> {
       (
         terms: ['Show Pump on Today', 'Pumping', 'Breast pump', 'Expressing'],
         child: SwitchListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-          secondary: const _Badge(Icons.water_drop_rounded, tone: 1),
-          title: const LText(
-            'Show Pump on Today',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          subtitle: LText(
+          secondary: const Icon(Icons.water_drop_rounded),
+          title: const LText('Show Pump on Today'),
+          subtitle: const LText(
             'A Pump button next to Feed and Nappy, for logging pumping and '
             'controlling Momcozy pumps.',
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
           ),
           value: app.pumpOnToday,
           onChanged: app.setShowPump,
@@ -559,7 +506,6 @@ class _SettingsPageState extends State<SettingsPage> {
         terms: ['Pumping', 'Momcozy', 'BP380', 'Bluetooth', 'Your pumps'],
         child: _Tile(
           icon: Icons.bluetooth_rounded,
-          tone: 1,
           title: 'Pumping',
           subtitle: Platform.isAndroid
               ? 'Your pumps, sessions and stats'
@@ -576,7 +522,6 @@ class _SettingsPageState extends State<SettingsPage> {
           terms: ['Pump lab', 'Diagnostics', 'Packet log'],
           child: _Tile(
             icon: Icons.science_outlined,
-            tone: 4,
             title: 'Pump lab',
             subtitle: 'Diagnostics and raw pump data',
             value: '',
@@ -591,15 +536,10 @@ class _SettingsPageState extends State<SettingsPage> {
       (
         terms: ['Show Camera on Today', 'Camera', 'Nanit'],
         child: SwitchListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-          secondary: const _Badge(Icons.videocam_rounded),
-          title: const LText(
-            'Show Camera on Today',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          subtitle: LText(
+          secondary: const Icon(Icons.videocam_rounded),
+          title: const LText('Show Camera on Today'),
+          subtitle: const LText(
             'A Camera button on Today, for watching the Nanit camera.',
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
           ),
           value: app.cameraOnToday,
           onChanged: app.setShowCamera,
@@ -613,7 +553,6 @@ class _SettingsPageState extends State<SettingsPage> {
             final hub = NanitHub.instance;
             return _Tile(
               icon: Icons.videocam_rounded,
-              tone: 0,
               title: 'Nanit camera',
               subtitle: hub.local.saved != null
                   ? 'Video, audio and room readings over your home network'
@@ -661,7 +600,7 @@ class _SettingsPageState extends State<SettingsPage> {
           'After every change and every minute',
         ],
         child: const Padding(
-          padding: EdgeInsets.only(top: 10),
+          padding: EdgeInsets.only(top: Space.lg),
           child: _PeersCard(),
         ),
       ),
@@ -673,7 +612,6 @@ class _SettingsPageState extends State<SettingsPage> {
           terms: ['Export backup', 'History', 'spreadsheet'],
           child: _Tile(
             icon: Icons.save_alt_rounded,
-            tone: 2,
             title: 'Export backup',
             value: '',
             onTap: () => exportBackupFile(context),
@@ -683,20 +621,15 @@ class _SettingsPageState extends State<SettingsPage> {
           terms: ['Import backup', 'Your saved data could not be read'],
           child: _Tile(
             icon: Icons.upload_file_rounded,
-            tone: 2,
             title: 'Import backup',
             value: '',
             onTap: () => importBackupFile(context),
           ),
         ),
       ],
-      footer: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-        child: LText(
-          'Importing adds to your log and never deletes anything. '
-          'A spreadsheet export is on the History tab.',
-          style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-        ),
+      footer: const _Footer(
+        'Importing adds to your log and never deletes anything. '
+        'A spreadsheet export is on the History tab.',
       ),
     );
     addSection('This device', [
@@ -724,7 +657,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
         child: _Tile(
           icon: Icons.info_outline_rounded,
-          tone: 2,
           title: 'App version',
           value: AppState.appVersion,
           onTap: () => showAppUpdates(context),
@@ -749,7 +681,6 @@ class _SettingsPageState extends State<SettingsPage> {
         terms: ['Run first-time setup again', 'Welcome'],
         child: _Tile(
           icon: Icons.restart_alt_rounded,
-          tone: 4,
           title: 'Run first-time setup again',
           value: '',
           onTap: () {
@@ -765,7 +696,12 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(
+                Space.page,
+                Space.sm,
+                Space.page,
+                0,
+              ),
               child: TextField(
                 controller: _search,
                 onChanged: (_) => setState(() {}),
@@ -790,25 +726,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   // Room for the phone's navigation buttons (e.g. Samsung) below the last item.
                   padding: EdgeInsets.fromLTRB(
-                    16,
+                    Space.page,
                     0,
-                    16,
-                    32 + MediaQuery.paddingOf(context).bottom,
+                    Space.page,
+                    Space.xxl + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
                     if (app.loadProblem != null)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(top: Space.lg),
                         child: Card(
-                          color: Baby.warn.withValues(alpha: 0.12),
                           child: ListTile(
                             leading: Icon(
                               Icons.warning_amber_rounded,
-                              color: Baby.warn,
+                              color: context.colors.error,
                             ),
                             title: const LText(
                               'Your saved data could not be read',
-                              style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                             subtitle: LText(
                               'A copy was kept. Use Import backup and choose:\n${app.loadProblem}',
@@ -819,12 +753,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     if (_search.text.trim().isEmpty) const _Summary(),
                     ...sections,
                     if (sections.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32),
-                        child: LText(
-                          'No settings found. Try a different search.',
-                          textAlign: TextAlign.center,
-                        ),
+                      const EmptyState(
+                        icon: Icons.search_off_rounded,
+                        text: 'No settings found. Try a different search.',
                       ),
                   ],
                 ),
@@ -844,26 +775,18 @@ class _Tile extends StatelessWidget {
     required this.value,
     required this.onTap,
     this.subtitle,
-    this.tone,
   });
   final IconData icon;
   final String title;
   final String value;
   final String? subtitle;
-  final int? tone;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    leading: _Badge(icon, tone: tone),
-    title: LText(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-    subtitle: subtitle == null
-        ? null
-        : LText(
-            subtitle!,
-            style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-          ),
+    leading: Icon(icon),
+    title: LText(title),
+    subtitle: subtitle == null ? null : LText(subtitle!),
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -874,10 +797,12 @@ class _Tile extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: context.colors.onSurfaceVariant),
             ),
           ),
-        Icon(Icons.chevron_right_rounded, color: Baby.muted),
+        const SizedBox(width: Space.xs),
+        const Icon(Icons.chevron_right_rounded),
       ],
     ),
     onTap: onTap,
@@ -904,12 +829,13 @@ class _Summary extends StatelessWidget {
         : 'Synced ${ago(app.lastSync!)}';
     final ok =
         app.peers.isNotEmpty && !app.syncPausedForVersion && !app.syncHasError;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      padding: const EdgeInsets.only(top: Space.lg),
       child: Card(
-        color: Baby.pillSoft,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(Space.lg),
           child: Row(
             children: [
               Semantics(
@@ -937,19 +863,19 @@ class _Summary extends StatelessWidget {
                           bottom: -4,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Baby.primary,
+                              color: scheme.surfaceContainerHighest,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Baby.pillSoft,
+                                color: context.nest.card,
                                 width: 2,
                               ),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(4),
+                              padding: const EdgeInsets.all(Space.xs),
                               child: Icon(
                                 Icons.photo_camera_rounded,
                                 size: 12,
-                                color: Baby.onPrimary,
+                                color: scheme.onSurface,
                               ),
                             ),
                           ),
@@ -959,13 +885,13 @@ class _Summary extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: Space.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     InkWell(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Corners.sm),
                       onTap: () => editBabyProfile(context),
                       child: Row(
                         children: [
@@ -976,17 +902,14 @@ class _Summary extends StatelessWidget {
                                   : app.babyName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
+                              style: theme.textTheme.titleLarge,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: Space.sm),
                           Icon(
                             Icons.edit_outlined,
-                            size: 16,
-                            color: Baby.muted,
+                            size: 18,
+                            color: scheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -996,28 +919,27 @@ class _Summary extends StatelessWidget {
                       app.deviceName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Baby.muted,
-                        fontWeight: FontWeight.w600,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: Space.xs),
                     Row(
                       children: [
                         Icon(
                           ok ? Icons.check_circle_rounded : Icons.circle,
                           size: ok ? 16 : 10,
                           color: ok
-                              ? Baby.ok
+                              ? context.nest.success.color
                               : app.peers.isEmpty
-                              ? Baby.muted
-                              : Baby.warn,
+                              ? scheme.onSurfaceVariant
+                              : context.nest.warn.color,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: Space.sm),
                         Expanded(
                           child: LText(
                             status,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ),
                       ],
@@ -1055,7 +977,7 @@ Future<void> _editDeviceName(BuildContext context, AppState app) async {
             onSubmitted: (v) => Navigator.pop(ctx, v),
           ),
           if (app.deviceNameCustom) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             TextButton.icon(
               icon: const Icon(Icons.restart_alt_rounded),
               label: const LText("Use this device's own name"),
@@ -1094,24 +1016,19 @@ class _BabyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final active = baby.id == app.activeBabyId;
+    final scheme = context.colors;
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: BabyPhoto(photo: baby.photo, size: 44),
+      leading: BabyPhoto(photo: baby.photo, size: 40),
       title: LText.raw(
         baby.name.isEmpty ? tr('Baby') : baby.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle: LText.raw(
         '${babyAge(baby)}${active ? ' · ${tr('Selected')}' : ''}',
-        style: TextStyle(
-          color: active ? Baby.primary : Baby.muted,
-          fontWeight: FontWeight.w600,
-        ),
       ),
       trailing: active
-          ? Icon(Icons.check_circle_rounded, color: Baby.primary)
+          ? Icon(Icons.check_circle_rounded, color: scheme.primary)
           : TextButton(
               onPressed: () {
                 if (!app.selectBaby(baby.id)) {
@@ -1175,51 +1092,58 @@ class PairCard extends StatelessWidget {
     final app = AppScope.of(context);
     final ip = app.ips.isEmpty ? null : app.ips.first;
     final port = app.server.port;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             LText(
               'Everyone in the hub keeps the same log over your home Wi‑Fi. '
               'On the device you are adding, open Settings and scan this code. '
               'Add a device once and it shares with everyone else automatically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: Space.lg),
             if (ip == null || port == null)
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(vertical: Space.lg),
                 child: LText(
                   port == null
                       ? 'Sync could not start on this device.'
                       : 'Connect to Wi‑Fi to pair.',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium,
                 ),
               )
             else ...[
               // Always dark on white so it scans well in dark mode too.
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: QrImageView(
-                  data: PairInfo(ip, port, app.syncKey).toUri(),
-                  size: 180,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.circle,
-                    color: Color(0xFF3B2A2F),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(Space.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Corners.lg),
                   ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.circle,
-                    color: Color(0xFF3B2A2F),
+                  child: QrImageView(
+                    data: PairInfo(ip, port, app.syncKey).toUri(),
+                    size: 180,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.circle,
+                      color: Color(0xFF1A1D21),
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.circle,
+                      color: Color(0xFF1A1D21),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Space.lg),
               Row(
                 children: [
                   Expanded(
@@ -1238,14 +1162,14 @@ class PairCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             const Divider(),
-            const SizedBox(height: 12),
-            const LText(
-              'Add a device',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            const SizedBox(height: Space.lg),
+            Semantics(
+              header: true,
+              child: LText('Add a device', style: theme.textTheme.titleMedium),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: Space.md),
             Row(
               children: [
                 if (Platform.isAndroid || Platform.isIOS) ...[
@@ -1270,7 +1194,7 @@ class PairCard extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: Space.sm),
                 ],
                 Expanded(
                   child: OutlinedButton.icon(
@@ -1281,7 +1205,7 @@ class PairCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Space.sm),
             TextButton.icon(
               icon: const Icon(Icons.qr_code_2_rounded),
               label: const LText('Not on the same Wi-Fi? Sync by QR code'),
@@ -1313,7 +1237,7 @@ class PairCard extends StatelessWidget {
             const LText(
               'Type the address and code shown on the other device (Settings, Family hub).',
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: Space.lg),
             TextField(
               controller: address,
               autofocus: true,
@@ -1322,7 +1246,7 @@ class PairCard extends StatelessWidget {
               ),
               decoration: const LInputDecoration(labelText: 'Address'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             TextField(
               controller: code,
               keyboardType: TextInputType.number,
@@ -1401,15 +1325,8 @@ class _PeersCard extends StatelessWidget {
       children: [
         if (app.peers.isNotEmpty)
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            leading: const _Badge(Icons.sync_rounded),
-            title: const LText(
-              'Sync now',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            leading: const Icon(Icons.sync_rounded),
+            title: const LText('Sync now'),
             trailing: app.syncing
                 ? const SizedBox(
                     width: 20,
@@ -1427,24 +1344,16 @@ class _PeersCard extends StatelessWidget {
                   },
           ),
         SwitchListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-          secondary: const _Badge(Icons.autorenew_rounded),
-          title: const LText(
-            'Sync automatically',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          secondary: const Icon(Icons.autorenew_rounded),
+          title: const LText('Sync automatically'),
           subtitle: const LText('After every change and every minute'),
           value: app.autoSync,
           onChanged: app.setAutoSync,
         ),
         if (BackgroundSync.supported)
           SwitchListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
-            secondary: const _Badge(Icons.cloud_sync_rounded),
-            title: const LText(
-              'Keep syncing when closed',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            secondary: const Icon(Icons.cloud_sync_rounded),
+            title: const LText('Keep syncing when closed'),
             subtitle: const LText('Shows a quiet notification while on'),
             value: app.backgroundSync,
             onChanged: app.setBackgroundSync,
@@ -1453,21 +1362,11 @@ class _PeersCard extends StatelessWidget {
             app.backgroundSync &&
             !app.batteryExempt)
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+            leading: Icon(
+              Icons.battery_alert_rounded,
+              color: context.nest.warn.color,
             ),
-            leading: IconBubble(
-              glyph: (s, c) =>
-                  Icon(Icons.battery_alert_rounded, size: s, color: c),
-              color: Baby.peeSoft,
-              iconColor: Baby.warn,
-              size: 40,
-            ),
-            title: const LText(
-              'Allow background use',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+            title: const LText('Allow background use'),
             subtitle: const LText(
               'Otherwise Android may pause syncing while the screen is off',
             ),
@@ -1485,22 +1384,27 @@ class _Big extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      LText(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          color: Baby.muted,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        LText(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
-      ),
-      SelectableText(
-        value,
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-      ),
-    ],
-  );
+        const SizedBox(height: Space.xs),
+        SelectableText(
+          value,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ScanPage extends StatefulWidget {

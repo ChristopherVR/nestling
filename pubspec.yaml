@@ -44,6 +44,8 @@ dependencies:
   mobile_scanner: ^7.4.2
   intl: ^0.20.3
   material_symbols_icons: ^4.2960.0
+  # Tonal palettes for the design tokens (ships with Flutter).
+  material_color_utilities: any
   file_picker: ^13.1.0
   package_info_plus: ^10.2.2
   universal_ble: ^3.2.0
@@ -82,19 +84,6 @@ flutter:
   assets:
     - assets/release_notes.json
 
-  # Figtree (SIL Open Font License, see assets/fonts/OFL.txt)
-  fonts:
-    - family: Figtree
-      fonts:
-        - asset: assets/fonts/Figtree-400.ttf
-        - asset: assets/fonts/Figtree-500.ttf
-          weight: 500
-        - asset: assets/fonts/Figtree-600.ttf
-          weight: 600
-        - asset: assets/fonts/Figtree-700.ttf
-          weight: 700
-        - asset: assets/fonts/Figtree-800.ttf
-          weight: 800
 
   # To add assets to your application, add an assets section, like this:
   # assets:
