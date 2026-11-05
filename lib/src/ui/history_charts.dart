@@ -9,6 +9,8 @@ import 'common.dart';
 import 'history_period_controls.dart';
 import 'theme.dart';
 
+const _tabular = [FontFeature.tabularFigures()];
+
 class HistoryCharts extends StatefulWidget {
   const HistoryCharts({super.key});
 
@@ -22,6 +24,10 @@ class _HistoryChartsState extends State<HistoryCharts> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final note = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
     final stats = HistoryStats(
       AppScope.of(context).entries,
       now: DateTime.now(),
@@ -67,9 +73,12 @@ class _HistoryChartsState extends State<HistoryCharts> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 12),
-        const LText('Patterns over time: feeds, nappies, sleep'),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
+        LText(
+          'Patterns over time: feeds, nappies, sleep',
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: Space.md),
         HistoryPeriodControls(
           period: period,
           onChanged: (value) => setState(() => period = value),
@@ -90,17 +99,19 @@ class _HistoryChartsState extends State<HistoryCharts> {
           selected: {hourly},
           onSelectionChanged: (v) => setState(() => hourly = v.single),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         LText(
           hourly
               ? 'Each bar totals that hour across the selected dates. Tap a bar for details; swipe to see more.'
               : 'Each bar is one calendar day. Tap a bar for details; swipe to see more.',
+          style: note,
         ),
-        const SizedBox(height: 6),
-        const LText(
+        const SizedBox(height: Space.xs),
+        LText(
           'Mixed nappies count as both wee and poo. Empty days count as zero; today is incomplete.',
+          style: note,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: Space.lg),
         chart(
           hourly ? 'Feeds by hour' : 'Feeds per day',
           stats.feeds,
@@ -166,21 +177,22 @@ class _HistoryChartsState extends State<HistoryCharts> {
           ),
           chart('Pills per day', stats.pills, null, Baby.pill),
         ],
-        const LText(
+        LText(
           'Sleep is split across the hours and days it covers. Ongoing sleep is included up to now. Feed duration and bottle volume include recorded values only.',
+          style: note,
         ),
         if (period.hour == null) ...[
           const SectionTitle('Next-day estimate'),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Space.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (stats.canEstimate) ...[
                     Wrap(
-                      spacing: 24,
-                      runSpacing: 12,
+                      spacing: Space.xl,
+                      runSpacing: Space.md,
                       children: [
                         for (final (label, values, unit) in [
                           ('Feeds', stats.feeds, ''),
@@ -191,29 +203,31 @@ class _HistoryChartsState extends State<HistoryCharts> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              LText(label),
+                              LText(label, style: note),
                               Text(
                                 '≈ ${stats.estimate(values).toStringAsFixed(1)}$unit',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontFeatures: _tabular,
                                 ),
                               ),
                             ],
                           ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Space.lg),
                     LText(
                       'Average of ${stats.completedIndexes.length} completed days in this range, including days with no logs. Today is excluded.',
+                      style: note,
                     ),
-                    const SizedBox(height: 6),
-                    const LText(
+                    const SizedBox(height: Space.xs),
+                    LText(
                       'Estimates describe recorded patterns. Missing logs affect the result.',
+                      style: note,
                     ),
                   ] else
-                    const LText(
+                    LText(
                       'Select a range with logs on at least 3 completed days to see an estimate. Today is excluded.',
+                      style: note,
                     ),
                 ],
               ),
@@ -263,6 +277,11 @@ class _BarChartState extends State<_BarChart> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
     final values = widget.values;
     final labels = widget.labels;
     final color = widget.color;
@@ -276,54 +295,76 @@ class _BarChartState extends State<_BarChart> {
         if (values[i] == peak) labels[i],
     ];
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: Space.md),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: LText(
-                    title,
-                    style: TextStyle(fontWeight: FontWeight.w800, color: color),
+                // The series colour as a small key beside the title.
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    top: 6,
+                    end: Space.sm,
+                  ),
+                  child: SizedBox.square(
+                    dimension: 10,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
                 ),
-                LText(
-                  '${tr('Total')}: ${amount(total)}',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                Expanded(
+                  child: LText(title, style: theme.textTheme.titleMedium),
+                ),
+                const SizedBox(width: Space.sm),
+                Flexible(
+                  child: LText(
+                    '${tr('Total')}: ${amount(total)}',
+                    textAlign: TextAlign.end,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFeatures: _tabular,
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             LText(
               '${tr('Average per day')}: ${(total / widget.dayCount).toStringAsFixed(1)}${widget.unit.isEmpty ? '' : ' ${widget.unit}'}',
-              style: TextStyle(color: Baby.muted),
+              style: muted,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Space.xs),
             LText(
               peak == 0
                   ? 'No logs in this period'
                   : hourly
                   ? '${tr('Peak hour')}: ${peaks.take(3).join(', ')}${peaks.length > 3 ? '…' : ''} · ${amount(peak)}'
                   : '${tr('Highest day')}: ${peaks.take(3).join(', ')}${peaks.length > 3 ? '…' : ''} · ${amount(peak)}',
-              style: TextStyle(color: Baby.muted),
+              style: muted,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             if (selected != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: Space.md),
                 child: Text(
                   '${widget.detailLabels[selected!]} · ${amount(values[selected!])}',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFeatures: _tabular,
+                  ),
                 ),
               ),
             LText(
               '${tr('Scale')}: 0 – ${amount(scale)}',
-              style: TextStyle(fontSize: 12, color: Baby.muted),
+              style: theme.textTheme.bodySmall,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Space.sm),
             LayoutBuilder(
               builder: (context, constraints) {
                 final width = math.max(
@@ -341,6 +382,7 @@ class _BarChartState extends State<_BarChart> {
                       child: Semantics(
                         label:
                             '${tr(title)}, ${labels[i]}: ${amount(values[i])}',
+                        selected: selected == i,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -350,36 +392,50 @@ class _BarChartState extends State<_BarChart> {
                                 fit: BoxFit.scaleDown,
                                 child: Text(
                                   amount(values[i]),
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: selected == i
+                                        ? scheme.onSurface
+                                        : scheme.onSurfaceVariant,
+                                    fontFeatures: _tabular,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              height: 120,
-                              child: Align(
-                                alignment: Alignment.bottomCenter,
-                                child: Container(
-                                  width: 22,
-                                  height: values[i] == 0
-                                      ? 2
-                                      : 120 * values[i] / scale,
-                                  decoration: BoxDecoration(
-                                    color: values[i] == 0 ? Baby.line : color,
-                                    border: selected == i
-                                        ? Border.all(color: Baby.ink, width: 2)
-                                        : null,
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(5),
+                            const SizedBox(height: Space.xs),
+                            // Bars stand on a hairline baseline.
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: scheme.outlineVariant,
+                                  ),
+                                ),
+                              ),
+                              child: SizedBox(
+                                height: 120,
+                                width: double.infinity,
+                                child: Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    width: 20,
+                                    height: 119 * values[i] / scale,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      border: selected == i
+                                          ? Border.all(
+                                              color: scheme.onSurface,
+                                              width: 2,
+                                            )
+                                          : null,
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(Corners.xs),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: Space.sm),
                             SizedBox(
                               height: 24,
                               child: Padding(
@@ -391,9 +447,10 @@ class _BarChartState extends State<_BarChart> {
                                   child: Text(
                                     labels[i],
                                     maxLines: 1,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Baby.muted,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: selected == i
+                                          ? scheme.onSurface
+                                          : scheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),

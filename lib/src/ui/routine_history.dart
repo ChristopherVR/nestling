@@ -33,8 +33,9 @@ class RoutineActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final last = AppScope.of(context).lastRoutineCompletion(routine);
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -42,17 +43,18 @@ class RoutineActions extends StatelessWidget {
             last == null
                 ? 'Not done yet'
                 : 'Last done: ${completionLabel(last)}',
-            style: TextStyle(
-              color: last == null ? Baby.muted : Baby.ink,
-              fontWeight: FontWeight.w700,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: last == null
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Space.md),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: Space.sm,
+            runSpacing: Space.sm,
             children: [
-              FilledButton.icon(
+              FilledButton.tonalIcon(
                 onPressed: () => markRoutineDone(context, routine),
                 icon: const Icon(Icons.check_rounded),
                 label: const LText('Mark done'),
@@ -78,13 +80,13 @@ Future<void> markRoutineDone(BuildContext context, Routine routine) =>
     Desktop.of(context)
     ? showSheetDialog(context, _CompletionForm(routine: routine), scroll: false)
     : showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      constraints: const BoxConstraints(maxWidth: 560),
-      builder: (_) => _CompletionForm(routine: routine),
-    );
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        showDragHandle: true,
+        constraints: const BoxConstraints(maxWidth: 560),
+        builder: (_) => _CompletionForm(routine: routine),
+      );
 
 class _CompletionForm extends StatefulWidget {
   const _CompletionForm({required this.routine});
@@ -113,10 +115,10 @@ class _CompletionFormState extends State<_CompletionForm> {
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          24,
-          8,
-          24,
-          24 + MediaQuery.viewInsetsOf(context).bottom,
+          Space.xl,
+          Space.sm,
+          Space.xl,
+          Space.xl + MediaQuery.viewInsetsOf(context).bottom,
         ),
         child: Form(
           key: _form,
@@ -124,14 +126,16 @@ class _CompletionFormState extends State<_CompletionForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              LText(
-                'Mark ${widget.routine.name} as done',
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
+              Semantics(
+                header: true,
+                child: LText(
+                  'Mark ${widget.routine.name} as done',
+                  style: Desktop.of(context)
+                      ? Theme.of(context).textTheme.titleLarge
+                      : Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Space.xl),
               LTextFormField(
                 controller: _person,
                 maxLength: 60,
@@ -148,7 +152,10 @@ class _CompletionFormState extends State<_CompletionForm> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today_outlined),
                 title: const LText('Date'),
-                trailing: LText(dayLabel(_at)),
+                trailing: LText(
+                  dayLabel(_at),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 onTap: () async {
                   final day = await showDatePicker(
                     context: context,
@@ -174,7 +181,12 @@ class _CompletionFormState extends State<_CompletionForm> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule_rounded),
                 title: const LText('Time'),
-                trailing: LText(hm(_at)),
+                trailing: LText(
+                  hm(_at),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
@@ -196,15 +208,14 @@ class _CompletionFormState extends State<_CompletionForm> {
               ),
               if (_error != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: Space.md),
                   child: LText(
                     _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
               FilledButton.icon(
                 icon: const Icon(Icons.check_rounded),
                 label: const LText('Save completion'),
@@ -264,39 +275,47 @@ class _RoutineHistoryPage extends StatelessWidget {
         ),
       ),
       body: PageWidth(
+        maxWidth: 720,
         child: history.isEmpty
-            ? const Center(child: LText('No completions yet'))
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: history.length,
-                itemBuilder: (context, i) {
-                  final c = history[i];
-                  return Card(
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.check_circle_outline_rounded,
-                        color: Baby.ok,
-                      ),
-                      title: LText.raw(
-                        c.routineName,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      subtitle: LText(completionLabel(c)),
-                      trailing: LIconButton(
-                        tooltip: 'Remove completion',
-                        icon: const Icon(Icons.delete_outline_rounded),
-                        onPressed: () {
-                          app.setRoutineCompletionDeleted(c, true);
-                          showUndo(
-                            context,
-                            'Completion removed',
-                            () => app.setRoutineCompletionDeleted(c, false),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
+            ? const Center(
+                child: EmptyState(
+                  icon: Icons.history_rounded,
+                  title: 'No completions yet',
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  Space.page,
+                  Space.sm,
+                  Space.page,
+                  Space.xl,
+                ),
+                children: [
+                  ListCard(
+                    children: [
+                      for (final c in history)
+                        ListTile(
+                          leading: const Icon(
+                            Icons.check_circle_outline_rounded,
+                          ),
+                          title: LText.raw(c.routineName),
+                          subtitle: LText(completionLabel(c)),
+                          trailing: LIconButton(
+                            tooltip: 'Remove completion',
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            onPressed: () {
+                              app.setRoutineCompletionDeleted(c, true);
+                              showUndo(
+                                context,
+                                'Completion removed',
+                                () => app.setRoutineCompletionDeleted(c, false),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
       ),
     );
