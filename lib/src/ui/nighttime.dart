@@ -33,9 +33,8 @@ class NighttimeNotice extends StatelessWidget {
               style: TextButton.styleFrom(
                 visualDensity: VisualDensity.compact,
                 textStyle: const TextStyle(
-                  fontFamily: Baby.font,
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               onPressed: () => AppScope.of(context).setNightLight(false),

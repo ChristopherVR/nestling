@@ -892,7 +892,7 @@ class _GrowthPainter extends CustomPainter {
       final text = TextPainter(
         text: TextSpan(
           text: label,
-          style: TextStyle(fontFamily: Baby.font, fontSize: 11, color: color),
+          style: TextStyle(fontSize: 11, color: color),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
