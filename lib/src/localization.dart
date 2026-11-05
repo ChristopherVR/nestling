@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'distribution.dart';
 import 'ui/camera/camera_strings_af.dart';
 
 /// Device-local language; user-entered names and notes are kept as entered.
@@ -16,7 +15,7 @@ abstract final class AppLanguage {
 
 String tr(String text, {String? language}) {
   if (text.isEmpty) return text;
-  if (Distribution.play) text = _translate(text, playWording, _playPatterns);
+  text = _translate(text, habitWording, _habitPatterns);
   if ((language ?? AppLanguage.code) != 'af') return text;
   return _translate(text, afrikaans, _patterns);
 }
@@ -57,7 +56,7 @@ List<_TranslationPattern> _patternsOf(Map<String, String> table) => [
 ]..sort((a, b) => b.specificity.compareTo(a.specificity));
 
 final _patterns = _patternsOf(afrikaans);
-final _playPatterns = _patternsOf(playWording);
+final _habitPatterns = _patternsOf(habitWording);
 
 class _TranslationPattern {
   late final RegExp pattern;
@@ -935,7 +934,7 @@ const afrikaans = <String, String>{
   'Pair': 'Koppel',
   'Device': 'Toestel',
   'by {name}': 'deur {name}',
-  // Google Play wording (see [playWording]).
+  // Habit wording (see [habitWording]).
   'Habits': 'Gewoontes',
   'Habit': 'Gewoonte',
   'habit': 'gewoonte',
@@ -1323,9 +1322,11 @@ const afrikaans = <String, String>{
       '’n Kamera-knoppie op Vandag, om na die Nanit-kamera te kyk.',
 };
 
-/// The Google Play build tracks "habits" instead of "pills", so Play does not
-/// treat Nestling as a medical app. Applied by [tr] before translating.
-const playWording = <String, String>{
+/// Nestling tracks "habits", not "pills", in every build, so Google Play does
+/// not treat it as a medical app and the website and guides match the app.
+/// The source strings still say "pill" (and data keys stay `pill*`); [tr]
+/// rewrites them before translating.
+const habitWording = <String, String>{
   'Pills': 'Habits',
   'Pill': 'Habit',
   'pill': 'habit',

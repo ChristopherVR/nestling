@@ -99,7 +99,8 @@ void main() {
         final destination = size.width < 840
             ? find.descendant(
                 of: find.byType(NavigationBar),
-                matching: find.text(label),
+                // Nav keys use the source label; the Pills tab reads "Habits".
+                matching: find.text(label == 'Pills' ? 'Habits' : label),
               )
             : find.byKey(ValueKey('nav-$label'));
         await tester.ensureVisible(destination);
@@ -196,7 +197,7 @@ void main() {
         isTrue,
       );
       expect(find.byType(FloatingActionButton), findsNothing);
-      expect(find.widgetWithText(FilledButton, 'Add pill'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Add habit'), findsOneWidget);
       await ctrl(tester, LogicalKeyboardKey.digit1);
 
       // Ctrl+K opens the palette; arrows and Enter open the result.

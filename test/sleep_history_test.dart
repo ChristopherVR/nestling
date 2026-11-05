@@ -263,7 +263,7 @@ void main() {
       'Sleep hours per day',
       'Feed minutes per day',
       'Bottle ml per day',
-      'Pills per day',
+      'Habits per day',
       'Next-day estimate',
     ]) {
       await tester.scrollUntilVisible(

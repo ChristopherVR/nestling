@@ -14,7 +14,7 @@ shadow of its own.
    type, spacing and tonal surfaces, not from colour.
 3. **One accent.** The slate-teal accent appears only on primary actions and
    selected states. Red is reserved for errors.
-4. **Kinds are accents, not areas.** Feed, sleep, nappy and pill colours tint
+4. **Kinds are accents, not areas.** Feed, sleep, nappy and habit colours tint
    an icon, a chart series or a thin indicator, and nothing larger.
 5. **Plain Material.** Use Google's own patterns (Fit, Clock, Settings):
    ListTiles grouped in cards, section headers, dividers only where they
@@ -77,7 +77,7 @@ carries the meaning too, so colour is never the only cue.
 | nappy | `#567157` | `#3C563D` | `#A3C0A2` | sage |
 | pee | `#756B36` | `#5A501E` | `#C7B97D` | mustard |
 | poo | `#826550` | `#654A38` | `#D5B29A` | brown |
-| pill | `#856536` | `#684B1E` | `#DAB27C` | ochre |
+| pill (habits) | `#856536` | `#684B1E` | `#DAB27C` | ochre |
 | warn (status) | `#8C6309` | `#6B4A00` | `#E4B056` | amber |
 | success (status) | `#517353` | `#37573A` | `#9EC29D` | green |
 

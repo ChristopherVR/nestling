@@ -43,7 +43,7 @@ and the debugging steps that led to the independent local-access solution. The
 explains the camera services and reusable Python/Dart protocol adapters.
 
 Track feeds (left / right / both / bottle, time, how long), nappies (pee / poo / both), sleep, growth and
-your own pills with reminders. Every device in the family hub shares the same log over Wi-Fi, or by QR codes.
+your own habits with reminders. Every device in the family hub shares the same log over Wi-Fi, or by QR codes.
 
 <p align="center">
   <img src="store/screenshots/01-today.png" alt="Today" width="180">
@@ -220,7 +220,7 @@ Keep Play's version codes increasing when uploading subsequent bundles.
 - Different app versions pause syncing until someone taps "Continue anyway" on the device's page.
 - On screen the app checks every 2 minutes; local changes are pushed within a second. In the background
   (Android foreground service, `SyncService.kt`) there is no timer and no Wi-Fi lock; a wake lock is held
-  only while a sync runs. Pill reminders ring only on the phone that added the pill unless switched on.
+  only while a sync runs. Habit reminders ring only on the phone that added the habit unless switched on.
 - Wrong codes: 10 from one address within 10 minutes locks that address out for 10 minutes.
 - Address changes: if a paired phone cannot be reached, the app asks every address on its own /24
   network for that phone's `/info` (using the stored code) and updates the address when found. Only while
@@ -235,7 +235,7 @@ Keep Play's version codes increasing when uploading subsequent bundles.
 - Use the baby selector above the tabs to switch profiles. The person-plus button adds a baby;
   the pencil edits their name, date of birth and profile photo. Existing logs stay with the original baby automatically.
 - Feeds, nappies and routines belong to the selected baby. Feed reminder settings are separate
-  for each baby on each phone. Pills continue to track the parent's medication across profiles.
+  for each baby on each phone. Habits are the parent's own and stay the same across baby profiles.
 - Open **Routines** to set up bath time, bedtime, tummy time or a custom activity. Choose a time,
   one or more weekdays and optional notes. Edit, pause or delete a routine whenever needed.
 - Enable **Remind me on this device** for a weekly repeating notification on the selected days.
@@ -283,7 +283,7 @@ Keep Play's version codes increasing when uploading subsequent bundles.
   the entries shown. Use the day arrows to move between individual dates.
 - The **Charts** button opens a separate screen with its own date and hour filters. Switch
   between daily totals and hourly patterns. Daily charts include feeds, wees, poos, sleep,
-  recorded feeding minutes, bottle volume and pills; hourly charts show feeds, wees, poos and
+  recorded feeding minutes, bottle volume and habits; hourly charts show feeds, wees, poos and
   sleep duration. Each chart shows totals, daily averages, peaks and exact bar values.
 - Mixed nappies count as both wee and poo. Overnight sleep is split across hours and days;
   ongoing naps contribute up to now. Ranges use local calendar days. Today is incomplete,
@@ -310,9 +310,9 @@ and disappears during the day, including when the selected appearance stays dark
 ## Reminders
 
 - **Feed**: bell on the "Last feed" card → remind X hours after the start of the last feed.
-- **Pills**: "N times a day" (spread evenly over 24h) or "every X hours", from a first-dose time;
-  the schedule restarts each day at that time. One repeating daily alarm per dose time.
-- **Notification or alarm** (Settings, per phone, separately for feeds and pills). Alarm = the phone's
+- **Habits**: "N times a day" (spread evenly over 24h) or "every X hours", from a first time;
+  the schedule restarts each day at that time. One repeating daily alarm per time.
+- **Notification or alarm** (Settings, per phone, separately for feeds and habits). Alarm = the phone's
   alarm ringtone on the alarm stream, repeating until stopped (max 15 min), full screen on the lock
   screen, Stop / Snooze 10 min buttons (snooze works with the app closed, via a background handler in
   `lib/src/notifications.dart`). Opening it shows `AlarmPage` with Taken / Log feed. The app only shows

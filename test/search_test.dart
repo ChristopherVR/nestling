@@ -209,7 +209,7 @@ void main() {
       AppLanguage.use('af');
       final hit = group('feed left', SearchKind.entry)!.hits.single;
       expect(hit.item.title, 'Voeding · Links');
-      expect(group('pille', SearchKind.page)!.hits.single.item.title, 'Pille');
+      expect(group('gewoontes', SearchKind.page)!.hits.single.item.title, 'Gewoontes');
     });
   });
 }

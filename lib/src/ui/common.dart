@@ -6,7 +6,6 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../models.dart';
 import '../store.dart';
 import 'theme.dart';
-import '../distribution.dart';
 import '../localization.dart';
 export '../localization.dart';
 
@@ -127,14 +126,10 @@ abstract final class Glyphs {
   static final pee = _sym(Symbols.water_drop_rounded);
   static final pump = _sym(Symbols.water_full_rounded);
   static final camera = _sym(Symbols.videocam_rounded);
-  // The Play build tracks habits, not pills.
-  static Glyph get pill => Distribution.play ? _habit : _pill;
-  static IconData get pillIcon =>
-      Distribution.play ? Icons.task_alt_rounded : Icons.medication_rounded;
-  static IconData get pillOutlinedIcon =>
-      Distribution.play ? Icons.task_alt_outlined : Icons.medication_outlined;
-  static final _pill = _sym(Symbols.pill_rounded);
-  static final _habit = _sym(Symbols.task_alt_rounded);
+  // Every build tracks habits, not pills (see habitWording).
+  static final pill = _sym(Symbols.task_alt_rounded);
+  static const pillIcon = Icons.task_alt_rounded;
+  static const pillOutlinedIcon = Icons.task_alt_outlined;
   static final alarm = _sym(Symbols.alarm_rounded);
   static final left = _sym(Symbols.arrow_back_rounded);
   static final right = _sym(Symbols.arrow_forward_rounded);
