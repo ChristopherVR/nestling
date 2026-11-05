@@ -477,7 +477,7 @@ packages:
     source: hosted
     version: "4.2960.0"
   media_kit:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: media_kit
       sha256: ae9e79597500c7ad6083a3c7b7b7544ddabfceacce7ae5c9709b0ec16a5d6643
@@ -533,7 +533,7 @@ packages:
     source: hosted
     version: "1.0.11"
   media_kit_video:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: media_kit_video
       sha256: afaa509e7b7e0bf247557a3a740cde903a52c34ace9810f94500e127bd7b043d
@@ -568,11 +568,11 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/nanit_camera"
-      ref: "81a01aedd2f4aad11ce23f1d1710e1f6fc5e8f38"
-      resolved-ref: "81a01aedd2f4aad11ce23f1d1710e1f6fc5e8f38"
+      ref: f66f8f72539d73fbcc69196dcb7c2d6617c399b8
+      resolved-ref: f66f8f72539d73fbcc69196dcb7c2d6617c399b8
       url: "https://github.com/ChristopherVR/nanit-research.git"
     source: git
-    version: "0.2.6"
+    version: "0.2.7"
   objective_c:
     dependency: transitive
     description:

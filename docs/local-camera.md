@@ -302,6 +302,21 @@ The production app was restored and its version verified again after testing.
 flutter test integration_test/local_alerts_live_test.dart -d windows --dart-define=NANIT_TEST_IP=<camera-ip>
 ```
 
+The same guarded Android launcher supports `-Test local_camera_latency_test`
+for native-player A/B comparisons, `-Test local_camera_listen_test` for repeated
+muted/Listen transitions, and `-Test local_camera_lag_test` for transport stalls.
+`-Seconds` controls each comparison/soak window. `-TimingVariant baseline` selects
+one A/B case; `-TimingImages` explicitly enables private raw BGRA timing stills in
+the isolated app's cache. Those images and raw logs must not be committed.
+
+Camera package 0.2.7 removes the silent audio clock while Listen is off. Enabling
+Listen starts a fresh synchronized audio/video session; a short loading indicator
+is expected when changing modes. Windows uses software decoding to avoid its
+hardware copy-back queue. Android retains automatic decoder selection. Background
+sound/cry monitoring continues independently. The remaining camera/transport
+delay and optical measurement limits are documented in the research repository's
+`STREAM_LATENCY.md` and `evidence/baseline-latency-2026-11-05.json`.
+
 The hardware test leaves the camera screen, checks that native levels continue
 advancing, and sends an explicitly labelled synthetic cry notification through
 the production policy/delivery path. Synthetic probabilities test alert routing;

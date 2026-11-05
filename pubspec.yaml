@@ -52,8 +52,11 @@ dependencies:
     git:
       url: https://github.com/ChristopherVR/nanit-research.git
       path: packages/nanit_camera
-      ref: 81a01aedd2f4aad11ce23f1d1710e1f6fc5e8f38
+      ref: f66f8f72539d73fbcc69196dcb7c2d6617c399b8
 dev_dependencies:
+  # Native-player fixtures compare latency settings without changing app policy.
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
   integration_test:
     sdk: flutter
   flutter_test:
