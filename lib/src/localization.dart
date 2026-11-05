@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'distribution.dart';
+import 'ui/camera/camera_strings_af.dart';
 
 /// Device-local language; user-entered names and notes are kept as entered.
 abstract final class AppLanguage {
@@ -182,6 +183,8 @@ class LTextFormField extends TextFormField {
 // Exact labels and explicit templates. Captured values are never translated,
 // so baby names, caregiver names, activity names and notes stay unchanged.
 const afrikaans = <String, String>{
+  // Guided camera setup and help live with the camera screens.
+  ...cameraAfrikaans,
   "Growth": "Groei",
   "Growth journal": "Groeijoernaal",
   "Edit profile": "Wysig profiel",

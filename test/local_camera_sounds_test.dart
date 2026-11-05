@@ -1,11 +1,16 @@
 import 'package:baby_app/src/local_nanit.dart';
+import 'package:baby_app/src/ui/camera/camera_live_tips.dart';
 import 'package:baby_app/src/ui/local_camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 
 class SoundTestHub extends LocalNanitHub {
-  SoundTestHub() : super(store: MemoryNanitSecretStore()) {
+  SoundTestHub()
+    : super(
+        // Tips already seen, so the controls sit where this test expects.
+        store: MemoryNanitSecretStore()..values[cameraTipsSeenKey] = '1',
+      ) {
     saved = const SavedLocalCamera(
       address: '192.168.1.5',
       uid: 'N301TEST123456',

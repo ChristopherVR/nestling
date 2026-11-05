@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 
 import '../nanit_integration.dart';
+import 'camera/camera_address_dialog.dart';
+import 'camera/camera_help.dart';
+import 'camera/camera_help_content.dart';
+import 'camera/camera_issues.dart';
+import 'camera/camera_setup_wizard.dart';
 import 'common.dart';
-import 'theme.dart';
 import 'local_camera_page.dart';
 
 void openCamera(BuildContext context) => Navigator.push(
@@ -26,6 +30,9 @@ class _CameraPageState extends State<CameraPage> {
   NanitHub get hub => widget.hub ?? NanitHub.instance;
   bool _accountMode = false;
 
+  /// Keeps the wizard on screen for its last step once the camera is saved.
+  bool _finishingSetup = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +46,8 @@ class _CameraPageState extends State<CameraPage> {
       final Widget body;
       if (!hub.loaded) {
         body = const Center(child: CircularProgressIndicator());
+      } else if (_finishingSetup) {
+        body = _wizard();
       } else if (hub.local.saved != null) {
         body = LocalCameraWatch(
           hub: hub.local,
@@ -51,7 +60,7 @@ class _CameraPageState extends State<CameraPage> {
                   appBar: AppBar(title: const LText('Camera Wi-Fi')),
                   body: PageWidth(
                     maxWidth: 720,
-                    child: LocalCameraSetup(
+                    child: CameraSetupWizard(
                       hub: hub,
                       setupWifi: true,
                       onAccount: () => Navigator.pop(context),
@@ -64,10 +73,7 @@ class _CameraPageState extends State<CameraPage> {
           },
         );
       } else if (!_accountMode && !hub.paired) {
-        body = LocalCameraSetup(
-          hub: hub,
-          onAccount: () => setState(() => _accountMode = true),
-        );
+        body = _wizard();
       } else if (!hub.signedIn && !hub.paired) {
         body = _SignIn(hub: hub);
       } else if (!hub.paired) {
@@ -88,7 +94,7 @@ class _CameraPageState extends State<CameraPage> {
                       appBar: AppBar(title: const LText('Local camera')),
                       body: PageWidth(
                         maxWidth: 720,
-                        child: LocalCameraSetup(
+                        child: CameraSetupWizard(
                           hub: hub,
                           onAccount: () => Navigator.pop(context),
                           onConnected: () => Navigator.pop(context),
@@ -104,6 +110,13 @@ class _CameraPageState extends State<CameraPage> {
         body: PageWidth(maxWidth: 720, child: body),
       );
     },
+  );
+
+  Widget _wizard() => CameraSetupWizard(
+    hub: hub,
+    onAccount: () => setState(() => _accountMode = true),
+    onSaving: (v) => setState(() => _finishingSetup = v),
+    onConnected: () => setState(() => _finishingSetup = false),
   );
 }
 
@@ -167,6 +180,17 @@ class _SignInState extends State<_SignIn> {
             'down.',
       ),
       const SizedBox(height: 16),
+      const CameraInfoCard(
+        title: 'How account mode works',
+        icon: Icons.info_outline,
+        items: [
+          'Nanit gives Nestling a camera key that lasts about 7 days.',
+          'Nestling renews it by itself whenever this device has internet. Without internet for about a week, video stops until you are online again.',
+          'Video still travels only over your home Wi-Fi.',
+          'Adds motion alerts. They react to changes in the picture, so they are simpler than in the Nanit app.',
+        ],
+      ),
+      const SizedBox(height: 12),
       Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -205,8 +229,7 @@ class _SignInState extends State<_SignIn> {
                   LText(
                     _error!,
                     style: TextStyle(
-                      color: Baby.error,
-                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                 ],
@@ -230,7 +253,13 @@ class _SignInState extends State<_SignIn> {
         'Your password goes only to Nanit. This device keeps the sign-in '
         'key in its secure storage.',
         textAlign: TextAlign.center,
-        style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+      Center(
+        child: TextButton(
+          onPressed: () => openCameraHelp(context, topicId: 'tokenExpired'),
+          child: const LText('Why does this need the internet?'),
+        ),
       ),
     ],
   );
@@ -392,17 +421,8 @@ class _PickCameraState extends State<_PickCamera> {
                     vertical: 4,
                   ),
                   enabled: b.cameraUid != null && _pairing == null,
-                  leading: IconBubble(
-                    glyph: (s, c) =>
-                        Icon(Icons.videocam_rounded, size: s, color: c),
-                    color: Baby.primarySoft,
-                    iconColor: Baby.primary,
-                    size: 40,
-                  ),
-                  title: LText.raw(
-                    b.name.isEmpty ? '—' : b.name,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                  leading: const _Bubble(Icons.videocam_rounded, size: 40),
+                  title: LText.raw(b.name.isEmpty ? '—' : b.name),
                   subtitle: LText(
                     b.cameraUid == null ? 'No camera' : 'Nanit camera',
                   ),
@@ -411,7 +431,7 @@ class _PickCameraState extends State<_PickCamera> {
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Icon(Icons.chevron_right_rounded, color: Baby.muted),
+                      : const Icon(Icons.chevron_right_rounded),
                   onTap: () => _pick(b),
                 ),
             ],
@@ -440,24 +460,48 @@ class _Watch extends StatelessWidget {
     final live = hub.live;
     final client = hub.client;
     final problem = hub.problem;
-    final failed = hub.connection?.state == NanitLinkState.failed;
+    final linkIssue = issueForAccountLink(hub);
+    final fixes = <CameraFixAction, VoidCallback>{
+      CameraFixAction.retry: hub.reconnect,
+      CameraFixAction.signIn: hub.signOut,
+      CameraFixAction.pickAgain: hub.forgetCamera,
+      CameraFixAction.changeAddress: () => editCameraAddress(context, hub),
+    };
     return ListView(
       padding: _pagePadding(context),
       children: [
         const SizedBox(height: 8),
         if (live != null) NanitCameraView(stream: live, label: nanitVideoLabel),
-        if (problem != null) ...[
+        if (live != null)
+          ListenableBuilder(
+            listenable: live,
+            builder: (context, _) {
+              final issue = live.state == NanitLiveState.failed
+                  ? issueForLiveFailure(live.failure)
+                  : null;
+              if (issue == null || linkIssue != null) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: CameraIssueCard(
+                  issue: issue,
+                  actions: {CameraFixAction.retry: () => live.start()},
+                ),
+              );
+            },
+          ),
+        if (linkIssue != null) ...[
+          const SizedBox(height: 12),
+          CameraIssueCard(issue: linkIssue, detail: problem, actions: fixes),
+        ] else if (problem != null) ...[
           const SizedBox(height: 12),
           _Problem(
             text: problem,
-            action: failed
-                ? _fixLabel(hub)
-                : hub.account.pairing?.manualIp == null
+            action: hub.account.pairing?.manualIp == null
                 ? 'Enter address'
                 : null,
-            onAction: failed
-                ? () => _fix(context, hub)
-                : () => editCameraAddress(context, hub),
+            onAction: () => editCameraAddress(context, hub),
           ),
         ],
         if (client != null)
@@ -472,24 +516,6 @@ class _Watch extends StatelessWidget {
         _Details(hub: hub),
       ],
     );
-  }
-
-  static String _fixLabel(NanitHub hub) => switch (hub.connection?.failure) {
-    NanitLinkFailure.certificate => 'Pick the camera again',
-    NanitLinkFailure.unauthorized ||
-    NanitLinkFailure.notSignedIn ||
-    null => hub.signedIn ? 'Try again' : 'Sign in again',
-  };
-
-  static Future<void> _fix(BuildContext context, NanitHub hub) async {
-    switch (hub.connection?.failure) {
-      case NanitLinkFailure.certificate:
-        await hub.forgetCamera();
-      case _ when !hub.signedIn:
-        await hub.signOut();
-      case _:
-        hub.reconnect();
-    }
   }
 }
 
@@ -510,8 +536,11 @@ class _Details extends StatelessWidget {
       NanitLinkState.idle || null => 'Not connected',
     };
     final expires = hub.account.cameraTokenExpires;
+    final soon =
+        expires != null &&
+        expires.difference(DateTime.now()) < const Duration(days: 2);
     TextStyle sub() =>
-        TextStyle(color: Baby.muted, fontWeight: FontWeight.w600);
+        TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return ListCard(
       children: [
         ListTile(
@@ -521,7 +550,6 @@ class _Details extends StatelessWidget {
           ),
           title: LText.raw(
             p?.babyName.isNotEmpty == true ? p!.babyName : 'Nanit',
-            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           subtitle: LText(status, style: sub()),
           trailing: firmware == null ? null : LText.raw(firmware, style: sub()),
@@ -531,12 +559,9 @@ class _Details extends StatelessWidget {
             horizontal: 16,
             vertical: 4,
           ),
-          title: const LText(
-            'Camera address',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          title: const LText('Camera address'),
           subtitle: LText(p?.manualIp ?? 'Found automatically', style: sub()),
-          trailing: Icon(Icons.chevron_right_rounded, color: Baby.muted),
+          trailing: const Icon(Icons.chevron_right_rounded),
           onTap: () => editCameraAddress(context, hub),
         ),
         if (expires != null)
@@ -545,23 +570,26 @@ class _Details extends StatelessWidget {
               horizontal: 16,
               vertical: 4,
             ),
-            title: const LText(
-              'Works offline until',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            leading: Icon(
+              soon ? Icons.key_off_outlined : Icons.key_outlined,
+              color: soon ? Theme.of(context).colorScheme.error : null,
             ),
+            title: const LText('Works offline until'),
             subtitle: LText(
               hub.signedIn
                   ? whenLabel(expires.toLocal())
                   : '${whenLabel(expires.toLocal())} · sign in to renew',
               style: sub(),
             ),
+            trailing: const Icon(Icons.help_outline),
+            onTap: () => openCameraHelp(context, topicId: 'tokenExpired'),
           ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 4,
           ),
-          leading: Icon(Icons.link_off_rounded, color: Baby.muted),
+          leading: const Icon(Icons.link_off_rounded),
           title: const LText('Pick another camera'),
           onTap: hub.forgetCamera,
         ),
@@ -570,12 +598,24 @@ class _Details extends StatelessWidget {
             horizontal: 16,
             vertical: 4,
           ),
-          leading: Icon(Icons.logout_rounded, color: Baby.error),
+          leading: Icon(
+            Icons.logout_rounded,
+            color: Theme.of(context).colorScheme.error,
+          ),
           title: LText(
             'Sign out of Nanit',
-            style: TextStyle(color: Baby.error),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
           onTap: hub.signOut,
+        ),
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: const Icon(Icons.help_outline),
+          title: const LText('Help & troubleshooting'),
+          onTap: () => openCameraHelp(context),
         ),
       ],
     );
@@ -584,62 +624,12 @@ class _Details extends StatelessWidget {
 
 /// Asks for the camera's IP address, for when it is not found by itself.
 Future<void> editCameraAddress(BuildContext context, NanitHub hub) async {
-  final v = await showDialog<String>(
-    context: context,
-    builder: (_) => _AddressDialog(initial: hub.account.pairing?.manualIp),
+  final v = await showCameraAddressDialog(
+    context,
+    initial: hub.account.pairing?.manualIp,
+    allowAutomatic: true,
   );
   if (v != null) await hub.setManualIp(v);
-}
-
-class _AddressDialog extends StatefulWidget {
-  const _AddressDialog({this.initial});
-  final String? initial;
-
-  @override
-  State<_AddressDialog> createState() => _AddressDialogState();
-}
-
-class _AddressDialogState extends State<_AddressDialog> {
-  late final _ip = TextEditingController(text: widget.initial);
-
-  @override
-  void dispose() {
-    _ip.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const LText('Camera address'),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const LText(
-          'Only needed if Nestling cannot find the camera by itself. '
-          'Find it in your router’s list of devices.',
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _ip,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onSubmitted: (v) => Navigator.pop(context, v),
-          decoration: const LInputDecoration(hintText: '192.168.1.20'),
-        ),
-      ],
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context, ''),
-        child: const LText('Find it myself'),
-      ),
-      FilledButton(
-        onPressed: () => Navigator.pop(context, _ip.text),
-        child: const LText('Save'),
-      ),
-    ],
-  );
 }
 
 // --- Bits ---------------------------------------------------------------------
@@ -656,24 +646,18 @@ class _Intro extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      IconBubble(
-        glyph: (s, c) => Icon(icon, size: s, color: c),
-        color: Baby.primarySoft,
-        iconColor: Baby.primary,
-        size: 64,
-      ),
+      _Bubble(icon, size: 64),
       const SizedBox(height: 12),
       LText(
         title,
         textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.titleLarge
-            ?.copyWith(fontWeight: FontWeight.w800),
+        style: Theme.of(context).textTheme.titleLarge,
       ),
       const SizedBox(height: 6),
       LText(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     ],
   );
@@ -687,9 +671,9 @@ class _Problem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    color: Baby.warn.withValues(alpha: 0.12),
+    color: Theme.of(context).colorScheme.secondaryContainer,
     child: ListTile(
-      leading: Icon(Icons.info_outline_rounded, color: Baby.warn),
+      leading: const Icon(Icons.info_outline_rounded),
       title: LText(text),
       trailing: action == null
           ? null
@@ -740,21 +724,9 @@ class CameraTodayCard extends StatelessWidget {
               horizontal: 16,
               vertical: 4,
             ),
-            leading: IconBubble(
-              glyph: (s, col) =>
-                  Icon(Icons.videocam_rounded, size: s, color: col),
-              color: Baby.primarySoft,
-              iconColor: Baby.primary,
-              size: 40,
-            ),
-            title: const LText(
-              'Camera',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            subtitle: LText(
-              localSubtitle,
-              style: TextStyle(color: Baby.muted, fontWeight: FontWeight.w600),
-            ),
+            leading: const _Bubble(Icons.videocam_rounded, size: 40),
+            title: const LText('Camera'),
+            subtitle: LText(localSubtitle),
             trailing: FilledButton.tonal(
               onPressed: () => openCamera(context),
               child: LText(paired ? 'Watch' : 'Set up'),
@@ -763,6 +735,24 @@ class CameraTodayCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A tinted round-cornered icon, in the theme's primary container colours.
+class _Bubble extends StatelessWidget {
+  const _Bubble(this.icon, {required this.size});
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = Theme.of(context).colorScheme;
+    return IconBubble(
+      glyph: (g, c) => Icon(icon, size: g, color: c),
+      color: s.primaryContainer,
+      iconColor: s.onPrimaryContainer,
+      size: size,
     );
   }
 }
