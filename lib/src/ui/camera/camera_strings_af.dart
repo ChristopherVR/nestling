@@ -296,6 +296,9 @@ const cameraAfrikaans = <String, String>{
   'Mesh Wi-Fi works. 2.4 GHz and 5 GHz both work as long as they are the same home network. Guest networks and VPNs usually block it.': 'Maas-Wi-Fi werk. 2,4 GHz en 5 GHz werk albei solank hulle dieselfde tuisnetwerk is. Gastenetwerke en VPN’s blokkeer dit gewoonlik.',
   'Does it use a lot of battery or data?': 'Gebruik dit baie battery of data?',
   'Live video uses Wi-Fi only, never mobile data, and pauses when you leave the camera screen. Background alerts use some battery because Nestling keeps listening.': 'Regstreekse video gebruik net Wi-Fi, nooit mobiele data nie, en word onderbreek wanneer jy die kameraskerm verlaat. Agtergrondwaarskuwings gebruik ’n bietjie battery omdat Nestling aanhou luister.',
+  'Does pairing mode or “Forget this camera” reset my camera?':
+      'Stel koppelmodus of “Vergeet hierdie kamera” my kamera terug?',
+  'No. Pairing mode only lets the camera receive new Wi-Fi details, and Forget only removes it from Nestling.': 'Nee. Koppelmodus laat die kamera net nuwe Wi-Fi-besonderhede ontvang, en Vergeet verwyder dit net uit Nestling.',
   'Can I rely on it as a baby monitor?':
       'Kan ek daarop staatmaak as ’n babamonitor?',
   'Treat it as a convenience, not a safety device. Video and alerts can fail or arrive late, for example if the Wi-Fi drops. Always check on your baby yourself.': 'Beskou dit as ’n gerief, nie ’n veiligheidstoestel nie. Video en waarskuwings kan misluk of laat kom, byvoorbeeld as die Wi-Fi wegval. Gaan altyd self na jou baba kyk.',

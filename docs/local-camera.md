@@ -1,397 +1,402 @@
-# Local Nanit camera
+# Watching your Nanit camera in Nestling
 
-Nestling has a local camera mode independent of Nanit sign-in. It uses the owner's camera
-on the same private IPv4 network. The verified hardware is a Nanit Pro, firmware 6.58.615.
-Other firmware is not yet certified compatible.
+Nestling can show your Nanit camera on your phone or Windows PC over your own home Wi-Fi.
+You get live video and sound, the room temperature and humidity, the night light,
+soothing sounds and optional sound and cry alerts, without a Nanit account and without
+the internet.
 
-## Setup and use
+This guide walks you through setup one step at a time, explains what to do if something
+does not work, and answers common questions.
 
-1. Open Camera on Today (enable the card in Settings if hidden), or Settings → Nanit camera.
-2. If the camera is already on Wi-Fi, choose **Find cameras on my network**. If multicast
-   discovery is filtered, Nestling tries RTSP discovery in each local /24 (up to four
-   private interfaces). On a larger subnet, enter an address outside these ranges manually.
-3. If it needs Wi-Fi, choose **Set up Wi-Fi**, put it in pairing mode with its light flashing,
-   keep it nearby, and close the Nanit app. Scan, select the camera and enter a WPA2 SSID and
-   password. A hidden-network toggle is available. No cloud registration is sent.
-4. After Wi-Fi is accepted, discover the camera on the LAN or enter its address. Give it a
-   name. Nestling verifies its identity before saving it.
-5. Video starts muted. **Listen** plays incoming microphone audio on this device. Night light
-   toggles between off and 50%; room temperature/humidity update every 15 seconds.
-6. **Camera sounds** plays Wind, White noise, Waves or Birds through the camera speaker.
-   Choose a volume and a 5/15/30/60-minute timer, then tap **Play sound**. The volume slider
-   also works during playback. **Stop sound** stops the current Nestling sound. Stop before
-   choosing another track or timer. Playback continues if you leave the screen or close
-   the app, and the camera itself stops it when the timer expires.
+- [At a glance](#at-a-glance)
+- [Before you start](#before-you-start)
+- [Which Wi-Fi networks work?](#which-wi-fi-networks-work)
+- [Set up, step by step](#set-up-step-by-step)
+- [Finding the camera's address](#finding-the-cameras-address)
+- [Using the live view](#using-the-live-view)
+- [Sound and cry alerts](#sound-and-cry-alerts)
+- [Optional: Nanit account mode](#optional-nanit-account-mode)
+- [Troubleshooting](#troubleshooting)
+- [Questions people ask](#questions-people-ask)
 
-Both Windows and Android include a first-time checklist under **Set up Wi-Fi**: power and
-proximity, the rear Wi-Fi pairing button and flashing night light, then selection and Wi-Fi
-credentials. Empty network discovery also offers **Set up camera Wi-Fi** directly.
-**Setup help & troubleshooting** is available during onboarding and from the saved camera
-screen. It covers platform-specific Bluetooth settings/permissions, missing cameras, failed
-Wi-Fi joins, discovery, reconnecting after a router/address change, and muted audio. Reading
-help does not start Bluetooth scanning or alter the camera. These UI additions do not change
-the outstanding physical Android and Flutter BLE validation below.
-Opening help from live video pauses the stream; returning resumes muted. The updated Windows
-release and Android GitHub debug APK both build successfully. Static analysis and the 11
-camera tests pass; Windows first-time setup navigation and expandable help were inspected
-in the running app without scanning, provisioning or resetting the camera.
+## At a glance
 
-The pairing-button and flashing-night-light guidance follows Nanit's
-[camera pairing instructions](https://support.nanit.com/en_us/pairing-the-camera-By48GhCFlg).
+| | Home network mode (recommended) | The Nanit app |
+|---|---|---|
+| Live video and sound at home | Yes | Yes |
+| Room temperature and humidity | Yes | Yes |
+| Night light and soothing sounds | Yes | Yes |
+| Sound and possible-cry alerts | Yes, from Nestling | Yes |
+| Watching away from home | No | Yes |
+| Recordings, video history, sleep reports | No | Yes (with subscription) |
+| Breathing monitoring, motion alerts | No | Yes |
+| Talking through the camera | Not yet | Yes |
+| Needs a Nanit account | No | Yes |
+| Needs the internet | No | Yes |
 
-Leaving the screen or backgrounding the app closes video and room/sound-control polling.
-Opt-in sound and cry monitoring continues independently (see below). Returning
-starts muted. Reconnection retries every 8 seconds while viewing, with mDNS rediscovery if the
-saved address stops working, followed by the bounded RTSP fallback. A different serial at the saved address is rejected. Change the
-address or Wi-Fi from the camera details. Forgetting removes Nestling's saved entry only.
+**What stays offline:** in home network mode, video and sound go straight from the camera
+to your phone or PC over your Wi-Fi. Nestling does not upload them anywhere and does not
+talk to Nanit. (The camera itself may still talk to Nanit if it has internet; Nestling does
+not change that.)
 
-Keep the viewing device on the same LAN, without guest/client isolation. LAN access needs
-TCP 8081 (maintenance) and 554 (media) to the camera; the in-process player adapter binds only
-to loopback on a random port. No inbound LAN stream listener or external Python process is
-needed. Internet access is not needed for these operations. Nestling does not itself block
-the camera's WAN access; use router policy if it must never reach the internet.
+**Nanit account mode** is an optional alternative that adds motion alerts but needs the
+internet about once a week. See [Optional: Nanit account mode](#optional-nanit-account-mode).
 
-## Implementation
+## Before you start
 
-- `LocalNanitHub` stores only name, UID, firmware and last address via `NanitSecretStore`.
-  Its transport has no Nanit account API. A saved local camera suppresses the legacy hub's
-  automatic account refresh and control connection.
-- `NanitOfflineCamera` identifies the camera and starts its V4L2 source only if absent, using
-  fixed FastCGI operations. It does not reboot, read/delete credentials, change firmware,
-  register a cloud server, change the microphone mixer or stop the global media source.
-- `NanitOfflineBridge` translates RTSP headers/SDP to the camera's internal authority. It
-  preserves interleaved RTP/RTCP bytes and recalculates SDP lengths. The player requires TCP.
-- `NanitWifiSetup` adapts universal_ble to the package's pure `NanitWifiFlow`. Notifications,
-  reads and writes use one GATT connection; disconnecting can end pairing mode. Bluetooth
-  setup sends request 15 only. The password is not persisted or logged; mutable packet
-  buffers are cleared after use. Runtime strings cannot be guaranteed erased from memory.
-- The existing Nanit account UI is optional. Local mode exposes no cloud alerts, recordings,
-  motion alerts, breathing monitoring or camera sleep. Local sound and possible-cry alerts
-  use Nestling's explicit policy described below.
-  Those are not silently represented as supported local features.
+You need:
 
-Local RTSP/maintenance traffic uses the camera's unauthenticated LAN interfaces. Serial
-matching prevents an accidental address mix-up; it is not cryptographic device authentication.
-Use it on the owner's trusted LAN. The public UI exposes no arbitrary command entry.
+- A **Nanit Pro** camera. Home network mode has been tested with firmware 6.58.615; other
+  models or firmware may not work or may behave differently.
+- Your **phone or Windows PC on the same home Wi-Fi** as the camera.
+- **Bluetooth**, only if the camera is new, was reset, or needs to join a different Wi-Fi.
+- Your **Wi-Fi name and password**, for the same reason.
+- About **5 minutes**.
 
-## Validation — 5 November 2026
+You do **not** need a Nanit account, a subscription or an internet connection.
 
-- Dart transport against the real camera: identity and room readings succeeded; FFmpeg
-  decoded 146 video frames at 1920×1080 and 1,292 KiB of incoming PCM audio over 15 seconds.
-  Audio was decoded to null, never played. No account tokens were read or used.
-- Native Windows Flutter player: decoded 1920×1080 texture, muted playback, then clean pause
-  and socket disposal. This caught and fixed a socket-set mutation during stream cleanup.
-  A second live test exercised Nestling's complete Camera screen, background/resume and
-  staying paused while Wi-Fi setup is open. Both passed against the pinned Git package.
-- Discovery: post-reset camera had no mDNS advertisement or port 442 service. RTSP fallback
-  found it successfully; interleaving nearby addresses prevents VPN/virtual interfaces from
-  exhausting the scan budget before the home interface is checked.
-- Android GitHub debug APK built successfully. This PC's Java NIO socket initialization
-  needed a process-local `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=<existing-short-path>`
-  pointing at `.dart_tool/java-tmp`; no project-wide Java or firewall setting was changed.
-  The normal Windows release application also built successfully against the pinned package.
-- Package tests cover fragmented FastCGI responses, success-marker enforcement, RTSP lengths,
-  binary packet preservation, bounded readings/addresses and the recorded BLE handshake.
-- App tests cover local-first onboarding at phone width, account flow compatibility,
-  metadata-only persistence, no cloud requests, identity mismatch and cancelling connection.
-  Final suites: 159 app tests and 81 camera-package tests passed; two optional tests in each
-  suite were skipped. App/package analysis reported no issues in the changed code.
-- The prior Python research proved Wi-Fi provisioning on this camera after the owner's reset,
-  followed by offline video/audio with credential files absent. The new Dart BLE protocol
-  replays that exchange in tests. **A fresh end-to-end Flutter BLE pairing on hardware remains
-  to be tested**, especially Android permissions/radio behaviour. We did not reset or re-pair
-  the already working camera during app development.
+## Which Wi-Fi networks work?
 
-The earlier research blocked WAN after Wi-Fi association; provisioning with WAN blocked from
-the first association and never-registered hardware remain unverified. No speaker, noise or
-breathing actions were triggered in app validation.
+Nestling talks to the camera directly inside your home, so this device and the camera must
+be on the same home network.
 
-```powershell
-flutter analyze
-flutter test
-flutter build apk --flavor github --debug
-# Explicit hardware test, muted; replace address with the owned camera:
-flutter test integration_test/local_camera_live_test.dart -d windows --dart-define=NANIT_TEST_IP=192.168.1.25
-```
+| Works | Does not work |
+|---|---|
+| Your home Wi-Fi, the one the camera uses | A guest network (usually walled off from other devices) |
+| Mesh Wi-Fi (several routers or pods with one name) | Mobile data, or being away from home |
+| 2.4 GHz or 5 GHz, as long as it is the same home network | A VPN switched on, on this device |
+| Ethernet on a Windows PC, if it is on the same router | A router setting called "AP isolation", "client isolation" or "device isolation" |
 
-The camera package is pinned to a Git commit in `pubspec.yaml`. A local sibling checkout may
-be used for development through the ignored `pubspec_overrides.yaml`; release validation must
-also resolve the pinned dependency without that override.
+If your router has separate names such as "Home" and "Home-5G", they normally still reach
+each other. When giving the camera Wi-Fi details, the 2.4 GHz name usually reaches further
+through walls.
 
-## Additional hardware checks — 5 November 2026
+## Set up, step by step
 
-After the owner enabled further feature testing, the research PoC verified camera
-microphone capture/mute/restore, room readings and brief Wind playback with WAN blocked
-and credential files absent. Wind was played for three seconds at 5%, then 30%; digital
-speaker output was measured, but user confirmation of audibility remains outstanding.
-The camera's native journal also exposed fresh motion active/clear events without an
-account, and one fresh active event during a final WAN-blocked observation. Controlled
-movement correlation is still outstanding. These newly tested
-microphone controls, sound playback and native event access are **PoC functionality, not
-additional Nestling UI controls in this commit**.
+Open the camera from the **Camera** button on **Today**, or from **Settings → Nanit
+camera**. If you do not see the Camera button on Today, turn on **Settings → Camera → Show
+Camera on Today**.
 
-Breathing's executable/library are installed, but the detector is stopped. A token-free
-session/control path and a supervised Breathing Wear test remain unvalidated. Ordinary
-motion messages for a region called `sting` are not breathing measurements. No PC
-microphone/talk-back or breathing alarm was triggered in this round. Test tooling and
-numeric evidence are recorded in the research repo's `OFFLINE_ACCESS.md` and `evidence/`.
+Every setup screen shows your progress at the top, says what to expect, and has a
+**Something not working?** button with fixes for that step.
 
-The owner then clarified that the mic option means both listening and talk-back. A further
-WAN-blocked PoC check played camera AAC audio on the PC and sent five seconds of live Razer
-Seiren Mini microphone capture to the camera (80,000 mono PCM16 samples at 16 kHz). Camera
-playback exited successfully and its speaker monitor measured a nonzero signal. The input
-was extremely quiet, so intelligible speech and practical volume still require a coordinated
-spoken test. No speech recording was retained; global mixer settings were unchanged and
-temporary helpers/firewall rules were removed. This validates the transport path; it does
-not yet add a Talk button to Nestling. Evidence: research repo
-`evidence/offline-two-way-audio-2026-11-05.json`.
+### 1. Welcome
 
-An owner-coordinated follow-up used the selected Razer microphone for five seconds.
-Input RMS was −48.49 dBFS, and the camera's digital speaker monitor again measured
-the output with WAN blocked and tokens absent. Playback completed and cleanup was
-verified; audible speech clarity still awaits the owner's confirmation. Evidence:
-research repo `evidence/offline-spoken-audio-2026-11-05.json`.
-The requested ten-second repeat also completed, but microphone input was only
-−83.71 dBFS, so it did not resolve speech clarity. The corresponding `offline-spoken-audio-repeat-2026-11-05.json`
-records delivery, isolation and cleanup; user confirmation of speaking/audibility
-is still pending.
+![The welcome screen explains what you get and what to know](images/camera/01-intro.png)
 
-## Stream stability and latency — 5 November 2026
+The first screen lists what home network mode does and does not do. Tap **Get started**.
 
-The Windows delay/disconnection report exposed three independent problems:
+### 2. Is your camera already on your Wi-Fi?
 
-- The RTSP bridge applied the same 20-second receive timeout in both directions.
-  An RTSP player can send no control requests during that interval while the camera
-  continues sending RTP. The bridge now allows that client silence, while retaining
-  a timeout for camera inactivity and stalled writes. TCP_NODELAY is enabled on both
-  sides. A fake-camera regression test reproduced the early disconnect before the fix.
-- A delayed or failed temperature/humidity request previously blocked initial video
-  or tore down an established stream. Telemetry now loads separately, clears stale
-  readings on failure and retries without restarting media.
-- Losing focus on Windows emits `inactive` even while the window is visible. This
-  no longer pauses the camera; hiding/minimizing/backgrounding still does.
+![Choose Already on Wi-Fi or Set up Wi-Fi](images/camera/02-path.png)
 
-The native player uses mpv's low-latency profile with disk caching and read-ahead
-disabled, and a 100 ms audio buffer. Audio/video clock synchronization remains enabled.
-Recoverable decoder log errors no longer trigger immediate reconnection; end-of-stream,
-startup failure or eight seconds without playback timeline progress do. The settings
-follow the [mpv low-latency guidance](https://mpv.io/manual/stable/#low-latency-playback).
-These settings reduce sources of buffering; they do not establish an exact physical
-camera-to-screen or speaker delay.
+- **Already on Wi-Fi** — the camera works in the Nanit app at home today. Nestling just
+  needs to find it. Skip to [step 6](#6-check-this-devices-wi-fi).
+- **Set up Wi-Fi** — the camera is new, was reset, or you changed your router or Wi-Fi
+  password. Continue with step 3.
 
-Validation against pinned package `e82df97` (0.2.1): Windows decoded 1920×1080
-video after 2,180 ms and sustained a 90-second muted playback test with 901 timeline
-updates and zero stream errors. A separate hardware test passed visible-window
-focus changes, background pause/resume and Wi-Fi setup remaining paused. Its live
-test harness was corrected to avoid waiting for a rendered frame while paused.
-All 161 app tests and 82 camera-package tests passed; app and changed-package-file
-analysis passed. Numeric evidence is in the research repo's
-`evidence/windows-stream-stability-2026-11-05.json`. This run did not block WAN;
-exact physical audio/video delay remains unmeasured and Android hardware playback
-still needs confirmation.
-The normal Windows release and Android GitHub debug APK were rebuilt successfully
-against that pinned dependency; the Windows release was reopened on the live camera.
-The owner then confirmed the Windows result: “Much better and stays connected.”
-This records the observed improvement in delay and stability without assigning an
-unmeasured latency value or uptime duration.
+**Not sure?** Choose **Already on Wi-Fi**. If Nestling cannot find the camera, it offers
+Wi-Fi setup.
 
-## Camera sound controls — 5 November 2026
+### 3. Put the camera in pairing mode
 
-Camera sounds are now a first-class local feature on the shared Windows/Android screen.
-They use the bundled WAV files and a namespaced temporary camera process, not account
-requests or uploaded media. Its timer runs independently of Nestling, the sound loops
-until the deadline, and the global microphone/speaker mixer remains unchanged. Volume
-changes target only the Nestling PulseAudio stream. Stop validates the runner's command
-line and process group before signaling it, so it does not kill other camera audio jobs.
+![Press the pairing button on the back until the night light flashes](images/camera/03-pairing.png)
 
-The UI reads sound status every three seconds and restores the current track/volume when
-you return. Status/action errors do not interrupt video. Opening, reconnecting or leaving
-the screen never automatically starts or stops a sound. Stop remains available when the
-current playback status is uncertain. No sound is started until Play sound is pressed.
+1. Plug the camera in and wait about a minute for it to start.
+2. Turn on Bluetooth on this device.
+3. Close the Nanit app on all phones and tablets.
+4. Press the **Wi-Fi pairing button on the back** of the camera.
+5. Wait until the **night light flashes**, then tap **The light is flashing**.
 
-The package's opt-in `test/manual/sound_live_test.dart` verified muted start, volume update,
-status and stop for all four tracks, plus automatic timer expiry with the client closed.
-All five hardware tests passed at zero volume. A Pulse inspection separately confirmed
-0% output and removal of the stream after Stop. These tests establish control operation;
-they do not independently confirm audible quality for every track.
+Pairing mode does not reset or erase the camera. It lasts a few minutes; you can press the
+button again at any time.
 
-The real Windows Play/Stop buttons were then verified at 0% volume. Playback status
-updated and Stop removed the camera's stream/helper. All 163 app tests and 85 package
-tests pass; two Windows hardware video/lifecycle checks also pass with sound polling
-enabled. Windows release and Android GitHub debug builds succeeded against package
-`3c35d4d` (0.2.2). Android hardware sound control remains untested. Findings and numeric
-evidence are in the research repo's `evidence/local-sound-controls-2026-11-05.json`.
+**If this does not work:** if the light does not flash, check the camera has power and
+press the button again. If it stops flashing before you finish, press it again.
 
-The owner subsequently reported silent playback despite an active, unmuted Pulse
-stream. Package 0.2.3 fixes the missing S5L speaker-enable step: Play saves GPIO 60's
-previous state and enables it; Stop, timer expiry and failure cleanup restore that
-state. Unknown hardware is rejected instead of assuming the same pin. The owner
-confirmed audible Wind during a 10-second test at 20%. Both original pin states,
-timer expiry, failed playback and forced cleanup were verified on the camera.
-The earlier zero-volume checks proved control operation but missed this physical
-speaker requirement. See `evidence/speaker-enable-fix-2026-11-05.json` in research.
+### 4. Find your camera over Bluetooth
 
-Validation for pinned `e3efd11` (0.2.3): all 86 camera-package tests passed with
-seven optional skips; the five opt-in sound hardware tests and ten relevant app
-tests passed. Windows release and Android GitHub debug builds succeeded. The
-updated Windows release was reopened and connected to live video.
+![Nestling lists the camera it found nearby](images/camera/05-bluetooth-found.png)
 
-## Local sound and possible-cry alerts — 5 November 2026
+Hold this device within 1–2 metres of the camera and tap **Look for camera**. Looking takes
+up to 15 seconds. Your camera shows up as **Nanit_** followed by letters and numbers.
+Select it and tap **Continue**.
 
-In **Camera → Sound & cry alerts**, enable **Monitor in background** and allow
-notifications. Sound and cry alerts have independent switches. Sound sensitivity
-offers Low (louder sounds), Normal, and High (quieter sounds). Recent detections,
-monitor health and notification-delivery problems appear in the same card.
-Monitoring does not require Listen or live video to remain on. Preferences are
-saved per device and restored when Nestling starts. Forgetting a camera stops its
-monitor and removes its alert preferences.
+**If this does not work:**
 
-This is Nestling's local policy, not a reproduction of Nanit's private final
-notification decision:
+- *Bluetooth is off* — turn on Bluetooth (on Windows: **Settings → Bluetooth & devices**),
+  then tap **Look again**.
+- *Nestling cannot use Bluetooth* — on Android open **Settings → Apps → Nestling →
+  Permissions** and allow **Nearby devices** (on Android 11 or older, also allow
+  **Location** and turn Location on). On Windows, the PC needs Bluetooth Low Energy; if
+  there is no Bluetooth switch, the adapter or driver is missing.
+- *No camera found nearby* — check the night light is flashing, move closer, close the Nanit
+  app on every phone and tablet, and tap **Look again**. You do not need to pair the camera
+  in your phone's own Bluetooth settings; if you did, remove it there.
 
-- Sound requires two fresh above-threshold observations. Low/Normal/High use
-  −25/−35/−45 dBFS. These are digital microphone levels, not calibrated room SPL.
-- Possible crying requires three consecutive native cry-model scores of at least
-  0.70. Scores are read from the camera's existing classifier; generic noise and
-  raw `is_alert=false` candidate messages are never relabelled as crying.
-- Each alert type repeats at most once a minute. Startup/reconnect/reboot discard
-  historical data. Muted microphones and stale data are reported as unavailable.
-  An unhealthy monitor sends one interruption notification after 15 seconds.
-- General sound alerts pause during camera speaker playback, including sounds
-  and talk-back. Cry checks continue; accuracy during playback is unvalidated.
+### 5. Enter your home Wi-Fi
 
-The package's separate per-instance sampler converts microphone PCM to numeric
-one-second RMS on the camera. No audio file is retained or uploaded. Only numeric
-levels, native probability windows and health metadata are polled, approximately
-every two seconds plus request time. An owned-process check protects cleanup;
-each helper expires after 45 seconds without renewal. Windows and Android can
-monitor independently without stopping each other's helper.
+![Enter your Wi-Fi name and password](images/camera/06-wifi.png)
 
-Windows must remain running and awake. Android uses the existing foreground
-service/shared Flutter engine with its own persistent monitoring flag and CPU
-wake lock. Turning off log sync does not turn off camera monitoring. Turning off
-monitoring releases its wake lock while retaining enabled log sync. The optional
-**Allow background battery use** action opens Android's system prompt. Both
-devices must stay on the camera's LAN. Force-stop, sleep on Windows, Wi-Fi loss,
-and Android power restrictions can interrupt alerts. A short locked-screen test
-does not establish overnight reliability or survival of every OEM power policy.
+Type the **Wi-Fi name** exactly as it appears in this device's Wi-Fi list (including
+capitals), and the **Wi-Fi password**. Turn on **Hidden network** only if your router hides
+its name. Tap **Connect camera to Wi-Fi** and keep the camera nearby; it can take up to two
+minutes.
 
-### Device-test isolation and deployment incident
+Your password is sent once to the camera over Bluetooth and is **not saved**.
 
-The first Android integration deployment replaced the installed GitHub app with
-the checkout's older test build. Flutter's automatic uninstall removed the phone's
-local log. The owner was informed; the official Nestling 1.5.30 (code 38) APK was
-restored. The owner chose to restore their log manually; no PC backup was imported.
-Private recovery files remain ignored and are not part of this change.
+**If this does not work:**
 
-The `cameraTest` flavor uses app ID `com.babyapp.baby_app.camera_test`, label
-**Nestling Camera Test**, and an updater stub. Also, this Flutter SDK can infer the
-production namespace before the test APK exists and later target it during test
-cleanup. A separate flavor alone is insufficient: prebuild and verify its APK
-identity, and disable automatic uninstall. `tool/test_camera_android.ps1` does
-these checks. Do not use direct `flutter test --flavor github` on an owner's app.
-The production app was restored and its version verified again after testing.
+- *Check the Wi-Fi name and password* — the name must be 1 to 32 characters and the
+  password 8 to 63. Nothing was sent yet; correct them and try again.
+- *The camera could not join your Wi-Fi* — check the name and password exactly. Use a home
+  network with a password (WPA2); networks with a sign-in web page, like hotel Wi-Fi, do not
+  work. If your router is set to "WPA3 only", switch it to "WPA2/WPA3". If you have separate
+  2.4 GHz and 5 GHz names, try the 2.4 GHz one. Press the pairing button again, then retry.
+- *Wi-Fi setup stopped part-way* — keep this device within 1–2 metres and Nestling open with
+  the screen on. Press the pairing button again and look for the camera again.
 
-```powershell
-# Keep the phone unlocked for launch; lock it after ALERT_BACKGROUND_READY.
-./tool/test_camera_android.ps1 -Device <adb-device-id> -Camera <camera-ip>
-# Coordinated speech check: wait up to ten minutes, finish after an actual sound
-# notification, and retain a short window for inspecting Android's OS notice.
-./tool/test_camera_android.ps1 -Device <adb-device-id> -Camera <camera-ip> -Seconds 600 -RequireSound
-# Windows opt-in hardware test:
-flutter test integration_test/local_alerts_live_test.dart -d windows --dart-define=NANIT_TEST_IP=<camera-ip>
-```
+### 6. Check this device's Wi-Fi
 
-The same guarded Android launcher supports `-Test local_camera_latency_test`
-for native-player A/B comparisons, `-Test local_camera_listen_test` for repeated
-muted/Listen transitions, and `-Test local_camera_lag_test` for transport stalls.
-`-Seconds` controls each comparison/soak window. `-TimingVariant baseline` selects
-one A/B case; `-TimingImages` explicitly enables private raw BGRA timing stills in
-the isolated app's cache. Those images and raw logs must not be committed.
+![Checklist of networks that work and do not work](images/camera/07-network.png)
 
-Camera package 0.2.7 removes the silent audio clock while Listen is off. Enabling
-Listen starts a fresh synchronized audio/video session; a short loading indicator
-is expected when changing modes. Windows uses software decoding to avoid its
-hardware copy-back queue. Android retains automatic decoder selection. Background
-sound/cry monitoring continues independently. The remaining camera/transport
-delay and optical measurement limits are documented in the research repository's
-`STREAM_LATENCY.md` and `evidence/baseline-latency-2026-11-05.json`.
+Make sure this phone or PC is on the **same home Wi-Fi** as the camera — not the guest
+network, not mobile data, and with any VPN turned off. If you just gave the camera a
+different Wi-Fi network, connect this device to it too. Then tap **This device is on the
+home Wi-Fi**.
 
-The hardware test leaves the camera screen, checks that native levels continue
-advancing, and sends an explicitly labelled synthetic cry notification through
-the production policy/delivery path. Synthetic probabilities test alert routing;
-they do not validate recognition of actual crying.
-The optional `-RequireSound` check fails if no real sound notification is delivered
-before the deadline. It counts events only after the notification call succeeds;
-the ordinary timed background test can legitimately pass with zero sound events.
+### 7. Find the camera on your network
 
-### Validation results
+Tap **Search my network**. It takes up to 15 seconds. Tap your camera when it appears.
 
-- Pinned camera package `0a52fdf` (0.2.4), with the local dependency override
-  removed: app analysis passed and all 171 app tests passed (two optional skips).
-  Windows release, Android GitHub debug and isolated cameraTest debug builds passed.
-- Windows: a 180-second observation away from Camera advanced native level time
-  by 178 seconds, remained healthy, and delivered one real **Sound detected** alert
-  during owner-confirmed speech at Normal sensitivity. A separate labelled
-  synthetic fixture passed possible-cry notification delivery. The release app
-  was reopened on live video and its real alert controls enabled; monitoring
-  reported healthy with both alert types on.
-- Samsung SM-S938B (reported Android 17): the 90-second away-from-Camera test
-  advanced native level time by 88.99 seconds and passed while Home/background
-  and sleep were applied during the window. Android reported foreground service
-  ID 4242 and the `Nestling:cameraMonitoring` partial wake lock. After stopping,
-  no service remained and Android recorded release of that wake lock. A labelled
-  synthetic possible-cry notification call succeeded; this first run captured
-  zero acoustic alerts.
-- A second Android run through the guarded launcher passed a 120-second window
-  with 119 seconds of native level advancement. The phone was locked/backgrounded
-  after readiness; the service and wake lock were again removed after Stop.
-  Synthetic cry delivery passed and the normal app remained version 1.5.30/code
-  38 after cleanup. This window also captured zero acoustic alerts; real Android
-  sound-alert delivery was not established until the coordinated check below.
-  The isolated normal-app build is provided separately for manual use, without
-  importing the owner's log.
-- Package validation: 88 tests passed; two simultaneous real-camera sessions
-  maintained fresh levels/classifier metadata independently. A forced short-lease
-  check removed its helper and Pulse source output after expiry.
-- Coordinated Android speech check: the longer `ALERT_REQUIRE_SOUND` test ended
-  successfully after 56 seconds, with 56 seconds of native level advancement and
-  one real Sound detected notification at Normal sensitivity. The owner confirmed
-  speaking. Android's notification record independently showed ID 3000010,
-  channel `local_camera_alerts`, title **Sound detected**, and importance 4 while
-  keyguard reported `showing=true` and `inputRestricted=true`. Monitoring remained
-  healthy and the separate synthetic cry-notification check passed. Stop removed
-  the service and released its wake lock. The isolated normal-app APK was put back
-  afterward; the production app remained 1.5.30/code 38 and no log was imported.
+![When nothing is found, Nestling explains what to try](images/camera/08-not-found.png)
 
-No camera reboot, pairing, credential reads/deletion, microphone-mixer change,
-sound-machine start or breathing action was used for these alert tests. No new
-WAN-block experiment was performed. Real-cry sensitivity/false positives, cry
-performance during sound playback, overnight Android power management and
-reboot/process-restart recovery remain unvalidated on hardware.
+**If this does not work:**
 
-## Recovering accumulated stream delay
+- *Your camera was not found on this Wi-Fi* — check the camera is plugged in and its light
+  is on, that this device is on the same home Wi-Fi, and that any VPN is off. If the camera
+  is new, was reset, or you changed your router or Wi-Fi password, set up its Wi-Fi first.
+- *This device could not search the network* — turn on Wi-Fi and connect to your home
+  network. If your phone says the Wi-Fi has no internet, choose to stay connected anyway.
+  On Windows, allow Nestling on private networks if asked.
+- Still nothing? Open **Enter the address yourself** and type the camera's address (see
+  [Finding the camera's address](#finding-the-cameras-address)), then tap **Connect by
+  address**.
 
-A three-second test-only transport stall reproduced an advancing but delayed
-stream on the local RTSP path. The previous watchdog only detected stopped
-playback, so the resumed stream could stay several seconds behind indefinitely.
-The player now compares playback progress against a monotonic clock after
-startup and requests a fresh connection if it gains more than 1.5 seconds of lag
-for three seconds. Brief jitter or a backlog that catches up does not reconnect.
-Audio/video synchronization is retained; this fixes accumulated delay rather
-than promising zero base latency.
+### 8. Name your camera
 
-A PC-clock comparison measured roughly 0.8–0.9 seconds on the published Windows
-build and about 0.5–1.1 seconds on Android in short samples after reconnecting.
-Those measurements are not an overnight guarantee or a physical audio-delay
-measurement. The 45-second baseline runs passed on both platforms. The stall
-test fails when the new guard is disabled; with it enabled, it checks that a
-fresh player decodes again and does not enter a reconnect loop.
+Give the camera a name you will recognise, such as *Nursery* or *Grandma's room*, and tap
+**Save and connect**. Nestling checks it really is a Nanit camera before saving. Only the
+name, address and camera ID are saved on this device — never a password.
 
-```powershell
-flutter test integration_test/local_camera_lag_test.dart -d windows --dart-define=NANIT_TEST_IP=<owned-camera-ip>
-```
+**If this does not work:**
 
-Android hardware tests must continue using the isolated `cameraTest` flavor,
-prebuild/verify its actual package ID, and use `--no-uninstall`. Do not deploy
-integration tests over the owner's production app.
+- *Nothing answered at that address* — the address may be wrong or out of date, or the
+  camera may be off. Tap **Try again**, **Search again**, or check the address in your
+  router's device list.
+- *Something else is using that address* — a printer, TV or other device answered. Look for
+  the device called **Nanit** (or starting with **N3**) in your router and use its address.
+
+### 9. All set
+
+![You are all set, with what to expect](images/camera/12-done.png)
+
+Tap **Start watching**. Good to know:
+
+- Video starts **muted**. Tap **Listen** to hear the room.
+- Video pauses when you leave the camera screen and reconnects when you come back.
+- If your router gives the camera a new address, Nestling finds it again by itself.
+
+## Finding the camera's address
+
+Nestling usually finds the camera for you. You only need its address if searching does not
+work.
+
+The address (called an IP address) is **four numbers separated by dots**, for example
+**192.168.1.25**. Home networks use addresses that start with **192.168.**, **10.** or
+**172.16** to **172.31**.
+
+![The manual address section shows an example router device list](images/camera/09-manual-address.png)
+
+1. Open your router's app (for example the app from your internet provider or mesh system),
+   or its web page. That page is often **192.168.1.1** or **192.168.0.1**, and is usually
+   printed on a sticker under the router.
+2. Find the list of connected devices (often called *Devices*, *Clients* or *Connected
+   devices*).
+3. Look for a device called **Nanit**, or one whose name starts with **N3**. Its IP address
+   is shown next to it.
+4. Some versions of the Nanit app also show it in the camera's settings, under network or
+   camera information.
+5. Type the four numbers and dots exactly, with no spaces and no `http://`.
+
+Example of what a router's device list looks like:
+
+| Device | IP address |
+|---|---|
+| Living-room-PC | 192.168.1.12 |
+| Pixel-8 | 192.168.1.18 |
+| **Nanit (N301…)** | **192.168.1.25** |
+| Samsung-TV | 192.168.1.31 |
+
+Do not use your internet (public) address from a "what is my IP" website; it will not work.
+
+**Tip:** to stop the address changing after a router restart, "reserve" it in your router.
+This setting is often called *DHCP reservation*, *fixed IP* or *static lease*.
+
+## Using the live view
+
+![First visit: a few tips above the video](images/camera/live-first-time.png)
+
+- **Listen / Mute** — video always starts muted so it never wakes anyone by surprise. Tap
+  **Listen** to hear the room. Leaving the screen mutes it again.
+- **Reconnect** — if the picture is stuck. Nestling also retries by itself every few seconds.
+- **Camera sounds** — choose Wind, White noise, Waves or Birds, a volume and a timer (5 to
+  60 minutes), then tap **Play sound**. You can change the volume while it plays. It keeps
+  playing if you leave the screen or close Nestling, until the timer ends or you tap **Stop
+  sound**. Stop the current sound before choosing another track or timer.
+- **In the room** — temperature and humidity update every 15 seconds. The **Night light**
+  switch turns it on (50%) or off.
+- **Change camera address** — if your router gave the camera a new one.
+- **Change Wi-Fi** — after a new router or a new Wi-Fi name or password. This runs the
+  Bluetooth steps again.
+- **Forget this camera** — removes it from Nestling. It does not reset the camera.
+- The **lightbulb** button at the top shows tips; the **question mark** opens searchable
+  help and questions.
+
+When something goes wrong, the live view shows what happened, why, and what to try, with
+buttons such as **Try again** or **Change camera address**.
+
+## Sound and cry alerts
+
+Nestling can keep listening in the background and notify you about loud sounds or possible
+crying, even when you leave the camera screen.
+
+1. Under **Sound & cry alerts**, turn on **Monitor in background** and allow notifications.
+2. Choose **Sound alerts**, **Cry alerts**, or both, and a **Sound sensitivity**: Low
+   (louder sounds only), Normal, or High (quieter sounds too).
+3. Keep this device on the home Wi-Fi. On Windows, keep the PC on and awake. On Android,
+   tap **Allow background battery use**.
+
+Good to know:
+
+- Each alert repeats at most once a minute.
+- General sound alerts pause while the camera's speaker is playing a sound. Cry alerts
+  continue.
+- A **Camera monitoring interrupted** alert means Nestling lost the camera — not that the
+  room is quiet.
+- Possible-crying alerts are a best guess and can be wrong.
+
+## Optional: Nanit account mode
+
+On the first setup screen you can choose **Use a Nanit account instead**. This signs in to
+Nanit once and adds **motion alerts**.
+
+- **Why it needs the internet about once a week:** in account mode the camera only accepts a
+  key signed by Nanit, and each key lasts about **7 days**. Nestling renews it by itself
+  whenever the device has internet. **Works offline until** on the camera screen shows when
+  the current key runs out. If Nestling cannot reach Nanit for a week, video stops until you
+  are online again (and you may need to sign in again).
+- Video still travels only over your home Wi-Fi.
+- **Motion alerts are simpler than in the Nanit app.** They react to how much the picture
+  changes, not to Nanit's cloud analysis of your baby's movement. Shadows, a night light
+  switching or a moving mobile can count as motion. Use **Motion sensitivity** (Low ignores
+  small changes; High reacts to small ones).
+- Your password goes only to Nanit. This device keeps the sign-in key in its secure storage.
+
+If you would rather never need the internet, use home network mode.
+
+## Troubleshooting
+
+Every problem screen in Nestling has a **More help** button, and **Camera help** has a
+search box (try words like *password*, *sound* or *address*).
+
+![Camera help with search, quick start and topics](images/camera/help.png)
+
+| What you see | What it means | What to do |
+|---|---|---|
+| Your camera was not found on this Wi-Fi | Nothing answered on this device's network | Check camera power; same home Wi-Fi (not guest or mobile data); VPN off; set up Wi-Fi if the camera is new or reset; or type its address |
+| This device could not search the network | Wi-Fi is off or not connected | Connect to home Wi-Fi; stay connected even if it says "no internet"; on Windows allow private networks |
+| That does not look like a home-network address | The address is mistyped or public | Four numbers with dots, e.g. 192.168.1.25; use the router's device list |
+| Nothing answered at that address | Wrong or old address, or camera off | Check the numbers; look the address up again; or search instead |
+| Something else is using that address | A different device answered | Use the device called Nanit / N3… in your router |
+| A different camera answered | Your router reassigned addresses, or you have two Nanits | **Change camera address**; reserve the address in your router |
+| Cannot reach the camera right now | No answer from the camera; Nestling keeps retrying | Check power and Wi-Fi; VPN off; after a router restart use **Change camera address**; after a Wi-Fi change use **Change Wi-Fi** |
+| The camera answered, but video did not start | The camera is busy, often just after starting | Wait 30 seconds and tap **Reconnect**; if it repeats, unplug the camera for 10 seconds |
+| Video stopped | The connection dropped | Nestling reconnects by itself; if it happens often, improve Wi-Fi near the camera or this device |
+| Temperature and humidity are unavailable | Readings did not arrive; video still works | Wait — it retries every 15 seconds; tap **Reconnect** if it lasts minutes |
+| I can see video but cannot hear anything | Video starts muted | Tap **Listen**; turn up media volume; check headphones / Windows sound output |
+| The camera did not send video | A firewall or VPN on this device is blocking it | Windows: allow Nestling on private networks and set your Wi-Fi to Private; phone: turn off VPN/firewall apps |
+| The camera is busy with other viewers (error 403) | The camera only streams to a few apps at once | Close the Nanit app or Nestling on other devices; wait a minute; **Try again** |
+| This device is not on the camera's network | Video cannot reach this device | Connect to home Wi-Fi; VPN off |
+| Bluetooth is off | Needed for Wi-Fi setup only | Turn Bluetooth on; **Look again** |
+| Nestling cannot use Bluetooth | Permission denied or no Bluetooth adapter | Android: allow **Nearby devices** (and Location on Android 11 or older); Windows: check Bluetooth & devices |
+| No camera found nearby | No camera in pairing mode answered | Check the flashing night light; press the pairing button again; move within 1–2 m; close the Nanit app |
+| That device is not a camera in setup mode | Pairing mode may have ended | Press the pairing button again; pick the device starting with Nanit_ |
+| Check the Wi-Fi name and password | Name or password too long or too short | Name 1–32 characters, password 8–63 |
+| The camera could not join your Wi-Fi | Usually a typo or unsupported network | Check exact name/password; WPA2 network; try the 2.4 GHz name; press the pairing button and retry |
+| Wi-Fi setup stopped part-way | Bluetooth connection ended | Stay within 1–2 m; keep Nestling open; press the pairing button and try again |
+| Your camera key needs renewing (account mode) | The weekly Nanit key expired or you were signed out | Get online and tap **Sign in again**; or use home network mode |
+| Could not reach Nanit to renew the camera key (account mode) | No internet right now | Video keeps working until "Works offline until"; try again when online |
+| The camera's identity changed (account mode) | The camera was reset or replaced | Tap **Pick the camera again** |
+| My router gave the camera a new address | Routers can change addresses after a restart | Nestling searches by itself; otherwise **Change camera address**; reserve the address |
+
+## Questions people ask
+
+**What does home network mode do?**
+It shows live video and sound from your Nanit camera, the room temperature and humidity,
+the night light, soothing sounds, and optional sound and cry alerts. Everything travels over
+your own Wi-Fi, straight from the camera to this device.
+
+**What does it not do, compared with the Nanit app?**
+No watching away from home, no recordings or video history, no sleep reports, no breathing
+monitoring, no motion alerts and no talking through the camera. Keep the Nanit app for those.
+
+**Do I need the internet?**
+Not in home network mode. Once set up, it works with the internet switched off. Nanit
+account mode is different: it needs the internet for a moment about once a week.
+
+**Why does account mode need the internet about once a week?**
+In account mode the camera only accepts a key signed by Nanit, and each key lasts about 7
+days. Nestling renews it by itself whenever it can. If it cannot reach Nanit for a week,
+video stops until you are online again.
+
+**Does my video go to the cloud?**
+Nestling does not upload your video or sound anywhere. It goes from the camera to this
+device over your Wi-Fi. The camera itself may still talk to Nanit if it has internet;
+Nestling does not change that. If you want the camera never to reach the internet, block it
+in your router.
+
+**Is my Wi-Fi password saved?**
+No. During setup it is sent once to the camera over Bluetooth and then forgotten.
+
+**Can I keep using the Nanit app?**
+Yes. Nestling does not change your Nanit account or subscription. Close the Nanit app while
+you set up the camera's Wi-Fi, and remember the camera only streams to a few apps at once.
+
+**Can two phones watch at the same time?**
+Yes, if both are on the home Wi-Fi. Set up the camera in Nestling on each device. The camera
+limits how many apps can watch at once.
+
+**Which cameras work?**
+Home network mode has been tested on the Nanit Pro camera with firmware 6.58.615. Other
+models or firmware may not work or may behave differently.
+
+**Does it work with mesh Wi-Fi, 5 GHz or a VPN?**
+Mesh Wi-Fi works. 2.4 GHz and 5 GHz both work as long as they are the same home network.
+Guest networks and VPNs usually block it.
+
+**Does it use a lot of battery or data?**
+Live video uses Wi-Fi only, never mobile data, and pauses when you leave the camera screen.
+Background alerts use some battery because Nestling keeps listening.
+
+**Does pairing mode or “Forget this camera” reset my camera?**
+No. Pairing mode only lets the camera receive new Wi-Fi details, and Forget only removes it
+from Nestling.
+
+**Can I rely on it as a baby monitor?**
+Treat it as a convenience, not a safety device. Video and alerts can fail or arrive late,
+for example if the Wi-Fi drops. Always check on your baby yourself.
+
+---
+
+Nestling is not made by or affiliated with Nanit. Nanit is a trademark of its owner.
