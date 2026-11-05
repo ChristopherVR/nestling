@@ -115,7 +115,8 @@ void main() {
           tester,
           Entry(
             type: type,
-            time: DateTime.now().subtract(const Duration(hours: 1)),
+            // A past date consistently exercises the longer date label.
+            time: DateTime(2020, 11, 4, 23, 6),
             nappy: NappyKind.pee,
             side: FeedSide.left,
             medName: 'Vitamin',
@@ -132,6 +133,9 @@ void main() {
         field.onChanged(changed);
         await tester.pumpAndSettle();
         expect(update(tester).onPressed, isNotNull);
+        // Longer date labels can push the footer below the viewport.
+        await tester.ensureVisible(find.text('Update'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Update'));
         await tester.pumpAndSettle();
         expect(app.entries.single.time, changed);
