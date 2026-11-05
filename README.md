@@ -58,8 +58,9 @@ Nestling sends WPA2 network details over Bluetooth without a Nanit account. Came
 microphone audio (muted until **Listen**), room readings and night light work locally.
 
 No separate bridge process or expiring camera token is needed. Verified on Nanit Pro
-firmware **6.58.615**. See [local camera setup, architecture and validation](docs/local-camera.md)
-for supported platforms, troubleshooting, test commands and remaining hardware checks.
+firmware **6.58.615**. See the [camera user guide](docs/local-camera.md) for setup and
+troubleshooting, and the [developer notes](docs/local-camera-dev.md) for architecture, test
+commands and remaining hardware checks.
 
 ## Install on Windows
 

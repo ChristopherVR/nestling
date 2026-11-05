@@ -140,6 +140,10 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'me@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'secret');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    await tester.ensureVisible(find.text('Sign in to Nanit'));
+    await tester.pump();
     await tester.tap(find.text('Sign in to Nanit'));
     await step(tester);
 

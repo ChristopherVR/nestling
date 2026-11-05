@@ -334,15 +334,24 @@ void main() {
       await tester.runAsync(tested.start);
       await tester.pump();
       expect(find.text('Your camera, at home'), findsOneWidget);
+      await tester.tap(find.text('Get started'));
+      await tester.pump();
       expect(find.text('Already on Wi-Fi'), findsOneWidget);
       expect(find.text('Set up Wi-Fi'), findsOneWidget);
-      await tester.enterText(find.byType(TextField).at(1), '8.8.8.8');
+      await tester.tap(find.text('Already on Wi-Fi'));
+      await tester.pump();
+      await tester.tap(find.text('This device is on the home Wi-Fi'));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Enter the address yourself'));
+      await tester.tap(find.text('Enter the address yourself'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '8.8.8.8');
       await tester.ensureVisible(find.text('Connect by address'));
       await tester.tap(find.text('Connect by address'));
       await tester.pump();
-      await tester.ensureVisible(
-        find.text('Enter the camera’s local IPv4 address.'),
-      );
+      final card = find.text('That does not look like a home-network address');
+      await tester.ensureVisible(card);
+      expect(card, findsOneWidget);
       expect(
         find.text('Enter the camera’s local IPv4 address.'),
         findsOneWidget,
