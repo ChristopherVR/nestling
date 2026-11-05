@@ -2,13 +2,13 @@
 
 _Last updated: 5 November 2026_
 
-Nestling is a baby log for parents and caregivers: feeds, nappies, sleep, pills, routines and
+Nestling is a baby log for parents and caregivers: feeds, nappies, sleep, habits, routines and
 growth and pumping. It is built by an individual developer (ChristopherVR). This policy explains what the app
 does with your information. In short: **your log stays on your own devices.**
 
 ## What the app stores
 
-Everything you enter (babies' names, birthdays and photos, log entries, notes, pills, routines,
+Everything you enter (babies' names, birthdays and photos, log entries, notes, habits, routines,
 growth measurements and reminders) is saved only in the app's private storage on your device.
 Nestling does not require an account and has no advertising, analytics or tracking. The
 developer never receives your data. The optional Nanit account connection is described below.
@@ -45,7 +45,7 @@ remove a device from the hub at any time in Settings.
 - **Camera:** only to scan pairing and sync QR codes. Images are not saved or sent anywhere.
 - **Photos / files:** only when you choose a profile or growth photo, or import or export a
   backup. Backups are written to a location you pick.
-- **Notifications, alarms and full-screen alerts:** for feed, pill and routine reminders that you
+- **Notifications, alarms and full-screen alerts:** for feed, habit and routine reminders that you
   set up.
 - **Bluetooth (nearby devices):** to set up Wi-Fi on your own camera and connect to your own Bluetooth breast pumps, so
   you can control them and log pumping sessions. Nestling reads the pump's status, battery,

@@ -10,5 +10,4 @@ export const site = {
   releases: `${repo}/releases`,
   latestRelease: `${repo}/releases/latest`,
   issues: `${repo}/issues`,
-  play: 'https://play.google.com/store/apps/details?id=io.github.christophervr.nestling',
 } as const

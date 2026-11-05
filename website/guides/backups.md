@@ -29,8 +29,7 @@ This is also how you move to a new phone without a family hub: export on the old
 
 ## Updating Nestling
 
-- **Google Play:** updates come through Google Play.
-- **APK from GitHub:** tap **Settings → This device → App version**, then **Update**. Nestling checks the download before installing it.
+- **Android:** tap **Settings → This device → App version**, then **Update**. Nestling checks the download before installing it.
 - **Windows:** close Nestling and extract the new ZIP into a new folder. Your log carries over.
 
 Updates keep your log. After an update, Nestling shows **What's new** once. All release notes are on [GitHub Releases](https://github.com/ChristopherVR/nestling/releases).

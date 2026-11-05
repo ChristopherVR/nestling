@@ -6,7 +6,7 @@ const links = [
   {
     href: '/get-started',
     title: 'Install Nestling',
-    text: 'Android from Google Play or as an APK, or Windows as a ZIP. About a minute.',
+    text: 'Android as an APK, or Windows as a ZIP. About a minute.',
   },
   {
     href: '/guides/sharing',

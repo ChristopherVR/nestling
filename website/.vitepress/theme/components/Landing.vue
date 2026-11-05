@@ -4,17 +4,17 @@ import {
   BellRing,
   Bluetooth,
   CalendarClock,
+  Download,
   FileDown,
   Languages,
+  ListChecks,
   Moon,
   MoonStar,
-  Pill,
   Video,
 } from '@lucide/vue'
 import { Button } from './ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion'
 import DeviceFrame from './DeviceFrame.vue'
-import PlayIcon from './PlayIcon.vue'
 import QuickLinks from './QuickLinks.vue'
 import { site } from '../site'
 
@@ -61,7 +61,7 @@ const rows = [
 const extras = [
   { icon: Moon, title: 'Sleep', text: 'Start nap and End nap, with times you can adjust.', href: '/guides/logging#sleep' },
   { icon: CalendarClock, title: 'Routines', text: 'Bath, bedtime or tummy time on set days, and who did it.', href: '/guides/logging#routines' },
-  { icon: Pill, title: 'Pills', text: 'Your own doses worked out across the day, with reminders. Called Habits on Google Play.', href: '/guides/reminders#pills' },
+  { icon: ListChecks, title: 'Habits', text: 'Things you do on a schedule, worked out across the day, with reminders.', href: '/guides/reminders#habits' },
   { icon: BellRing, title: 'Reminders', text: 'When the next feed is due. Each phone chooses its own.', href: '/guides/reminders' },
   { icon: Bluetooth, title: 'Momcozy pumps', text: 'Control supported pumps from Android and save each session.', href: '/guides/pump' },
   { icon: Video, title: 'Nanit camera', text: 'Watch and listen on your home network, no Nanit account needed.', href: '/guides/camera' },
@@ -82,10 +82,6 @@ const faqs = [
   {
     q: 'Does it need the internet?',
     a: 'No. Logging works offline, and devices sync over your home Wi‑Fi or by QR code. The internet is only needed to download the app, to check for updates when you ask, and for the optional Nanit account sign-in.',
-  },
-  {
-    q: 'What is the difference between Google Play and the APK?',
-    a: 'Google Play installs and updates the app for you; its reminders are notifications, and the Pills tab is called Habits. The APK updates itself from inside the app and can ring a full‑screen alarm. They are separate apps, so keep only one of them on a phone.',
   },
   {
     q: 'What happens to my log if I lose my phone?',
@@ -118,15 +114,14 @@ const faqs = [
             Wi‑Fi. It’s free, there is no account, and the log never leaves your devices.
           </p>
           <div class="mt-6 flex flex-col items-start gap-4 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
-            <Button as="a" :href="site.play" target="_blank" rel="noopener" size="lg">
-              <PlayIcon />
-              Get it on Google Play
-              <span class="sr-only">(opens in a new tab)</span>
+            <Button as="a" :href="withBase('/get-started#apk')" size="lg">
+              <Download />
+              Download for Android
             </Button>
             <a
-              :href="withBase('/get-started#download')"
+              :href="withBase('/get-started#windows')"
               class="text-[15px] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
-            >APK and Windows downloads</a>
+            >Get it for Windows</a>
           </div>
         </div>
         <div class="hidden lg:block">
@@ -151,7 +146,7 @@ const faqs = [
         </h2>
         <p class="m-0 mt-4 max-w-[60ch] text-[17px] leading-[1.6] text-ink-2">
           Big buttons, one tap per entry, and the time since the last feed at the top of the
-          screen. Screens below are from the Google Play version.
+          screen.
         </p>
 
         <div class="mt-12 flex flex-col gap-16 lg:mt-16 lg:gap-20">

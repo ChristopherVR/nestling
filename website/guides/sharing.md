@@ -27,7 +27,7 @@ Tap **Type code** instead of **Scan code**, and type the **address** and **code*
 
 ## What is shared
 
-Babies, feeds, nappies, sleep, growth, routines and pills, including edits and deletions. **Settings, reminders, the theme and device names stay on each device.**
+Babies, feeds, nappies, sleep, growth, routines and habits, including edits and deletions. **Settings, reminders, the theme and device names stay on each device.**
 
 Each entry remembers who logged it. If you both log the same thing within 10 minutes, Nestling marks it as a possible duplicate so you can delete one.
 
