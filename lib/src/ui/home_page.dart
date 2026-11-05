@@ -127,16 +127,18 @@ class _HomePageState extends State<HomePage> {
       ],
       const SizedBox(height: Space.sm),
       _StatusCard(app: app),
+      // A new parent's next step comes before the buttons it points at, so it
+      // is never pushed off screen (e.g. by the night-light notice).
+      if (app.tourPending) ...[
+        const SizedBox(height: Space.lg),
+        _FirstLogGuide(app: app),
+      ],
       const SizedBox(height: Space.lg),
       const PumpLiveCard(),
       _QuickGrid(children: quick),
       if (app.cameraOnToday) ...[
         const SizedBox(height: Space.md),
         const CameraTodayCard(),
-      ],
-      if (app.tourPending) ...[
-        const SizedBox(height: Space.md),
-        _FirstLogGuide(app: app),
       ],
     ];
     final activity = <Widget>[
