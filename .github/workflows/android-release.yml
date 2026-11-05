@@ -130,7 +130,9 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.workers.max=2
         run: |
           chmod +x android/gradlew
-          flutter build apk --flavor github --release --no-pub
+          # Release builds must regenerate the registrant without dev plugins.
+          # --no-pub skips this in Flutter: flutter/flutter#169336.
+          flutter build apk --flavor github --release
       - run: python3 tool/verify_distribution_manifest.py github
       - name: Verify APK uses the existing signing certificate
         run: python3 tool/verify_apk_signing.py
@@ -183,7 +185,7 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.workers.max=2
         run: |
           chmod +x android/gradlew
-          flutter build appbundle --flavor play --release --no-pub
+          flutter build appbundle --flavor play --release
       - run: flutter test --flavor play --no-pub test/play_distribution_test.dart test/wifi_sync_test.dart
       - run: python3 tool/verify_distribution_manifest.py play
       - run: python3 tool/verify_play_bundle.py build/app/outputs/bundle/playRelease/app-play-release.aab
@@ -222,7 +224,7 @@ jobs:
           ssh-key: ${{ secrets.NANIT_RESEARCH_SSH_KEY }}
       - run: flutter pub get
       - run: flutter test --no-pub
-      - run: flutter build windows --release --no-pub
+      - run: flutter build windows --release
       - name: Package the complete Windows application
         shell: pwsh
         env:
