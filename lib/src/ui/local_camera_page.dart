@@ -14,6 +14,7 @@ import 'camera/camera_issues.dart';
 import 'camera/camera_live_tips.dart';
 import 'common.dart';
 import 'disclaimer_page.dart';
+import 'theme.dart';
 
 class LocalCameraWatch extends StatefulWidget {
   const LocalCameraWatch({super.key, required this.hub, this.onWifiSetup});
@@ -100,7 +101,12 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
       final s = Theme.of(context).colorScheme;
       final fault = hub.fault;
       return ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+          Space.page,
+          Space.sm,
+          Space.page,
+          Space.xxl + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           Row(
             children: [
@@ -119,10 +125,15 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
           ),
           Row(
             children: [
-              Icon(playing ? Icons.wifi : Icons.wifi_find, size: 18),
-              const SizedBox(width: 8),
+              Icon(
+                playing ? Icons.wifi : Icons.wifi_find,
+                size: 20,
+                color: s.onSurfaceVariant,
+              ),
+              const SizedBox(width: Space.sm),
               Flexible(
                 child: LText(
+                  style: t.bodyMedium?.copyWith(color: s.onSurfaceVariant),
                   playing
                       ? 'Live · Home network'
                       : ready
@@ -136,11 +147,11 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           CameraFirstTimeTips(store: hub.store),
-          const SizedBox(height: 4),
+          const SizedBox(height: Space.xs),
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Corners.lg),
             child: AspectRatio(
               aspectRatio: 16 / 9,
               // Video letterboxing stays black in every theme.
@@ -178,10 +189,10 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           Wrap(
-            spacing: 12,
-            runSpacing: 8,
+            spacing: Space.md,
+            runSpacing: Space.sm,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               FilledButton.tonalIcon(
@@ -202,7 +213,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
           ),
           if (ready && _muted)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: Space.sm),
               child: LText(
                 'Muted. Tap Listen to hear the room.',
                 style: t.bodySmall?.copyWith(color: s.onSurfaceVariant),
@@ -210,7 +221,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
             ),
           if (fault != null)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(top: Space.md),
               child: CameraIssueCard(
                 issue: issueForLocalFault(fault),
                 detail: hub.problem,
@@ -222,40 +233,41 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
             )
           else if (hub.problem != null)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(top: Space.md),
               child: Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Space.lg),
                   child: LText(hub.problem!),
                 ),
               ),
             ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xl),
           _CameraSounds(hub: hub),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           CameraAlertsCard(alerts: hub.alerts),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Space.xs, Space.lg, Space.xs, 0),
             child: LText(
               'Use at your own risk. Camera feeds and alerts can fail or be delayed. Always independently check your child.',
+              style: t.bodyMedium?.copyWith(color: s.onSurfaceVariant),
             ),
           ),
           TextButton(
             onPressed: () => showDisclaimer(context),
             child: const LText('Disclaimer & responsibility'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Space.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(tr('In the room'), style: t.titleMedium),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Space.md),
                   Wrap(
-                    spacing: 28,
-                    runSpacing: 12,
+                    spacing: Space.xl,
+                    runSpacing: Space.md,
                     children: [
                       _Reading(
                         Icons.thermostat,
@@ -273,7 +285,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const LText('Night light'),
@@ -290,7 +302,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           Card(
             child: Column(
               children: [
@@ -303,7 +315,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
                   isThreeLine: true,
                 ),
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.lg),
                   child: LText(
                     'Video and room readings pause when you leave this screen. Enabled sound and cry alerts keep monitoring while Nestling runs. Motion and breathing alerts are not available in local mode.',
                   ),
@@ -407,7 +419,7 @@ class CameraAlertsCard extends StatelessWidget {
     listenable: alerts,
     builder: (context, _) => Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -474,7 +486,7 @@ class CameraAlertsCard extends StatelessWidget {
             const LText(
               'Sound alerts pause while the camera speaker plays audio. Cry checks continue. Alerts repeat at most once a minute for each type.',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             const LText(
               'Stay on the same home network. Windows must remain open and awake. Android shows an ongoing monitoring notification; battery restrictions or force-stopping Nestling can interrupt monitoring.',
             ),
@@ -484,7 +496,7 @@ class CameraAlertsCard extends StatelessWidget {
                 child: const LText('Allow background battery use'),
               ),
             if (alerts.history.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
               Text(
                 tr('Recent alerts'),
                 style: Theme.of(context).textTheme.titleSmall,
@@ -538,21 +550,24 @@ class _CameraSoundsState extends State<_CameraSounds> {
         : _volume;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.graphic_eq),
-                const SizedBox(width: 8),
+                Icon(
+                  Icons.graphic_eq,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: Space.sm),
                 Text(
                   tr('Camera sounds'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             LText(
               playing
                   ? '${sound!.track!.label} is playing · ${((sound.remainingSeconds + 59) ~/ 60)} min remaining'
@@ -562,7 +577,7 @@ class _CameraSoundsState extends State<_CameraSounds> {
                   ? 'Sound playback is unavailable on this camera.'
                   : 'Play a soothing sound through the camera’s speaker.',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             DropdownButtonFormField<NanitSoundTrack>(
               key: ValueKey(track),
               initialValue: track,
@@ -576,7 +591,7 @@ class _CameraSoundsState extends State<_CameraSounds> {
                   : null,
             ),
             if (!playing) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               DropdownButtonFormField<int>(
                 initialValue: _minutes,
                 decoration: InputDecoration(labelText: tr('Stop after')),
@@ -592,7 +607,7 @@ class _CameraSoundsState extends State<_CameraSounds> {
                     : null,
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             LText('Sound volume · ${volume.round()}%'),
             Slider(
               value: volume,
@@ -614,8 +629,8 @@ class _CameraSoundsState extends State<_CameraSounds> {
                   : null,
             ),
             Wrap(
-              spacing: 12,
-              runSpacing: 8,
+              spacing: Space.md,
+              runSpacing: Space.sm,
               children: [
                 FilledButton.icon(
                   onPressed: enabled && !playing
@@ -641,15 +656,15 @@ class _CameraSoundsState extends State<_CameraSounds> {
             ),
             if (hub.changingSound)
               const Padding(
-                padding: EdgeInsets.only(top: 12),
+                padding: EdgeInsets.only(top: Space.md),
                 child: LinearProgressIndicator(),
               ),
             if (hub.soundProblem != null)
               Padding(
-                padding: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.only(top: Space.md),
                 child: LText(hub.soundProblem!),
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             const LText(
               'Sound continues if you leave this screen, until its timer ends or you tap Stop sound.',
             ),
@@ -668,8 +683,8 @@ class _Reading extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon),
-      const SizedBox(width: 8),
+      Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      const SizedBox(width: Space.sm),
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

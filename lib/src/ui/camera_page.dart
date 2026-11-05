@@ -9,6 +9,7 @@ import 'camera/camera_issues.dart';
 import 'camera/camera_setup_wizard.dart';
 import 'common.dart';
 import 'local_camera_page.dart';
+import 'theme.dart';
 
 void openCamera(BuildContext context) => Navigator.push(
   context,
@@ -170,7 +171,7 @@ class _SignInState extends State<_SignIn> {
   Widget build(BuildContext context) => ListView(
     padding: _pagePadding(context),
     children: [
-      const SizedBox(height: 8),
+      const SizedBox(height: Space.sm),
       _Intro(
         icon: Icons.videocam_rounded,
         title: 'Watch your Nanit camera',
@@ -179,7 +180,7 @@ class _SignInState extends State<_SignIn> {
             'to the camera over your home Wi-Fi, even when the internet is '
             'down.',
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: Space.lg),
       const CameraInfoCard(
         title: 'How account mode works',
         icon: Icons.info_outline,
@@ -190,10 +191,10 @@ class _SignInState extends State<_SignIn> {
           'Adds motion alerts. They react to changes in the picture, so they are simpler than in the Nanit app.',
         ],
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Space.lg),
           child: AutofillGroup(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -205,7 +206,7 @@ class _SignInState extends State<_SignIn> {
                   autofillHints: const [AutofillHints.email],
                   decoration: const LInputDecoration(labelText: 'Email'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 TextField(
                   controller: _password,
                   enabled: !_busy,
@@ -225,7 +226,7 @@ class _SignInState extends State<_SignIn> {
                   ),
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Space.md),
                   LText(
                     _error!,
                     style: TextStyle(
@@ -233,7 +234,7 @@ class _SignInState extends State<_SignIn> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 FilledButton(
                   onPressed: _busy ? null : _go,
                   child: _busy
@@ -248,7 +249,7 @@ class _SignInState extends State<_SignIn> {
           ),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       LText(
         'Your password goes only to Nanit. This device keeps the sign-in '
         'key in its secure storage.',
@@ -317,7 +318,7 @@ class _CodeDialogState extends State<_CodeDialog> {
                 ? 'That code did not work. Try the newest one.'
                 : 'Nanit sent a code to your $where$hint.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           TextField(
             controller: _code,
             autofocus: true,
@@ -382,19 +383,19 @@ class _PickCameraState extends State<_PickCamera> {
   Widget build(BuildContext context) => ListView(
     padding: _pagePadding(context),
     children: [
-      const SizedBox(height: 8),
+      const SizedBox(height: Space.sm),
       const _Intro(
         icon: Icons.child_care_rounded,
         title: 'Which camera?',
         text: 'Pick the baby whose camera this device should watch.',
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: Space.sm),
       FutureBuilder(
         future: _babies,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
             return const Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.all(Space.xxl),
               child: Center(child: CircularProgressIndicator()),
             );
           }
@@ -417,11 +418,11 @@ class _PickCameraState extends State<_PickCamera> {
               for (final b in babies)
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
+                    horizontal: Space.lg,
+                    vertical: Space.xs,
                   ),
                   enabled: b.cameraUid != null && _pairing == null,
-                  leading: const _Bubble(Icons.videocam_rounded, size: 40),
+                  leading: const Icon(Icons.videocam_rounded),
                   title: LText.raw(b.name.isEmpty ? '—' : b.name),
                   subtitle: LText(
                     b.cameraUid == null ? 'No camera' : 'Nanit camera',
@@ -438,7 +439,7 @@ class _PickCameraState extends State<_PickCamera> {
           );
         },
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       Center(
         child: TextButton(
           onPressed: widget.hub.signOut,
@@ -470,7 +471,7 @@ class _Watch extends StatelessWidget {
     return ListView(
       padding: _pagePadding(context),
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         if (live != null) NanitCameraView(stream: live, label: nanitVideoLabel),
         if (live != null)
           ListenableBuilder(
@@ -483,7 +484,7 @@ class _Watch extends StatelessWidget {
                 return const SizedBox.shrink();
               }
               return Padding(
-                padding: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.only(top: Space.md),
                 child: CameraIssueCard(
                   issue: issue,
                   actions: {CameraFixAction.retry: () => live.start()},
@@ -492,10 +493,10 @@ class _Watch extends StatelessWidget {
             },
           ),
         if (linkIssue != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           CameraIssueCard(issue: linkIssue, detail: problem, actions: fixes),
         ] else if (problem != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           _Problem(
             text: problem,
             action: hub.account.pairing?.manualIp == null
@@ -545,8 +546,8 @@ class _Details extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+            horizontal: Space.lg,
+            vertical: Space.xs,
           ),
           title: LText.raw(
             p?.babyName.isNotEmpty == true ? p!.babyName : 'Nanit',
@@ -556,8 +557,8 @@ class _Details extends StatelessWidget {
         ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+            horizontal: Space.lg,
+            vertical: Space.xs,
           ),
           title: const LText('Camera address'),
           subtitle: LText(p?.manualIp ?? 'Found automatically', style: sub()),
@@ -567,8 +568,8 @@ class _Details extends StatelessWidget {
         if (expires != null)
           ListTile(
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+              horizontal: Space.lg,
+              vertical: Space.xs,
             ),
             leading: Icon(
               soon ? Icons.key_off_outlined : Icons.key_outlined,
@@ -586,8 +587,8 @@ class _Details extends StatelessWidget {
           ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+            horizontal: Space.lg,
+            vertical: Space.xs,
           ),
           leading: const Icon(Icons.link_off_rounded),
           title: const LText('Pick another camera'),
@@ -595,8 +596,8 @@ class _Details extends StatelessWidget {
         ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+            horizontal: Space.lg,
+            vertical: Space.xs,
           ),
           leading: Icon(
             Icons.logout_rounded,
@@ -610,8 +611,8 @@ class _Details extends StatelessWidget {
         ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
+            horizontal: Space.lg,
+            vertical: Space.xs,
           ),
           leading: const Icon(Icons.help_outline),
           title: const LText('Help & troubleshooting'),
@@ -634,8 +635,12 @@ Future<void> editCameraAddress(BuildContext context, NanitHub hub) async {
 
 // --- Bits ---------------------------------------------------------------------
 
-EdgeInsets _pagePadding(BuildContext context) =>
-    EdgeInsets.fromLTRB(16, 0, 16, 32 + MediaQuery.paddingOf(context).bottom);
+EdgeInsets _pagePadding(BuildContext context) => EdgeInsets.fromLTRB(
+  Space.page,
+  0,
+  Space.page,
+  Space.xxl + MediaQuery.paddingOf(context).bottom,
+);
 
 class _Intro extends StatelessWidget {
   const _Intro({required this.icon, required this.title, required this.text});
@@ -646,14 +651,14 @@ class _Intro extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      _Bubble(icon, size: 64),
-      const SizedBox(height: 12),
+      Icon(icon, size: 40, color: context.colors.onSurfaceVariant),
+      const SizedBox(height: Space.lg),
       LText(
         title,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.titleLarge,
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: Space.sm),
       LText(
         text,
         textAlign: TextAlign.center,
@@ -671,9 +676,11 @@ class _Problem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    color: Theme.of(context).colorScheme.secondaryContainer,
     child: ListTile(
-      leading: const Icon(Icons.info_outline_rounded),
+      leading: Icon(
+        Icons.info_outline_rounded,
+        color: context.colors.onSurfaceVariant,
+      ),
       title: LText(text),
       trailing: action == null
           ? null
@@ -719,15 +726,15 @@ class CameraTodayCard extends StatelessWidget {
             ? subtitle
             : 'Home network · No account needed';
         return Card(
+          clipBehavior: Clip.antiAlias,
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+            leading: Icon(
+              Icons.videocam_rounded,
+              color: context.colors.onSurfaceVariant,
             ),
-            leading: const _Bubble(Icons.videocam_rounded, size: 40),
             title: const LText('Camera'),
             subtitle: LText(localSubtitle),
-            trailing: FilledButton.tonal(
+            trailing: TextButton(
               onPressed: () => openCamera(context),
               child: LText(paired ? 'Watch' : 'Set up'),
             ),
@@ -735,24 +742,6 @@ class CameraTodayCard extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// A tinted round-cornered icon, in the theme's primary container colours.
-class _Bubble extends StatelessWidget {
-  const _Bubble(this.icon, {required this.size});
-  final IconData icon;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    return IconBubble(
-      glyph: (g, c) => Icon(icon, size: g, color: c),
-      color: s.primaryContainer,
-      iconColor: s.onPrimaryContainer,
-      size: size,
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:nanit_camera/nanit_camera.dart';
 import '../../localization.dart';
 import '../../nanit_integration.dart';
 import '../../nanit_wifi_setup.dart';
+import '../theme.dart';
 import 'camera_art.dart';
 import 'camera_help.dart';
 import 'camera_help_content.dart';
@@ -290,7 +291,12 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
       children: [
         if (current > 0)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              Space.sm,
+              Space.page,
+              0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -299,11 +305,11 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
                   child: ExcludeSemantics(
                     child: LinearProgressIndicator(
                       value: current / numbered.length,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(Corners.xs),
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: Space.sm),
                 LText(
                   'Step $current of ${numbered.length}',
                   style: t.labelLarge?.copyWith(
@@ -316,23 +322,28 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         Expanded(
           child: SingleChildScrollView(
             key: ValueKey(_step),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              Space.md,
+              Space.page,
+              Space.xl,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 CameraIllustration(c.scene),
-                const SizedBox(height: 20),
+                const SizedBox(height: Space.xl),
                 Semantics(
                   header: true,
                   child: LText(c.title, style: t.headlineSmall),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Space.sm),
                 LText(c.body, style: t.bodyLarge),
                 if (c.expect.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: Space.lg),
                   _ExpectCard(c.expect),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 ...c.children,
                 if (!c.placesIssue) ..._issueCard(),
               ],
@@ -354,7 +365,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
 
   List<Widget> _issueCard() => [
     if (_issue != null) ...[
-      const SizedBox(height: 16),
+      const SizedBox(height: Space.lg),
       CameraIssueCard(
         key: _issueKey,
         issue: _issue!,
@@ -409,7 +420,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           'Optional sound and possible-cry alerts',
         ],
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       const CameraInfoCard(
         title: 'Good to know',
         icon: Icons.info_outline,
@@ -420,7 +431,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           'Setup takes about 5 minutes.',
         ],
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       Card(
         child: ListTile(
           leading: const Icon(Icons.person_outline),
@@ -449,14 +460,14 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         text: 'It works in the Nanit app at home. Nestling just needs to find it.',
         onTap: () => _choosePath(false),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       _ChoiceCard(
         icon: Icons.bluetooth,
         title: 'Set up Wi-Fi',
         text: 'It is new, was reset, or you changed your router or Wi-Fi password. Takes about 3 minutes.',
         onTap: () => _choosePath(true),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: Space.lg),
       const LText(
         'Not sure? Choose Already on Wi-Fi. If Nestling cannot find the camera, it will offer Wi-Fi setup.',
       ),
@@ -517,10 +528,10 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         ),
         if (_wifi.scanning)
           const Padding(
-            padding: EdgeInsets.only(top: 12),
+            padding: EdgeInsets.only(top: Space.md),
             child: LinearProgressIndicator(),
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         RadioGroup<String>(
           groupValue: _selectedBle,
           onChanged: (v) => setState(() => _selectedBle = v),
@@ -539,7 +550,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           ),
         ),
         if (scanIssue != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           CameraIssueCard(
             key: _issueKey,
             issue: scanIssue,
@@ -587,7 +598,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
             helperMaxLines: 3,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: Space.lg),
         TextField(
           controller: _password,
           enabled: !busy,
@@ -619,15 +630,15 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           'Tip: if your router has separate names such as “Home” and “Home-5G”, choose the one without 5G. 2.4 GHz reaches further through walls.',
         ),
         if (busy) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: Space.lg),
           const LinearProgressIndicator(),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           const LText(
             'Keep the camera nearby. This can take up to two minutes.',
           ),
         ],
         if (joinIssue != null && _issue == null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: Space.lg),
           CameraIssueCard(
             key: _issueKey,
             issue: joinIssue,
@@ -651,7 +662,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         const _SuccessNote(
           'The camera accepted the Wi-Fi details. It can take a minute to join.',
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
       ],
       const _CheckList(
         good: [
@@ -661,7 +672,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         bad: ['A guest network', 'Mobile data', 'A VPN that is switched on'],
       ),
       if (_bluetooth) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         const _TipCard(
           'If you just gave the camera a different Wi-Fi network, connect this device to that network too.',
         ),
@@ -690,12 +701,12 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
       ),
       if (_searching)
         const Padding(
-          padding: EdgeInsets.only(top: 12),
+          padding: EdgeInsets.only(top: Space.md),
           child: LinearProgressIndicator(),
         ),
       if (_issue != CameraIssue.invalidAddress) ..._issueCard(),
       if (_found.isNotEmpty) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         LText(
           'Tap your camera:',
           style: Theme.of(context).textTheme.titleSmall,
@@ -711,7 +722,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
             ),
           ),
       ],
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       Card(
         clipBehavior: Clip.antiAlias,
         child: ExpansionTile(
@@ -723,22 +734,27 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           leading: const Icon(Icons.pin_outlined),
           title: const LText('Enter the address yourself'),
           subtitle: const LText('If searching does not find it'),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            Space.lg,
+            0,
+            Space.lg,
+            Space.lg,
+          ),
           expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const LText(
               'The address is four numbers with dots, for example 192.168.1.25. Find it in your router’s list of connected devices:',
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             const RouterListExample(),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             TextButton.icon(
               onPressed: () =>
                   openCameraHelp(context, topicId: CameraTopicId.findAddress),
-              icon: const Icon(Icons.help_outline),
+              icon: const Icon(Icons.help_outline_rounded),
               label: const LText('How do I find my router’s device list?'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             TextField(
               controller: _address,
               enabled: !_busy,
@@ -752,7 +768,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
               ),
               onSubmitted: _busy ? null : (_) => _useTypedAddress(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             OutlinedButton(
               onPressed: _busy ? null : _useTypedAddress,
               child: const LText('Connect by address'),
@@ -791,7 +807,7 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
           ),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: Space.lg),
       TextField(
         controller: _name,
         enabled: !_busy,
@@ -884,7 +900,10 @@ class _BottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Space.md,
+            vertical: Space.sm,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -893,7 +912,7 @@ class _BottomBar extends StatelessWidget {
                   if (back != null)
                     TextButton.icon(
                       onPressed: back,
-                      icon: const Icon(Icons.arrow_back),
+                      icon: const Icon(Icons.arrow_back_rounded),
                       label: const LText('Back'),
                     ),
                   if (primary != null)
@@ -913,7 +932,7 @@ class _BottomBar extends StatelessWidget {
                                         color: s.onSurface,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: Space.md),
                                     Flexible(child: LText(primary!)),
                                   ],
                                 )
@@ -926,7 +945,7 @@ class _BottomBar extends StatelessWidget {
               if (onHelp != null)
                 TextButton.icon(
                   onPressed: onHelp,
-                  icon: const Icon(Icons.help_outline),
+                  icon: const Icon(Icons.help_outline_rounded),
                   label: const LText('Something not working?'),
                 ),
             ],
@@ -945,7 +964,6 @@ class _ExpectCard extends StatelessWidget {
     title: 'What to expect',
     icon: Icons.schedule,
     items: lines,
-    tonal: true,
   );
 }
 
@@ -962,22 +980,17 @@ class _ChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    return Card.outlined(
+    final s = context.colors;
+    return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Space.lg),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: s.primaryContainer,
-                foregroundColor: s.onPrimaryContainer,
-                child: Icon(icon),
-              ),
-              const SizedBox(width: 16),
+              Icon(icon, size: 28, color: s.onSurfaceVariant),
+              const SizedBox(width: Space.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,12 +999,16 @@ class _ChoiceCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 4),
-                    LText(text),
+                    const SizedBox(height: Space.xs),
+                    LText(
+                      text,
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: s.onSurfaceVariant),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              Icon(Icons.chevron_right_rounded, color: s.onSurfaceVariant),
             ],
           ),
         ),
@@ -1005,27 +1022,30 @@ class _CheckList extends StatelessWidget {
   final List<String> good, bad;
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
+    final s = context.colors;
     Widget row(String text, bool ok) => ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(
-        ok ? Icons.check_circle : Icons.cancel_outlined,
-        color: ok ? s.primary : s.error,
+        ok ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
+        color: ok ? context.nest.success.color : s.error,
       ),
       title: LText(text),
     );
     final t = Theme.of(context).textTheme;
     return Card(
-      elevation: 0,
-      color: s.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.md,
+          Space.lg,
+          Space.xs,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             LText('Works', style: t.titleSmall),
             for (final g in good) row(g, true),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             LText('Does not work', style: t.titleSmall),
             for (final b in bad) row(b, false),
           ],
@@ -1039,44 +1059,28 @@ class _TipCard extends StatelessWidget {
   const _TipCard(this.text);
   final String text;
   @override
-  Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: s.tertiaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.tips_and_updates_outlined, color: s.onTertiaryContainer),
-            const SizedBox(width: 12),
-            Expanded(
-              child: LText(
-                text,
-                style: TextStyle(color: s.onTertiaryContainer),
-              ),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => Card(
+    child: ListTile(
+      leading: Icon(
+        Icons.tips_and_updates_outlined,
+        color: context.colors.onSurfaceVariant,
       ),
-    );
-  }
+      title: LText(text),
+    ),
+  );
 }
 
 class _SuccessNote extends StatelessWidget {
   const _SuccessNote(this.text);
   final String text;
   @override
-  Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: s.primaryContainer,
-      child: ListTile(
-        leading: Icon(Icons.check_circle, color: s.onPrimaryContainer),
-        title: LText(text, style: TextStyle(color: s.onPrimaryContainer)),
+  Widget build(BuildContext context) => Card(
+    child: ListTile(
+      leading: Icon(
+        Icons.check_circle_outline_rounded,
+        color: context.nest.success.color,
       ),
-    );
-  }
+      title: LText(text),
+    ),
+  );
 }

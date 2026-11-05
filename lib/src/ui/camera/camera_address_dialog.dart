@@ -5,6 +5,7 @@ import '../../localization.dart';
 import 'camera_art.dart';
 import 'camera_help.dart';
 import 'camera_help_content.dart';
+import '../theme.dart';
 
 /// Asks for the camera's IP address with an example and where to find it.
 /// Returns a checked private IPv4 address, '' for "find it automatically"
@@ -63,9 +64,9 @@ class _AddressDialogState extends State<_AddressDialog> {
           const LText(
             'Find it in your router’s list of connected devices. Look for Nanit or a name starting with N3:',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           const RouterListExample(),
-          const SizedBox(height: 16),
+          const SizedBox(height: Space.lg),
           TextField(
             controller: _ip,
             autofocus: true,

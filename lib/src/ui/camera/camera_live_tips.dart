@@ -3,6 +3,7 @@ import 'package:nanit_camera/nanit_camera.dart';
 
 import '../../localization.dart';
 import 'camera_help.dart';
+import '../theme.dart';
 
 /// First-visit coaching for the live camera screen, and the same tips on
 /// demand from its info button.
@@ -50,10 +51,10 @@ Future<void> showCameraLiveTips(BuildContext context) =>
       useSafeArea: true,
       builder: (sheet) => ListView(
         shrinkWrap: true,
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.only(bottom: Space.xl),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.sm),
             child: LText(
               'Tips for the live view',
               style: Theme.of(sheet).textTheme.headlineSmall,
@@ -61,12 +62,12 @@ Future<void> showCameraLiveTips(BuildContext context) =>
           ),
           for (final (icon, title, text) in _tips)
             ListTile(
-              leading: Icon(icon),
+              leading: Icon(icon, color: context.colors.onSurfaceVariant),
               title: LText(title),
               subtitle: LText(text),
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            padding: const EdgeInsets.fromLTRB(Space.xl, Space.lg, Space.xl, 0),
             child: Row(
               children: [
                 TextButton.icon(
@@ -121,50 +122,30 @@ class _CameraFirstTimeTipsState extends State<CameraFirstTimeTips> {
   @override
   Widget build(BuildContext context) {
     if (!_show) return const SizedBox.shrink();
-    final s = Theme.of(context).colorScheme;
+    final s = context.colors;
     final t = Theme.of(context).textTheme;
     return Card(
       key: const ValueKey('camera-first-tips'),
-      elevation: 0,
-      color: s.tertiaryContainer,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.lg,
+          Space.lg,
+          Space.sm,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.tips_and_updates_outlined,
-                  color: s.onTertiaryContainer,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: LText(
-                    'New here? A few tips',
-                    style: t.titleMedium?.copyWith(
-                      color: s.onTertiaryContainer,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+            LText('New here? A few tips', style: t.titleMedium),
+            const SizedBox(height: Space.sm),
             for (final (icon, title, _) in _tips.take(3))
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: Space.xs),
                 child: Row(
                   children: [
-                    Icon(icon, size: 20, color: s.onTertiaryContainer),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: LText(
-                        title,
-                        style: t.bodyMedium?.copyWith(
-                          color: s.onTertiaryContainer,
-                        ),
-                      ),
-                    ),
+                    Icon(icon, size: 20, color: s.onSurfaceVariant),
+                    const SizedBox(width: Space.md),
+                    Expanded(child: LText(title, style: t.bodyMedium)),
                   ],
                 ),
               ),
@@ -175,11 +156,8 @@ class _CameraFirstTimeTipsState extends State<CameraFirstTimeTips> {
                   onPressed: () => showCameraLiveTips(context),
                   child: const LText('All tips'),
                 ),
-                const SizedBox(width: 8),
-                FilledButton.tonal(
-                  onPressed: _dismiss,
-                  child: const LText('Got it'),
-                ),
+                const SizedBox(width: Space.sm),
+                TextButton(onPressed: _dismiss, child: const LText('Got it')),
               ],
             ),
           ],

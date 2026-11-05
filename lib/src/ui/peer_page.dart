@@ -31,14 +31,16 @@ Future<bool> confirmVersionMismatch(BuildContext context, Peer p) async {
         'Different versions may store things differently, so some entries could sync wrongly. '
         'Best is to install the same version on both phones.',
       ),
+      // Continuing is the risky choice, so it is the quiet one; waiting
+      // for both phones to match is the primary action.
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const LText('Not now'),
-        ),
-        FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           child: const LText('Continue anyway'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const LText('Not now'),
         ),
       ],
     ),
@@ -125,7 +127,7 @@ class PeerPage extends StatelessWidget {
                   text:
                       'The two phones have different app versions, which may cause sync problems. '
                       'Install the same version on both, or continue anyway.',
-                  action: FilledButton(
+                  action: TextButton(
                     onPressed: () async {
                       if (await confirmVersionMismatch(context, p) &&
                           context.mounted) {

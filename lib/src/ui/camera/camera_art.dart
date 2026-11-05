@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../localization.dart';
+import '../theme.dart';
 
 /// Simple, theme-coloured diagrams for camera setup. The camera is a generic
 /// drawing (head, lens, night light and stand), not Nanit artwork.
@@ -41,8 +42,8 @@ class CameraIllustration extends StatelessWidget {
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(24),
+          color: scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(Corners.lg),
         ),
         clipBehavior: Clip.antiAlias,
         child: LayoutBuilder(
@@ -157,7 +158,7 @@ class CameraIllustration extends StatelessWidget {
               child: camera(flashing: true, button: true),
             ),
           ),
-          at(0.68, 0.42, icon(Icons.touch_app_outlined, h * 0.22, s.tertiary)),
+          at(0.68, 0.42, icon(Icons.touch_app_outlined, h * 0.22, s.primary)),
         ],
       ),
       CameraScene.bluetooth => Stack(
@@ -184,7 +185,11 @@ class CameraIllustration extends StatelessWidget {
           at(
             0.5,
             0.2,
-            _Badge(Icons.password, s.tertiaryContainer, s.onTertiaryContainer),
+            _Badge(
+              Icons.password,
+              s.secondaryContainer,
+              s.onSecondaryContainer,
+            ),
           ),
           at(0.72, 0.54, camera(flashing: true)),
         ],
@@ -249,7 +254,7 @@ class _Distance extends StatelessWidget {
       children: [
         Expanded(child: Divider(color: color, thickness: 1.5)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: Space.sm),
           child: Text(
             '1–2 m',
             style: Theme.of(context).textTheme.labelLarge
@@ -431,45 +436,40 @@ class RouterListExample extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
-    Widget row(IconData icon, String name, String ip, {bool camera = false}) =>
-        Container(
-          color: camera ? s.primaryContainer : null,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: camera ? s.onPrimaryContainer : s.onSurfaceVariant,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  name,
-                  style: t.bodyMedium?.copyWith(
-                    color: camera ? s.onPrimaryContainer : null,
-                    fontWeight: camera ? FontWeight.w700 : null,
-                  ),
-                ),
-              ),
-              Text(
-                ip,
-                style: t.bodyMedium?.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                  color: camera ? s.onPrimaryContainer : null,
-                  fontWeight: camera ? FontWeight.w700 : null,
-                ),
-              ),
-            ],
-          ),
-        );
+    Widget row(IconData icon, String name, String ip, {bool camera = false}) {
+      // The camera's row looks selected, the way a list marks a choice.
+      final style = (camera ? t.labelLarge : t.bodyMedium)?.copyWith(
+        color: camera ? s.onSecondaryContainer : null,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      );
+      return Container(
+        color: camera ? s.secondaryContainer : null,
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.md,
+          vertical: Space.sm,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: camera ? s.onSecondaryContainer : s.onSurfaceVariant,
+            ),
+            const SizedBox(width: Space.md),
+            Expanded(child: Text(name, style: style)),
+            Text(ip, style: style),
+          ],
+        ),
+      );
+    }
+
     return Semantics(
       label: tr('Example router device list. Nanit camera, 192.168.1.25'),
       child: ExcludeSemantics(
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(color: s.outlineVariant),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Corners.md),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(

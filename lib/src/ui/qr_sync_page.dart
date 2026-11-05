@@ -358,14 +358,16 @@ Future<bool> _confirmVersion(BuildContext context, String theirVersion) async {
         'This phone has version ${AppState.appVersion}, the other phone has '
         '${versionLabel(theirVersion).toLowerCase()}. Some entries could sync wrongly. Continue anyway?',
       ),
+      // Continuing is the risky choice, so it is the quiet one; waiting
+      // for both phones to match is the primary action.
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const LText('Not now'),
-        ),
-        FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           child: const LText('Continue anyway'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const LText('Not now'),
         ),
       ],
     ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../localization.dart';
+import '../common.dart' show EmptyState;
 import 'camera_art.dart';
 import 'camera_help_content.dart';
 import 'camera_issues.dart';
+import '../theme.dart';
 
 bool _windows(BuildContext context) =>
     Theme.of(context).platform == TargetPlatform.windows;
@@ -30,12 +32,11 @@ class CameraIssueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topic = topicFor(issue, windows: _windows(context));
-    final s = Theme.of(context).colorScheme;
+    final s = context.colors;
     final t = Theme.of(context).textTheme;
-    final background = topic.serious ? s.errorContainer : s.secondaryContainer;
-    final foreground = topic.serious
-        ? s.onErrorContainer
-        : s.onSecondaryContainer;
+    // A plain card: only the icon and title carry the error colour, so a
+    // serious problem stands out without a red panel.
+    final accent = topic.serious ? s.error : s.onSurfaceVariant;
     final steps = compact ? topic.steps.take(2).toList() : topic.steps;
     final available = [
       for (final a in topic.actions)
@@ -43,55 +44,57 @@ class CameraIssueCard extends StatelessWidget {
     ];
     return Card(
       key: ValueKey('issue-${issue.name}'),
-      elevation: 0,
-      color: background,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          Space.lg,
+          Space.lg,
+          Space.lg,
+          Space.sm,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(topic.icon, color: foreground),
-                const SizedBox(width: 12),
+                Icon(topic.icon, color: accent),
+                const SizedBox(width: Space.md),
                 Expanded(
                   child: Semantics(
                     liveRegion: true,
                     child: LText(
                       topic.title,
-                      style: t.titleMedium?.copyWith(color: foreground),
+                      style: t.titleMedium?.copyWith(
+                        color: topic.serious ? s.error : null,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LText(
-              topic.summary,
-              style: t.bodyMedium?.copyWith(color: foreground),
-            ),
+            const SizedBox(height: Space.sm),
+            LText(topic.summary, style: t.bodyMedium),
             if (topic.example != null) ...[
-              const SizedBox(height: 8),
-              _Example(topic.example!, foreground: foreground),
+              const SizedBox(height: Space.sm),
+              _Example(topic.example!),
             ],
             if (steps.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              LText(
-                'What to try',
-                style: t.labelLarge?.copyWith(color: foreground),
-              ),
-              const SizedBox(height: 4),
-              NumberedSteps(steps, color: foreground),
+              const SizedBox(height: Space.md),
+              LText('What to try', style: t.titleSmall),
+              const SizedBox(height: Space.xs),
+              NumberedSteps(steps),
             ],
             if (detail != null && detail != topic.summary) ...[
-              const SizedBox(height: 8),
-              LText(detail!, style: t.bodySmall?.copyWith(color: foreground)),
+              const SizedBox(height: Space.sm),
+              LText(
+                detail!,
+                style: t.bodySmall?.copyWith(color: s.onSurfaceVariant),
+              ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             Wrap(
-              spacing: 8,
-              runSpacing: 4,
+              spacing: Space.sm,
+              runSpacing: Space.xs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 for (final (i, a) in available.indexed)
@@ -106,7 +109,7 @@ class CameraIssueCard extends StatelessWidget {
                         ),
                 TextButton.icon(
                   onPressed: () => openCameraHelp(context, topicId: topic.id),
-                  icon: const Icon(Icons.help_outline),
+                  icon: const Icon(Icons.help_outline_rounded),
                   label: const LText('More help'),
                 ),
               ],
@@ -133,7 +136,7 @@ class NumberedSteps extends StatelessWidget {
       children: [
         for (final (i, step) in steps.indexed)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(vertical: Space.xs / 2),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -149,27 +152,32 @@ class NumberedSteps extends StatelessWidget {
 
 /// "Looks like: 192.168.1.25" in a chip-like box.
 class _Example extends StatelessWidget {
-  const _Example(this.text, {this.foreground});
+  const _Example(this.text);
   final String text;
-  final Color? foreground;
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     return Wrap(
-      spacing: 8,
-      runSpacing: 4,
+      spacing: Space.sm,
+      runSpacing: Space.xs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        LText('Example:', style: t.bodyMedium?.copyWith(color: foreground)),
+        LText('Example:', style: t.bodyMedium),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: foreground ?? Theme.of(context).colorScheme.outline,
-            ),
-            borderRadius: BorderRadius.circular(8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Space.md,
+            vertical: Space.xs,
           ),
-          child: Text(text, style: t.titleSmall?.copyWith(color: foreground)),
+          decoration: BoxDecoration(
+            border: Border.all(color: context.colors.outlineVariant),
+            borderRadius: BorderRadius.circular(Corners.sm),
+          ),
+          child: Text(
+            text,
+            style: t.titleSmall?.copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
         ),
       ],
     );
@@ -187,15 +195,15 @@ class CameraTopicBody extends StatelessWidget {
     children: [
       LText(topic.summary),
       if (topic.example != null) ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         _Example(topic.example!),
       ],
       if (topic.id == CameraTopicId.findAddress) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         const RouterListExample(),
       ],
       if (topic.steps.isNotEmpty) ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         NumberedSteps(topic.steps),
       ],
     ],
@@ -212,7 +220,7 @@ class _TopicTile extends StatelessWidget {
     initiallyExpanded: initiallyExpanded,
     leading: Icon(topic.icon),
     title: LText(topic.title),
-    childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+    childrenPadding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.lg),
     expandedCrossAxisAlignment: CrossAxisAlignment.start,
     children: [CameraTopicBody(topic)],
   );
@@ -237,23 +245,23 @@ Future<void> showCameraStepHelp(
       maxChildSize: 0.95,
       builder: (context, scroll) => ListView(
         controller: scroll,
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.only(bottom: Space.xl),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.sm),
             child: LText(
               'Something not working?',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),
           const Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+            padding: EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.sm),
             child: LText('Tap a problem to see what to do.'),
           ),
           for (final t in topics)
             _TopicTile(t, initiallyExpanded: topics.length == 1),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            padding: const EdgeInsets.fromLTRB(Space.xl, Space.lg, Space.xl, 0),
             child: OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(sheet);
@@ -324,19 +332,28 @@ class _CameraHelpPageState extends State<CameraHelpPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: ListView(
-            padding: const EdgeInsets.only(bottom: 32),
+            padding: const EdgeInsets.only(bottom: Space.xxl),
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                padding: const EdgeInsets.fromLTRB(
+                  Space.lg,
+                  Space.sm,
+                  Space.lg,
+                  Space.sm,
+                ),
                 child: SearchBar(
                   controller: _search,
+                  elevation: const WidgetStatePropertyAll(0),
+                  backgroundColor: WidgetStatePropertyAll(
+                    context.colors.surfaceContainerHigh,
+                  ),
                   hintText: tr('Search help, e.g. password, sound, address'),
-                  leading: const Icon(Icons.search),
+                  leading: const Icon(Icons.search_rounded),
                   trailing: [
                     if (_query.isNotEmpty)
                       IconButton(
                         tooltip: tr('Clear search'),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close_rounded),
                         onPressed: () => setState(() {
                           _search.clear();
                           _query = '';
@@ -371,30 +388,33 @@ class _CameraHelpPageState extends State<CameraHelpPage> {
                   ExpansionTile(
                     leading: const Icon(Icons.question_answer_outlined),
                     title: LText(f.question),
-                    childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    childrenPadding: const EdgeInsets.fromLTRB(
+                      Space.lg,
+                      0,
+                      Space.lg,
+                      Space.lg,
+                    ),
                     expandedCrossAxisAlignment: CrossAxisAlignment.start,
                     children: [LText(f.answer)],
                   ),
               ],
               if (shown.isEmpty && faq.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.search_off, size: 40),
-                      const SizedBox(height: 12),
-                      LText(
-                        'No help matches that. Try a simpler word such as Wi-Fi, Bluetooth, sound or address.',
-                        textAlign: TextAlign.center,
-                        style: t.bodyLarge,
-                      ),
-                    ],
-                  ),
+                const EmptyState(
+                  icon: Icons.search_off_rounded,
+                  text: 'No help matches that. Try a simpler word such as Wi-Fi, Bluetooth, sound or address.',
                 ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Space.lg,
+                  Space.xl,
+                  Space.lg,
+                  0,
+                ),
                 child: LText(
                   'Home network mode has been tested on the Nanit Pro camera with firmware 6.58.615. Other models or firmware may behave differently.',
+                  style: t.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -409,12 +429,16 @@ class _Header extends StatelessWidget {
   const _Header(this.text);
   final String text;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-    child: LText(
-      text,
-      style: Theme.of(context).textTheme.titleMedium
-          ?.copyWith(color: Theme.of(context).colorScheme.primary),
+  Widget build(BuildContext context) => Semantics(
+    header: true,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Space.page + Space.xs,
+        Space.xl,
+        Space.page,
+        Space.sm,
+      ),
+      child: LText(text, style: Theme.of(context).textTheme.titleMedium),
     ),
   );
 }
@@ -424,15 +448,15 @@ class _QuickStart extends StatelessWidget {
   const _QuickStart();
   @override
   Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16),
+    padding: EdgeInsets.symmetric(horizontal: Space.lg),
     child: Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CameraIllustration(CameraScene.network, height: 128),
-            SizedBox(height: 12),
+            SizedBox(height: Space.md),
             NumberedSteps([
               'Connect this device to your home Wi-Fi, the same one the camera uses.',
               'Camera already works in the Nanit app? Choose Already on Wi-Fi and search.',
@@ -453,42 +477,32 @@ class CameraInfoCard extends StatelessWidget {
     required this.title,
     required this.icon,
     required this.items,
-    this.tonal = false,
   });
   final String title;
   final IconData icon;
   final List<String> items;
-  final bool tonal;
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
+    final s = context.colors;
     final t = Theme.of(context).textTheme;
-    final fg = tonal ? s.onSecondaryContainer : s.onSurface;
     return Card(
-      elevation: 0,
-      color: tonal ? s.secondaryContainer : s.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LText(title, style: t.titleSmall?.copyWith(color: fg)),
-            const SizedBox(height: 8),
+            LText(title, style: t.titleSmall),
+            const SizedBox(height: Space.sm),
             for (final item in items)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: Space.xs),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, size: 20, color: tonal ? fg : s.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: LText(
-                        item,
-                        style: t.bodyMedium?.copyWith(color: fg),
-                      ),
-                    ),
+                    Icon(icon, size: 20, color: s.onSurfaceVariant),
+                    const SizedBox(width: Space.md),
+                    Expanded(child: LText(item, style: t.bodyMedium)),
                   ],
                 ),
               ),
