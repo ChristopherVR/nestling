@@ -27,7 +27,7 @@ const rows = [
       'Everything lands in History, where you can search, filter by day or hour, and correct a time you got wrong at 3 am.',
     ],
     link: { href: '/guides/logging', text: 'Logging basics' },
-    shot: { src: '/screenshots/02-history.webp', alt: 'History: today’s nappies, sleep, feeds and routines, each with who logged it.' },
+    shot: { src: '/screenshots/02-history.webp', alt: 'History: search and filters above today’s feeds and nappies, newest first.' },
   },
   {
     id: 'sharing',
@@ -128,7 +128,7 @@ const faqs = [
           <DeviceFrame
             eager
             src="/screenshots/01-today.webp"
-            alt="Today screen: 2 hours 24 minutes since the last feed, with Feed, Nappy and Habit buttons below."
+            alt="Today screen: 1 hour 8 minutes since the last feed, the last nappy and sleep, then Feed, Nappy, Sleep and Pill buttons and the camera."
           />
         </div>
       </section>

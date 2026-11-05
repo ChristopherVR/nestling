@@ -13,11 +13,13 @@ import 'dart:io';
 import 'dart:ui' show ImageByteFormat;
 
 import 'package:baby_app/main.dart';
+import 'package:baby_app/src/growth.dart';
 import 'package:baby_app/src/models.dart';
 import 'package:baby_app/src/store.dart';
 import 'package:baby_app/src/pump_ble.dart';
 import 'package:baby_app/src/pump_session.dart';
 import 'package:baby_app/src/ui/home_page.dart';
+import 'package:baby_app/src/ui/hub_page.dart';
 import 'package:baby_app/src/ui/setup_page.dart';
 import 'package:baby_app/src/ui/sheets.dart';
 import 'package:baby_app/src/ui/theme.dart';
@@ -70,8 +72,16 @@ Future<void> _loadFonts() async {
     Uri.file('$_root/.dart_tool/package_config.json')
         .resolve(symbols['rootUri'] as String),
   ).path;
+  // Flutter's bundled Roboto has no arrows ("3.3 → 6.5 kg"), and tests have
+  // no font fallback. `python tool/website_screenshots.py fonts` writes
+  // copies with the arrows added; use them when present.
+  String roboto(String w) {
+    final patched = '$_root/build/preview-fonts/roboto-$w.ttf';
+    return File(patched).existsSync() ? patched : '$icons/roboto-$w.ttf';
+  }
+
   await _loadFont('Roboto', [
-    for (final w in ['regular', 'medium', 'bold']) '$icons/roboto-$w.ttf',
+    for (final w in ['regular', 'medium', 'bold']) roboto(w),
   ]);
   await _loadFont('MaterialIcons', ['$icons/materialicons-regular.otf']);
   for (final style in ['Outlined', 'Rounded', 'Sharp']) {
@@ -121,12 +131,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> snap(WidgetTester tester, String name) async {
+  Future<void> snap(
+    WidgetTester tester,
+    String name, {
+    double pixelRatio = 1.25,
+  }) async {
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
       final render =
           boundary.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image = await render.toImage(pixelRatio: 1.25);
+      final image = await render.toImage(pixelRatio: pixelRatio);
       final data = await image.toByteData(format: ImageByteFormat.png);
       final file = File('$_out/$name.png');
       await file.parent.create(recursive: true);
@@ -287,6 +301,100 @@ void main() {
       ),
     );
     await snap(tester, 'desktop-today');
+    debugDisableShadows = true;
+  });
+
+  // The phone screenshots on the website (website/public/screenshots), at
+  // 600 x 1081. Convert to webp with tool/website_screenshots.py.
+  testWidgets('website', (tester) async {
+    final version = AppState.appVersion;
+    AppState.appVersion = '1.5.1';
+    addTearDown(() => AppState.appVersion = version);
+    final today = DateTime.now();
+    _seed(app, today);
+    // Pumping is optional; without its tile the camera card fits on screen.
+    app.setShowPump(false);
+    final born = today.subtract(const Duration(days: 125));
+    app.saveBabyProfile(name: 'Mia', dateOfBirth: born);
+    for (final (days, kg, cm) in [
+      (2, 3.3, 50.0),
+      (30, 4.4, 54.0),
+      (60, 5.3, 58.0),
+      (90, 6.0, 61.0),
+      (120, 6.5, 63.5),
+    ]) {
+      app.saveGrowth(
+        GrowthEntry(
+          babyId: app.activeBaby.id,
+          date: DateTime(born.year, born.month, born.day + days),
+          weightKg: kg,
+          heightCm: cm,
+        ),
+      );
+    }
+    for (final (id, name, minutes, came, sent) in [
+      ('dad', "Dad's phone", 2, 2, 3),
+      ('gran', "Gran's tablet", 60, 4, 0),
+    ]) {
+      final at = today.subtract(Duration(minutes: minutes));
+      app.peers.add(
+        Peer(
+            deviceId: id,
+            host: '192.168.1.${id.length + 20}',
+            port: 8765,
+            key: '123456',
+            name: name,
+          )
+          ..appVersion = AppState.appVersion
+          ..record(
+            SyncRecord(
+              at: at,
+              outgoing: sent > 0,
+              sent: sent,
+              received: came,
+              newThere: sent,
+              newHere: {'entries': came},
+              bytes: 2048,
+            ),
+          ),
+      );
+    }
+    debugDisableShadows = false;
+    addTearDown(tester.view.reset);
+    tester.view.devicePixelRatio = 1.5;
+    tester.view.physicalSize = const Size(600, 1081);
+    await tester.pumpWidget(
+      RepaintBoundary(
+        key: boundary,
+        child: BabyApp(state: app, now: () => today),
+      ),
+    );
+    Future<void> shot(String name) =>
+        snap(tester, 'web-$name', pixelRatio: 1.5);
+    Future<void> tab(String label) async {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text(label),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await shot('01-today');
+    await tab('History');
+    await shot('02-history');
+    await tester.tap(find.text('Charts'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('Daily totals'), const Offset(0, -380));
+    await shot('03-charts');
+    await tester.tap(find.text('Activity log'));
+    await tab('Growth');
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -315));
+    await shot('04-growth');
+    await tab('Today');
+    openHub(tester.element(find.byType(HomePage)));
+    await shot('06-family');
     debugDisableShadows = true;
   });
 }
