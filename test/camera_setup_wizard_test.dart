@@ -231,7 +231,7 @@ void main() {
       await tap(tester, 'Get started');
       await tap(tester, 'Already on Wi-Fi');
       expect(find.text('Step 2 of 5'), findsOneWidget);
-      expect(find.text('Not the guest network'), findsOneWidget);
+      expect(find.text('A guest network'), findsOneWidget);
 
       // Step help lists that step's problems.
       await tap(tester, 'Something not working?');

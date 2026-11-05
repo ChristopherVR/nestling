@@ -380,13 +380,14 @@ const cameraAfrikaans = <String, String>{
   'Check this device’s Wi-Fi': 'Kyk na hierdie toestel se Wi-Fi',
   'Nestling finds the camera through your home Wi-Fi, so this device must be on the same network as the camera.': 'Nestling vind die kamera deur jou huis se Wi-Fi, so hierdie toestel moet op dieselfde netwerk as die kamera wees.',
   'The camera accepted the Wi-Fi details. It can take a minute to join.': 'Die kamera het die Wi-Fi-besonderhede aanvaar. Dit kan ’n minuut neem om aan te sluit.',
-  'Connected to your home Wi-Fi, the one the camera uses':
-      'Gekoppel aan jou huis se Wi-Fi, die een wat die kamera gebruik',
-  'Mesh Wi-Fi, 2.4 GHz and 5 GHz are all fine':
-      'Maas-Wi-Fi, 2,4 GHz en 5 GHz is almal reg',
-  'Not the guest network': 'Nie die gastenetwerk nie',
-  'Not mobile data': 'Nie mobiele data nie',
-  'VPN turned off': 'VPN afgeskakel',
+  'Works': 'Werk',
+  'Does not work': 'Werk nie',
+  'Your home Wi-Fi, the one the camera uses':
+      'Jou huis se Wi-Fi, die een wat die kamera gebruik',
+  'Mesh Wi-Fi, 2.4 GHz or 5 GHz': 'Maas-Wi-Fi, 2,4 GHz of 5 GHz',
+  'A guest network': '’n Gastenetwerk',
+  'Mobile data': 'Mobiele data',
+  'A VPN that is switched on': '’n VPN wat aangeskakel is',
   'If you just gave the camera a different Wi-Fi network, connect this device to that network too.': 'As jy die kamera pas ’n ander Wi-Fi-netwerk gegee het, koppel hierdie toestel ook aan daardie netwerk.',
   'This device is on the home Wi-Fi': 'Hierdie toestel is op die huis-Wi-Fi',
   'Find the camera on your network': 'Vind die kamera op jou netwerk',

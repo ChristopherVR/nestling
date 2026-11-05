@@ -655,10 +655,10 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
       ],
       const _CheckList(
         good: [
-          'Connected to your home Wi-Fi, the one the camera uses',
-          'Mesh Wi-Fi, 2.4 GHz and 5 GHz are all fine',
+          'Your home Wi-Fi, the one the camera uses',
+          'Mesh Wi-Fi, 2.4 GHz or 5 GHz',
         ],
-        bad: ['Not the guest network', 'Not mobile data', 'VPN turned off'],
+        bad: ['A guest network', 'Mobile data', 'A VPN that is switched on'],
       ),
       if (_bluetooth) ...[
         const SizedBox(height: 12),
@@ -1014,14 +1014,19 @@ class _CheckList extends StatelessWidget {
       ),
       title: LText(text),
     );
+    final t = Theme.of(context).textTheme;
     return Card(
       elevation: 0,
       color: s.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            LText('Works', style: t.titleSmall),
             for (final g in good) row(g, true),
+            const SizedBox(height: 8),
+            LText('Does not work', style: t.titleSmall),
             for (final b in bad) row(b, false),
           ],
         ),
