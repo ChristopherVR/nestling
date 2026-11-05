@@ -220,6 +220,7 @@ class _EditGuardState extends State<_EditGuard> {
             child: const LText('Keep editing'),
           ),
           FilledButton(
+            style: dangerButtonStyle(ctx),
             onPressed: () => Navigator.pop(ctx, true),
             child: const LText('Discard'),
           ),
@@ -287,12 +288,7 @@ class _DeleteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    return TextButton.icon(
-      style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.error,
-      ),
-      icon: const Icon(Icons.delete_outline_rounded),
-      label: const LText('Delete'),
+    return DeleteTextButton(
       onPressed: () {
         app.deleteEntry(entry);
         Navigator.pop(context);
@@ -339,14 +335,13 @@ Widget _label(String text) => Builder(
   ),
 );
 
-/// The main Save button of a sheet: full width and 56dp tall. It uses the
-/// accent like every primary action; the kind's colour stays on the icon.
+/// The main Save button of a sheet, for [SheetActions]. It uses the accent
+/// like every primary action; the kind's colour stays on the icon.
 Widget _saveButton({
   required String label,
   required VoidCallback? onPressed,
   IconData icon = Icons.check_rounded,
 }) => FilledButton.icon(
-  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
   icon: Icon(icon),
   label: LText(label),
   onPressed: onPressed,
@@ -542,32 +537,22 @@ class _FeedSheetState extends State<FeedSheet> {
         const SizedBox(height: Space.lg),
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
         const SizedBox(height: Space.xl),
-        Row(
-          children: [
-            if (editing) ...[_DeleteButton(widget.initial!), const Spacer()],
-            if (!editing && !bottle && app.timerStart == null) ...[
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
-                  ),
+        SheetActions(
+          leading: editing ? _DeleteButton(widget.initial!) : null,
+          secondary: !editing && !bottle && app.timerStart == null
+              ? OutlinedButton.icon(
                   icon: const Icon(Icons.timer_outlined),
                   label: const LText('Start timer'),
                   onPressed: () {
                     app.startFeedTimer(s);
                     Navigator.pop(context);
                   },
-                ),
-              ),
-              const SizedBox(width: Space.md),
-            ],
-            Expanded(
-              child: _saveButton(
-                label: editing ? 'Update' : 'Save',
-                onPressed: editing && !dirty ? null : save,
-              ),
-            ),
-          ],
+                )
+              : null,
+          primary: _saveButton(
+            label: editing ? 'Update' : 'Save',
+            onPressed: editing && !dirty ? null : save,
+          ),
         ),
       ],
     );
@@ -740,16 +725,12 @@ class _PumpSheetState extends State<PumpSheet> {
         const SizedBox(height: Space.lg),
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
         const SizedBox(height: Space.xl),
-        Row(
-          children: [
-            if (editing) ...[_DeleteButton(widget.initial!), const Spacer()],
-            Expanded(
-              child: _saveButton(
-                label: editing ? 'Update' : 'Save',
-                onPressed: editing && !dirty ? null : save,
-              ),
-            ),
-          ],
+        SheetActions(
+          leading: editing ? _DeleteButton(widget.initial!) : null,
+          primary: _saveButton(
+            label: editing ? 'Update' : 'Save',
+            onPressed: editing && !dirty ? null : save,
+          ),
         ),
       ],
     );
@@ -874,15 +855,12 @@ class _NappySheetState extends State<NappySheet> {
         if (initial != null)
           Padding(
             padding: const EdgeInsets.only(top: Space.xl),
-            child: Row(
-              children: [
-                _DeleteButton(initial),
-                const Spacer(),
-                FilledButton(
-                  onPressed: dirty ? () => pick(kind!) : null,
-                  child: const LText('Update'),
-                ),
-              ],
+            child: SheetActions(
+              leading: _DeleteButton(initial),
+              primary: _saveButton(
+                label: 'Update',
+                onPressed: dirty ? () => pick(kind!) : null,
+              ),
             ),
           ),
       ],
@@ -919,32 +897,30 @@ class _PillDoseSheetState extends State<PillDoseSheet> {
           ),
           WhenField(value: time, onChanged: (t) => setState(() => time = t)),
           const SizedBox(height: Space.xl),
-          Row(
-            children: [
-              _DeleteButton(e),
-              const Spacer(),
-              FilledButton(
-                onPressed: !dirty
-                    ? null
-                    : () async {
-                        if (!await okToOverwrite(context, app, e) ||
-                            !context.mounted) {
-                          return;
-                        }
-                        app.addEntry(
-                          Entry(
-                            id: e.id,
-                            type: EntryType.pill,
-                            time: time ?? DateTime.now(),
-                            medId: e.medId,
-                            medName: e.medName,
-                          ),
-                        );
-                        Navigator.pop(context);
-                      },
-                child: const LText('Update'),
-              ),
-            ],
+          SheetActions(
+            leading: _DeleteButton(e),
+            primary: FilledButton.icon(
+              icon: const Icon(Icons.check_rounded),
+              onPressed: !dirty
+                  ? null
+                  : () async {
+                      if (!await okToOverwrite(context, app, e) ||
+                          !context.mounted) {
+                        return;
+                      }
+                      app.addEntry(
+                        Entry(
+                          id: e.id,
+                          type: EntryType.pill,
+                          time: time ?? DateTime.now(),
+                          medId: e.medId,
+                          medName: e.medName,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
+              label: const LText('Update'),
+            ),
           ),
         ],
       ),
@@ -998,50 +974,50 @@ class _SleepSheetState extends State<SleepSheet> {
             ),
           ),
         const SizedBox(height: Space.xl),
-        Row(
-          children: [
-            if (initial != null) _DeleteButton(initial),
-            const Spacer(),
-            FilledButton(
-              onPressed: initial != null && !dirty
-                  ? null
-                  : () async {
-                      if (start.isAfter(DateTime.now()) ||
-                          (end != null &&
-                              (end!.isBefore(start) ||
-                                  end!.isAfter(DateTime.now())))) {
-                        setState(
-                          () => error =
-                              'Choose valid start and end times in the past',
-                        );
-                        return;
-                      }
-                      if (!await okToOverwrite(context, app, initial) ||
-                          !context.mounted) {
-                        return;
-                      }
-                      if (initial == null) {
-                        if (!app.startSleep(time: start)) {
-                          setState(
-                            () => error = 'A nap is already being tracked',
-                          );
-                          return;
-                        }
-                      } else {
-                        app.addEntry(
-                          Entry(
-                            id: initial.id,
-                            type: EntryType.sleep,
-                            time: start,
-                            endTime: end,
-                          ),
-                        );
-                      }
-                      Navigator.pop(context);
-                    },
-              child: LText(initial == null ? 'Start nap' : 'Update'),
+        SheetActions(
+          leading: initial != null ? _DeleteButton(initial) : null,
+          primary: FilledButton.icon(
+            icon: Icon(
+              initial == null ? Icons.bedtime_outlined : Icons.check_rounded,
             ),
-          ],
+            onPressed: initial != null && !dirty
+                ? null
+                : () async {
+                    if (start.isAfter(DateTime.now()) ||
+                        (end != null &&
+                            (end!.isBefore(start) ||
+                                end!.isAfter(DateTime.now())))) {
+                      setState(
+                        () => error =
+                            'Choose valid start and end times in the past',
+                      );
+                      return;
+                    }
+                    if (!await okToOverwrite(context, app, initial) ||
+                        !context.mounted) {
+                      return;
+                    }
+                    if (initial == null) {
+                      if (!app.startSleep(time: start)) {
+                        setState(
+                          () => error = 'A nap is already being tracked',
+                        );
+                        return;
+                      }
+                    } else {
+                      app.addEntry(
+                        Entry(
+                          id: initial.id,
+                          type: EntryType.sleep,
+                          time: start,
+                          endTime: end,
+                        ),
+                      );
+                    }
+                    Navigator.pop(context);
+                  },
+            label: LText(initial == null ? 'Start nap' : 'Update'),
+          ),
         ),
       ],
     );

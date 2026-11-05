@@ -21,6 +21,7 @@ import 'package:nestling/src/pump_ble.dart';
 import 'package:nestling/src/pump_session.dart';
 import 'package:nestling/src/ui/home_page.dart';
 import 'package:nestling/src/ui/hub_page.dart';
+import 'package:nestling/src/ui/pills_page.dart';
 import 'package:nestling/src/ui/setup_page.dart';
 import 'package:nestling/src/ui/sheets.dart';
 import 'package:nestling/src/ui/theme.dart';
@@ -219,6 +220,143 @@ void main() {
       debugDisableShadows = true;
     });
   }
+  // Every palette candidate on the main screens, for side-by-side review:
+  //   flutter test --run-skipped --tags preview test/ui_preview_test.dart \
+  //     --plain-name palette
+  // Output: build/preview/palette/<variant>/<screen>[-dark].png. Compose
+  // them with `python tool/palette_compare.py`.
+  for (final variant in NestVariant.values) {
+    for (final dark in [false, true]) {
+      final suffix = dark ? '-dark' : '';
+      testWidgets('palette ${variant.name}$suffix', (tester) async {
+        NestPalette.debugVariant = variant;
+        addTearDown(() => NestPalette.debugVariant = null);
+        _seed(app, DateTime.now());
+        app.saveMed(
+          Medication(name: 'Tummy time', count: 3, startMinutes: 540),
+        );
+        if (dark) app.setAppearance('dark');
+        await start(tester);
+        Future<void> shot(String name) =>
+            snap(tester, 'palette/${variant.name}/$name$suffix');
+        Future<void> tab(String label) async {
+          await tester.tap(
+            find.descendant(
+              of: find.byType(NavigationBar),
+              matching: find.text(label),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await shot('today');
+        await tab('History');
+        await shot('history');
+        await tab('Habits');
+        await shot('habits');
+        await tab('Today');
+        final home = tester.element(find.byType(HomePage));
+        unawaited(showSheet(home, const FeedSheet()));
+        await shot('feed-sheet');
+        Navigator.of(home).pop();
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Settings'));
+        await shot('settings');
+        debugDisableShadows = true;
+      });
+    }
+  }
+
+  // Button audit: the screens and sheets with buttons, on a phone at normal
+  // and 1.5x text and on a desktop window. Output:
+  // build/preview/audit/<phone|phone-1.5x|desktop>/<screen>.png.
+  for (final (config, size, ratio, scale) in [
+    ('phone', const Size(1080, 2340), 2.625, 1.0),
+    ('phone-1.5x', const Size(1080, 2340), 2.625, 1.5),
+    ('desktop', const Size(1280, 820), 1.0, 1.0),
+  ]) {
+    testWidgets('audit $config', (tester) async {
+      _seed(app, DateTime.now());
+      app.saveMed(Medication(name: 'Tummy time', count: 3, startMinutes: 540));
+      debugDisableShadows = false;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.devicePixelRatio = ratio;
+      tester.view.physicalSize = size;
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: boundary,
+          child: BabyApp(state: app, now: () => now),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final desktop = config == 'desktop';
+      Future<void> shot(String name) =>
+          snap(tester, 'audit/$config/$name', pixelRatio: desktop ? 1 : 1.25);
+      Future<void> tab(String label) async {
+        final nav = find.byType(NavigationBar).evaluate().isNotEmpty
+            ? find.descendant(
+                of: find.byType(NavigationBar),
+                matching: find.text(label),
+              )
+            : find.text(label).first;
+        await tester.tap(nav);
+        await tester.pumpAndSettle();
+      }
+
+      await shot('today');
+      for (final label in ['History', 'Habits', 'Routines', 'Growth']) {
+        await tab(label);
+        await shot(label.toLowerCase());
+      }
+      await tab('Today');
+      final home = tester.element(find.byType(HomePage));
+      for (final (name, sheet) in [
+        ('feed-sheet', const FeedSheet() as Widget),
+        ('nappy-sheet', const NappySheet()),
+        ('sleep-sheet', const SleepSheet()),
+        ('pump-sheet', const PumpSheet()),
+        ('take-habit-sheet', const TakePillSheet()),
+        ('habit-editor', const MedEditor()),
+      ]) {
+        unawaited(showSheet(home, sheet));
+        await shot(name);
+        Navigator.of(home).pop();
+        await tester.pumpAndSettle();
+      }
+      // An entry being edited: Save plus Delete.
+      unawaited(editEntry(home, app.entries.first));
+      await shot('edit-entry-sheet');
+      Navigator.of(home).pop();
+      await tester.pumpAndSettle();
+      // The feed timer card, with its button pair.
+      app.startFeedTimer(FeedSide.left);
+      await tester.pumpAndSettle();
+      await shot('today-timer');
+      await tester.tap(find.text('Cancel').last);
+      await tester.pumpAndSettle();
+      await shot('discard-dialog');
+      await tester.tap(find.text('Keep feeding'));
+      await tester.pumpAndSettle();
+      app.stopFeedTimer(save: false);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        desktop ? find.text('Settings').last : find.byTooltip('Settings'),
+      );
+      await tester.pumpAndSettle();
+      await shot('settings');
+      for (var i = 1; i <= 4; i++) {
+        await tester.drag(
+          find.byType(Scrollable).last,
+          Offset(0, desktop ? -600 : -1400),
+        );
+        await shot('settings-$i');
+      }
+      debugDisableShadows = true;
+    });
+  }
+
   testWidgets('pump', (tester) async {
     _seed(app, DateTime.now());
     for (final (h, l, r) in [(7, 70, 55), (11, 60, 50), (15, 80, 65)]) {

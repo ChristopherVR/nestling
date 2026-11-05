@@ -401,9 +401,8 @@ class Kbd extends StatelessWidget {
     ),
     child: LText(
       label,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.labelSmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
     ),
   );
 }
@@ -568,7 +567,7 @@ class _PressScaleState extends State<PressScale> {
 /// A quick-log button: a neutral tonal button with the kind's icon, a label
 /// and a live hint ("Next: Right", "Due now"). At least 72dp tall, so it is
 /// easy to hit one-handed in the dark. Only the icon carries the kind's
-/// colour; [soft] is kept for callers but no longer painted.
+/// colour, unless the palette tints tiles, when [soft] fills it.
 class ActionTile extends StatelessWidget {
   const ActionTile({
     super.key,
@@ -594,7 +593,7 @@ class ActionTile extends StatelessWidget {
     final desktop = Desktop.of(context);
     return PressScale(
       child: Material(
-        color: scheme.surfaceContainerHigh,
+        color: context.nest.tintedTiles ? soft : scheme.surfaceContainerHigh,
         borderRadius: Corners.card,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -919,9 +918,12 @@ class OptionTile extends StatelessWidget {
                           : scheme.onSurface,
                     ),
                   ),
+                  // Reserves a line for the badge so tiles in a row line
+                  // up; a minimum, not a fixed height, so large text is
+                  // not clipped.
                   if (badge != null || glyph != null)
-                    SizedBox(
-                      height: 16,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 16),
                       child: badge == null
                           ? null
                           : LText(
@@ -1057,4 +1059,121 @@ class EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Two buttons side by side with equal widths; stacked full width when large
+/// text on a phone would squeeze or wrap their labels. Decided from the
+/// window rather than a LayoutBuilder, so it also works inside
+/// IntrinsicHeight rows (the desktop card grids).
+class ButtonPair extends StatelessWidget {
+  const ButtonPair({super.key, required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final stack = MediaQuery.sizeOf(context).width / scale < 380;
+    if (stack) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, child) in children.indexed) ...[
+            if (i > 0) const SizedBox(height: Space.sm),
+            child,
+          ],
+        ],
+      );
+    }
+    return Row(
+      children: [
+        for (final (i, child) in children.indexed) ...[
+          if (i > 0) const SizedBox(width: Space.sm),
+          Expanded(child: child),
+        ],
+      ],
+    );
+  }
+}
+
+/// The action row at the bottom of every sheet: a full-width [primary]
+/// (usually Save), optionally beside a [secondary] of equal width (such as
+/// Start timer) or after a [leading] text button (such as Delete).
+///
+/// Buttons inside are [Controls.sheetAction] tall: the one place where the
+/// main action is bigger than the 48dp standard, because a sheet's Save is
+/// the thumb target that is tapped most, often half asleep.
+class SheetActions extends StatelessWidget {
+  const SheetActions({
+    super.key,
+    required this.primary,
+    this.secondary,
+    this.leading,
+  });
+  final Widget primary;
+  final Widget? secondary;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final size = WidgetStatePropertyAll(
+      Size(64, Controls.sheetAction(Desktop.of(context))),
+    );
+    ButtonStyle tall(ButtonStyle? s) =>
+        (s ?? const ButtonStyle()).copyWith(minimumSize: size);
+    final Widget row;
+    if (secondary != null) {
+      row = ButtonPair(children: [secondary!, primary]);
+    } else if (leading != null) {
+      row = Row(
+        children: [
+          leading!,
+          const SizedBox(width: Space.md),
+          Expanded(child: primary),
+        ],
+      );
+    } else {
+      row = SizedBox(width: double.infinity, child: primary);
+    }
+    return FilledButtonTheme(
+      data: FilledButtonThemeData(style: tall(theme.filledButtonTheme.style)),
+      child: OutlinedButtonTheme(
+        data: OutlinedButtonThemeData(
+          style: tall(theme.outlinedButtonTheme.style),
+        ),
+        child: row,
+      ),
+    );
+  }
+}
+
+/// Style for a FilledButton that confirms something destructive (Delete,
+/// Discard, Forget): the error colour, so it never looks like a Save.
+ButtonStyle dangerButtonStyle(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  return FilledButton.styleFrom(
+    backgroundColor: scheme.error,
+    foregroundColor: scheme.onError,
+  );
+}
+
+/// A text button for Delete in sheets and editors: error colour and a bin.
+class DeleteTextButton extends StatelessWidget {
+  const DeleteTextButton({
+    super.key,
+    required this.onPressed,
+    this.label = 'Delete',
+  });
+  final VoidCallback? onPressed;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    style: TextButton.styleFrom(
+      foregroundColor: Theme.of(context).colorScheme.error,
+    ),
+    icon: const Icon(Icons.delete_outline_rounded),
+    label: LText(label),
+    onPressed: onPressed,
+  );
 }

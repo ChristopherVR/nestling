@@ -176,14 +176,58 @@ behind every icon.
 | Group of rows | `ListCard` (card + 56dp inset dividers) of `ListTile` / `EntryTile` |
 | Section heading | `SectionTitle` (titleMedium, 24dp above, 8dp below) |
 | Quick log | `ActionTile`: neutral tonal button, kind-coloured icon, label and live hint, at least 72dp |
-| Log or edit an entry | Modal bottom sheet via `showSheet` (dialog on desktop) with `SheetHeader`, content and a 56dp full-width Save |
+| Log or edit an entry | Modal bottom sheet via `showSheet` (dialog on desktop) with `SheetHeader`, content and `SheetActions` (full-width Save, 56dp; 48dp in desktop dialogs) |
 | 2-4 exclusive choices | `OptionTile` row or `SegmentedButton` |
 | Single-select filter | `ChoiceChip` in one horizontally scrolling row |
 | On/off | `SwitchListTile` |
-| Confirm a destructive action | `AlertDialog` (TextButton cancel, FilledButton confirm) |
+| Confirm an action | `AlertDialog`: TextButton cancel first, FilledButton confirm last |
+| Confirm a destructive action | The same, with `dangerButtonStyle` on the confirm (error colour) |
+| Delete inside a sheet or editor | `DeleteTextButton` (error text button with a bin), at the start of `SheetActions` |
+| Two equal actions in a card | `ButtonPair` (equal widths; stacks full width at large text) |
 | Feedback after save | Floating snackbar with Undo |
 | Empty, no results, error | `EmptyState` (bare icon, title, one line, optional action) |
 | Main add action on a tab | Extended FAB on phones; top bar button on desktop |
+
+## Buttons
+
+All button heights come from `Controls` in `theme.dart`, set in the
+component themes rather than per screen:
+
+- Filled, Tonal, Outlined, Text and Segmented buttons are **48dp** on phones
+  and **40dp** on desktop. Text buttons share that height, so Cancel lines up
+  with Save in dialogs. Button styles use standard density, so the compact
+  desktop density does not shave them to 32dp.
+- The action row of a sheet (`SheetActions`) is the one exception: **56dp**
+  on phones, 48dp in desktop dialogs. The primary is always full width; a
+  secondary action (Start timer) gets an equal half, and Delete sits at the
+  start as a text button. Setup's Continue and the pump's Start/Pause use
+  the same row.
+- Labels are `labelLarge` (14/20 Medium) on every button, chip and segment;
+  icons in buttons are 18dp.
+- Importance maps to one style: the main action is Filled, an alternative of
+  similar weight is Outlined, low-emphasis or inline actions are Text.
+  Tonal is for a secondary in-step action that sits above a separate Filled
+  primary (camera wizard).
+- Disabled buttons keep 55% content and a 10% fill (instead of 38%/12%), so
+  a disabled Save is still readable on a white sheet.
+- Destructive confirmations use the error colour, never the accent.
+- Extended FABs are phone only; desktop puts the same action in the top bar.
+  Lists under a FAB pad 96dp at the bottom.
+
+## Palette candidates
+
+`NestPalette` can be built in several variants (`NestVariant`): the shipped
+`current` (Slate) and three candidates under review, each described by a
+`_Spec` (HCT hues and chromas, plus where it allows a little colour: tinted
+quick-log tiles, a tinted Today summary, or sunny filled buttons). Every
+candidate passes `test/design_tokens_test.dart`. `NestPalette.shipped`
+chooses the palette; `NestPalette.debugVariant` overrides it in previews.
+To compare them:
+
+```
+flutter test --run-skipped --tags preview test/ui_preview_test.dart --plain-name palette
+python tool/palette_compare.py
+```
 
 ## Motion
 

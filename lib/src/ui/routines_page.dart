@@ -539,40 +539,39 @@ class _RoutineEditorState extends State<_RoutineEditor> {
                 onChanged: (on) => setState(() => _remind = on),
               ),
               const SizedBox(height: Space.lg),
-              FilledButton(
-                onPressed: () async {
-                  if (!_form.currentState!.validate()) return;
-                  if (!await okToOverwrite(context, app, widget.initial) ||
-                      !context.mounted) {
-                    return;
-                  }
-                  app.saveRoutine(
-                    Routine(
-                      id: widget.initial?.id,
-                      babyId: widget.initial?.babyId ?? widget.babyId,
-                      name: _name.text.trim(),
-                      notes: _notes.text.trim(),
-                      minutes: _minutes,
-                      weekdays: _weekdays.toList(),
-                      enabled: widget.initial?.enabled ?? true,
-                    ),
-                    remind:
-                        _remind ??
-                        (widget.initial != null &&
-                            app.routineRemindsHere(widget.initial!)),
-                  );
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const LText('Save routine'),
+              SheetActions(
+                primary: FilledButton.icon(
+                  icon: const Icon(Icons.check_rounded),
+                  onPressed: () async {
+                    if (!_form.currentState!.validate()) return;
+                    if (!await okToOverwrite(context, app, widget.initial) ||
+                        !context.mounted) {
+                      return;
+                    }
+                    app.saveRoutine(
+                      Routine(
+                        id: widget.initial?.id,
+                        babyId: widget.initial?.babyId ?? widget.babyId,
+                        name: _name.text.trim(),
+                        notes: _notes.text.trim(),
+                        minutes: _minutes,
+                        weekdays: _weekdays.toList(),
+                        enabled: widget.initial?.enabled ?? true,
+                      ),
+                      remind:
+                          _remind ??
+                          (widget.initial != null &&
+                              app.routineRemindsHere(widget.initial!)),
+                    );
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  label: const LText('Save routine'),
+                ),
               ),
               if (widget.initial != null) ...[
                 const SizedBox(height: Space.sm),
-                TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                  ),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  label: const LText('Delete routine'),
+                DeleteTextButton(
+                  label: 'Delete routine',
                   onPressed: () async {
                     if (!await okToOverwrite(context, app, widget.initial) ||
                         !context.mounted) {

@@ -54,7 +54,7 @@ class RoutineActions extends StatelessWidget {
             spacing: Space.sm,
             runSpacing: Space.sm,
             children: [
-              FilledButton.tonalIcon(
+              FilledButton.icon(
                 onPressed: () => markRoutineDone(context, routine),
                 icon: const Icon(Icons.check_rounded),
                 label: const LText('Mark done'),

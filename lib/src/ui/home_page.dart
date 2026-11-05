@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: Space.md),
       ],
       const SizedBox(height: Space.sm),
-      _StatusCard(app: app),
+      _SummaryTint(child: _StatusCard(app: app)),
       // A new parent's next step comes before the buttons it points at, so it
       // is never pushed off screen (e.g. by the night-light notice).
       if (app.tourPending) ...[
@@ -557,7 +557,7 @@ class _TimerCardState extends State<_TimerCard> {
               ],
             ),
             const SizedBox(height: Space.md),
-            _ButtonPair(
+            ButtonPair(
               children: [
                 OutlinedButton.icon(
                   onPressed: () => app.timerPaused
@@ -614,6 +614,7 @@ class _TimerCardState extends State<_TimerCard> {
                           child: const LText('Keep feeding'),
                         ),
                         FilledButton(
+                          style: dangerButtonStyle(ctx),
                           onPressed: () => Navigator.pop(ctx, true),
                           child: const LText('Discard'),
                         ),
@@ -630,39 +631,6 @@ class _TimerCardState extends State<_TimerCard> {
       ),
     );
   }
-}
-
-/// Two buttons side by side with equal widths; stacked when large text or a
-/// narrow screen would squeeze their labels.
-class _ButtonPair extends StatelessWidget {
-  const _ButtonPair({required this.children});
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
-      if (constraints.maxWidth < 340 * scale) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, child) in children.indexed) ...[
-              if (i > 0) const SizedBox(height: Space.sm),
-              child,
-            ],
-          ],
-        );
-      }
-      return Row(
-        children: [
-          for (final (i, child) in children.indexed) ...[
-            if (i > 0) const SizedBox(width: Space.sm),
-            Expanded(child: child),
-          ],
-        ],
-      );
-    },
-  );
 }
 
 /// A status card on the desktop Today grid.
@@ -835,6 +803,31 @@ class _ReminderRow extends StatelessWidget {
 /// The top of Today, as plain text: who, then the time since the last feed
 /// (the number that matters at 3 am), then the last nappy and sleep as
 /// list rows. No card: the type hierarchy carries it.
+/// Today's summary on a soft accent tint, when the palette asks for one.
+class _SummaryTint extends StatelessWidget {
+  const _SummaryTint({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = context.nest.summary;
+    if (tint == null) return child;
+    return Material(
+      color: tint,
+      borderRadius: Corners.card,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Space.md,
+          Space.lg,
+          Space.md,
+          Space.sm,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _StatusCard extends StatelessWidget {
   const _StatusCard({required this.app});
   final AppState app;

@@ -79,6 +79,140 @@ abstract final class _Kinds {
   static const success = (150.0, 26.0);
 }
 
+/// The palettes Nestling can be drawn in. [current] ships; the others are
+/// candidates under review, built from a [_Spec] each so that switching to
+/// one is a one-line change to [NestPalette.shipped].
+enum NestVariant {
+  current('Slate', 'Calm neutral grey with one muted slate-teal accent'),
+  tide('Tide', 'Fresh aqua on warm off-white, like a clear morning'),
+  marigold('Marigold', 'Sunny marigold on soft cream, warm without pink'),
+  sky('Sky', 'Soft sky blue with a mint companion, airy and light');
+
+  const NestVariant(this.label, this.mood);
+  final String label;
+  final String mood;
+}
+
+/// The recipe for a candidate palette: HCT hues and chromas, from which
+/// every role is derived at fixed tones (so contrast holds by construction),
+/// plus where the candidate allows a little colour.
+class _Spec {
+  const _Spec({
+    required this.accent,
+    required this.secondary,
+    required this.neutral,
+    required this.darkNeutral,
+    required this.kinds,
+    this.containerChroma = 32,
+    this.containerTone = 90,
+    this.tileChroma,
+    this.summaryChroma,
+    this.sunnyButtons = false,
+  });
+
+  /// (hue, chroma) of the primary accent.
+  final (double, double) accent;
+
+  /// (hue, chroma) of the secondary role: selected chips, nav indicator.
+  final (double, double) secondary;
+
+  /// (hue, chroma) of the light surfaces: a faint warm tint, not cold grey.
+  final (double, double) neutral;
+
+  /// (hue, chroma) of the dark surfaces. Kept lower than [neutral], since a
+  /// warm tint at low tone reads as brown.
+  final (double, double) darkNeutral;
+
+  /// (hue, chroma) per kind, in [NestPalette.kinds] order.
+  final Map<String, (double, double)> kinds;
+
+  /// Chroma of primaryContainer (FAB, selected tiles).
+  final double containerChroma;
+
+  /// Light-theme tone of primaryContainer. Lower than 90 only with
+  /// [sunnyButtons], where it fills the main buttons.
+  final double containerTone;
+
+  /// Chroma of each kind's container. When set, quick-log tiles are filled
+  /// with it; otherwise tiles stay a neutral tonal surface.
+  final double? tileChroma;
+
+  /// Chroma of the tint behind Today's summary, or null for no tint.
+  final double? summaryChroma;
+
+  /// Filled buttons use the bright primaryContainer with dark text instead
+  /// of a dark primary with white text. For yellow accents, whose AA tone
+  /// would otherwise be brown.
+  final bool sunnyButtons;
+}
+
+const _specs = <NestVariant, _Spec>{
+  // Fresh aqua; each quick-log tile carries a whisper of its kind's colour.
+  NestVariant.tide: _Spec(
+    accent: (192, 44),
+    secondary: (192, 18),
+    neutral: (100, 3),
+    darkNeutral: (200, 3),
+    containerChroma: 28,
+    tileChroma: 9,
+    kinds: {
+      'feed': (245, 38),
+      'sleep': (292, 34),
+      'nappy': (150, 36),
+      'pee': (95, 40),
+      'poo': (65, 22),
+      'pill': (70, 40),
+      'pump': (215, 32),
+      'warn': (78, 40),
+      'success': (145, 34),
+    },
+  ),
+  // Marigold on cream; the cheer is concentrated in sunny buttons and a
+  // butter-yellow summary, while tiles stay a calm cream.
+  NestVariant.marigold: _Spec(
+    accent: (78, 52),
+    secondary: (88, 40),
+    neutral: (92, 4),
+    darkNeutral: (85, 2.5),
+    containerChroma: 64,
+    containerTone: 83,
+    summaryChroma: 22,
+    sunnyButtons: true,
+    kinds: {
+      'feed': (232, 36),
+      'sleep': (275, 34),
+      'nappy': (140, 36),
+      'pee': (100, 40),
+      'poo': (65, 24),
+      'pill': (82, 40),
+      'pump': (200, 30),
+      'warn': (75, 40),
+      'success': (140, 34),
+    },
+  ),
+  // Sky blue with mint: a light sky summary, mint selection, tinted tiles.
+  NestVariant.sky: _Spec(
+    accent: (250, 40),
+    secondary: (165, 26),
+    neutral: (105, 1.5),
+    darkNeutral: (250, 4),
+    containerChroma: 24,
+    tileChroma: 8,
+    summaryChroma: 10,
+    kinds: {
+      'feed': (238, 36),
+      'sleep': (300, 32),
+      'nappy': (165, 34),
+      'pee': (95, 40),
+      'poo': (65, 22),
+      'pill': (80, 40),
+      'pump': (205, 32),
+      'warn': (80, 40),
+      'success': (150, 34),
+    },
+  ),
+};
+
 /// Everything the theme is built from for one [NestMode]: the Material
 /// [ColorScheme] plus Nestling's semantic colours.
 @immutable
@@ -96,6 +230,10 @@ class NestPalette extends ThemeExtension<NestPalette> {
     required this.poo,
     required this.warn,
     required this.success,
+    this.variant = NestVariant.current,
+    this.summary,
+    this.tintedTiles = false,
+    this.sunnyButtons = false,
   });
 
   final NestMode mode;
@@ -106,9 +244,224 @@ class NestPalette extends ThemeExtension<NestPalette> {
   final Color card;
   final KindColors feed, pump, pill, sleep, nappy, pee, poo, warn, success;
 
-  static final _cache = <NestMode, NestPalette>{};
+  /// Which palette this is.
+  final NestVariant variant;
 
-  static NestPalette of(NestMode mode) => _cache[mode] ??= _build(mode);
+  /// A soft tint behind Today's summary (baby, last feed), or null for none.
+  final Color? summary;
+
+  /// Whether quick-log tiles take their kind's container colour instead of
+  /// a neutral tonal surface.
+  final bool tintedTiles;
+
+  /// Whether filled buttons use primaryContainer with dark text (see
+  /// [_Spec.sunnyButtons]).
+  final bool sunnyButtons;
+
+  /// The palette that ships. Change this to adopt a candidate.
+  static const shipped = NestVariant.current;
+
+  /// Preview-only override of [shipped].
+  @visibleForTesting
+  static NestVariant? debugVariant;
+
+  /// The palette in use.
+  static NestVariant get active => debugVariant ?? shipped;
+
+  static final _cache = <(NestVariant, NestMode), NestPalette>{};
+
+  static NestPalette of(NestMode mode) => forVariant(active, mode);
+
+  static NestPalette forVariant(NestVariant variant, NestMode mode) =>
+      _cache[(variant, mode)] ??= switch (_specs[variant]) {
+        null => _build(mode),
+        final spec => _fromSpec(variant, spec, mode),
+      };
+
+  /// Builds a candidate palette from its [_Spec]. Every role sits at a fixed
+  /// tone per mode, so contrast is the same for every candidate.
+  static NestPalette _fromSpec(NestVariant variant, _Spec spec, NestMode mode) {
+    Color t((double, double) hc, double tone) =>
+        Color(Hct.from(hc.$1, hc.$2, tone).toInt());
+    final a = spec.accent;
+    final ac = (a.$1, spec.containerChroma);
+    final sec = spec.secondary;
+    final n = mode == NestMode.dark ? spec.darkNeutral : spec.neutral;
+    final nv = (n.$1, n.$2 * 1.6 + 2);
+    final scheme = switch (mode) {
+      NestMode.light => ColorScheme(
+        brightness: Brightness.light,
+        primary: t(a, 40),
+        onPrimary: const Color(0xFFFFFFFF),
+        primaryContainer: t(ac, spec.containerTone),
+        onPrimaryContainer: t(a, 12),
+        primaryFixed: t(ac, 90),
+        primaryFixedDim: t(a, 80),
+        onPrimaryFixed: t(a, 12),
+        onPrimaryFixedVariant: t(a, 30),
+        secondary: t((sec.$1, sec.$2 + 8), 40),
+        onSecondary: const Color(0xFFFFFFFF),
+        secondaryContainer: t(sec, 90),
+        onSecondaryContainer: t((sec.$1, sec.$2 + 8), 12),
+        tertiary: t((sec.$1, sec.$2 + 8), 40),
+        onTertiary: const Color(0xFFFFFFFF),
+        tertiaryContainer: t(sec, 92),
+        onTertiaryContainer: t(sec, 12),
+        error: const Color(0xFFB3261E),
+        onError: const Color(0xFFFFFFFF),
+        errorContainer: const Color(0xFFF9DEDC),
+        onErrorContainer: const Color(0xFF410E0B),
+        surface: t(n, 97.5),
+        onSurface: t(n, 11),
+        onSurfaceVariant: t(nv, 38),
+        surfaceDim: t(n, 87),
+        surfaceBright: t(n, 98.5),
+        surfaceContainerLowest: const Color(0xFFFFFFFF),
+        surfaceContainerLow: t(n, 96),
+        surfaceContainer: t(n, 94.5),
+        surfaceContainerHigh: t(n, 92.5),
+        surfaceContainerHighest: t(n, 90),
+        outline: t(nv, 52),
+        outlineVariant: t(nv, 85),
+        shadow: Colors.black,
+        scrim: Colors.black,
+        inverseSurface: t(n, 20),
+        onInverseSurface: t(n, 95),
+        inversePrimary: t(a, 80),
+        surfaceTint: Colors.transparent,
+      ),
+      NestMode.dim => ColorScheme(
+        brightness: Brightness.light,
+        primary: t(a, 32),
+        onPrimary: const Color(0xFFFFFFFF),
+        primaryContainer: t(ac, 75),
+        onPrimaryContainer: t(a, 8),
+        secondary: t((sec.$1, sec.$2 + 8), 32),
+        onSecondary: const Color(0xFFFFFFFF),
+        secondaryContainer: t(sec, 75),
+        onSecondaryContainer: t(sec, 8),
+        tertiary: t((sec.$1, sec.$2 + 8), 32),
+        onTertiary: const Color(0xFFFFFFFF),
+        tertiaryContainer: t(sec, 77),
+        onTertiaryContainer: t(sec, 8),
+        error: const Color(0xFF9C2019),
+        onError: const Color(0xFFFFFFFF),
+        errorContainer: const Color(0xFFE9CBC8),
+        onErrorContainer: const Color(0xFF410E0B),
+        surface: t(n, 85),
+        onSurface: t(n, 8),
+        onSurfaceVariant: t(nv, 29),
+        surfaceDim: t(n, 78),
+        surfaceBright: t(n, 88),
+        surfaceContainerLowest: t(n, 89),
+        surfaceContainerLow: t(n, 86.5),
+        surfaceContainer: t(n, 83),
+        surfaceContainerHigh: t(n, 80.5),
+        surfaceContainerHighest: t(n, 78),
+        outline: t(nv, 44),
+        outlineVariant: t(nv, 72),
+        shadow: Colors.black,
+        scrim: Colors.black,
+        inverseSurface: t(n, 20),
+        onInverseSurface: t(n, 92),
+        inversePrimary: t(a, 80),
+        surfaceTint: Colors.transparent,
+      ),
+      NestMode.dark => ColorScheme(
+        brightness: Brightness.dark,
+        primary: t(a, 80),
+        onPrimary: t(a, 18),
+        primaryContainer: t((a.$1, spec.containerChroma * 0.8), 30),
+        onPrimaryContainer: t(a, 92),
+        primaryFixed: t(ac, 90),
+        primaryFixedDim: t(a, 80),
+        onPrimaryFixed: t(a, 12),
+        onPrimaryFixedVariant: t(a, 30),
+        secondary: t(sec, 80),
+        onSecondary: t(sec, 18),
+        secondaryContainer: t((sec.$1, sec.$2 * 0.8), 30),
+        onSecondaryContainer: t(sec, 92),
+        tertiary: t(sec, 80),
+        onTertiary: t(sec, 18),
+        tertiaryContainer: t(sec, 28),
+        onTertiaryContainer: t(sec, 92),
+        error: const Color(0xFFF2B8B5),
+        onError: const Color(0xFF601410),
+        errorContainer: const Color(0xFF8C1D18),
+        onErrorContainer: const Color(0xFFF9DEDC),
+        surface: t(n, 7),
+        onSurface: t(n, 92),
+        onSurfaceVariant: t(nv, 76),
+        surfaceDim: t(n, 7),
+        surfaceBright: t(n, 24),
+        surfaceContainerLowest: t(n, 4),
+        surfaceContainerLow: t(n, 10.5),
+        surfaceContainer: t(n, 13),
+        surfaceContainerHigh: t(n, 17),
+        surfaceContainerHighest: t(n, 22),
+        outline: t(nv, 60),
+        outlineVariant: t(nv, 28),
+        shadow: Colors.black,
+        scrim: Colors.black,
+        inverseSurface: t(n, 90),
+        onInverseSurface: t(n, 18),
+        inversePrimary: t(a, 40),
+        surfaceTint: Colors.transparent,
+      ),
+    };
+    KindColors k(String name) {
+      final (hue, chroma) = spec.kinds[name]!;
+      final tile = (hue, spec.tileChroma ?? 6);
+      return switch (mode) {
+        NestMode.light => KindColors(
+          color: t((hue, chroma), 42),
+          onColor: const Color(0xFFFFFFFF),
+          container: t(tile, 92.5),
+          onContainer: t((hue, chroma), 15),
+        ),
+        NestMode.dim => KindColors(
+          color: t((hue, chroma), 31),
+          onColor: const Color(0xFFFFFFFF),
+          container: t(tile, 80),
+          onContainer: t((hue, chroma), 8),
+        ),
+        NestMode.dark => KindColors(
+          color: t((hue, chroma), 77),
+          onColor: t((hue, chroma), 15),
+          container: t((hue, (spec.tileChroma ?? 6) * 0.75), 18),
+          onContainer: t((hue, chroma), 92),
+        ),
+      };
+    }
+
+    return NestPalette(
+      mode: mode,
+      scheme: scheme,
+      variant: variant,
+      card: switch (mode) {
+        NestMode.light => const Color(0xFFFFFFFF),
+        NestMode.dim => scheme.surfaceContainerLowest,
+        NestMode.dark => scheme.surfaceContainerLow,
+      },
+      summary: switch ((spec.summaryChroma, mode)) {
+        (null, _) => null,
+        (final c?, NestMode.light) => t((sec.$1, c), 94),
+        (final c?, NestMode.dim) => t((sec.$1, c * 0.8), 82),
+        (final c?, NestMode.dark) => t((sec.$1, c * 0.4), 13),
+      },
+      tintedTiles: spec.tileChroma != null,
+      sunnyButtons: spec.sunnyButtons && mode != NestMode.dark,
+      feed: k('feed'),
+      pump: k('pump'),
+      pill: k('pill'),
+      sleep: k('sleep'),
+      nappy: k('nappy'),
+      pee: k('pee'),
+      poo: k('poo'),
+      warn: k('warn'),
+      success: k('success'),
+    );
+  }
 
   static NestPalette _build(NestMode mode) {
     final accent = Hct.fromInt(nestAccent.toARGB32());
@@ -289,6 +642,7 @@ class NestPalette extends ThemeExtension<NestPalette> {
       'inverseSurface': s.inverseSurface,
       'onInverseSurface': s.onInverseSurface,
       'inversePrimary': s.inversePrimary,
+      'summary': ?summary,
       for (final (name, k) in kinds) ...{
         'kind.$name': k.color,
         'kind.$name.container': k.container,
@@ -420,12 +774,24 @@ abstract final class Motion {
   static const enter = Curves.easeOutCubic;
 }
 
+/// Button heights. Every Filled, Tonal, Outlined, Text and Segmented button
+/// is [height] tall (40 on wide windows); only the action row of a sheet
+/// ([SheetActions] in common.dart) is taller, see [sheetAction].
+abstract final class Controls {
+  static const double height = 48;
+  static const double heightDesktop = 40;
+
+  /// The main action row of a sheet: 56 on phones, where it is the most
+  /// tapped target; 48 in desktop dialogs, where a pointer needs less.
+  static double sheetAction(bool desktop) => desktop ? 48 : 56;
+}
+
 /// Shape and size scale for wide windows.
 abstract final class DesktopTokens {
   static const double radiusSm = Corners.sm;
   static const double radius = Corners.md;
   static const double radiusLg = Corners.lg;
-  static const double controlHeight = 40;
+  static const double controlHeight = Controls.heightDesktop;
   static const double topBarHeight = 64;
   static const double sidebarWidth = 260;
   static const double railWidth = 80;
@@ -433,12 +799,12 @@ abstract final class DesktopTokens {
 
 // -------------------------------------------------------------------- theme
 
-final _themes = <(NestMode, bool), ThemeData>{};
+final _themes = <(NestVariant, NestMode, bool), ThemeData>{};
 
 /// The app theme. [desktop] gives the denser variant for wide windows.
 /// Themes are cached per palette, so calling this on every build is cheap.
 ThemeData babyTheme({bool desktop = false}) {
-  final key = (Baby.mode, desktop);
+  final key = (NestPalette.active, Baby.mode, desktop);
   return _themes[key] ??= _theme(Baby.palette, desktop: desktop);
 }
 
@@ -479,11 +845,17 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
   final text = _textTheme(base.textTheme, scheme);
   final card = nest.card;
   const stadium = StadiumBorder();
-  final controlHeight = desktop ? DesktopTokens.controlHeight : 48.0;
-  final buttonText = text.labelLarge!.copyWith(
-    fontSize: desktop ? 14 : 15,
-    letterSpacing: 0.1,
-  );
+  final controlHeight = desktop ? Controls.heightDesktop : Controls.height;
+  // One label style for every button, chip and segment: labelLarge (14/20,
+  // Medium), so buttons beside chips or option tiles never look heavier.
+  final buttonText = text.labelLarge!.copyWith(letterSpacing: 0.1);
+  // Disabled content at 55% and fill at 10% of onSurface, instead of
+  // Material's 38%/12%, which all but vanishes on white sheets.
+  final disabledFg = scheme.onSurface.withValues(alpha: 0.55);
+  final disabledBg = scheme.onSurface.withValues(alpha: 0.10);
+  // The theme's compact density would shave 8dp off every button on
+  // desktop (40 -> 32); heights here are already the desktop ones.
+  const buttonDensity = VisualDensity.standard;
   OutlineInputBorder field(Color color, [double width = 1]) =>
       OutlineInputBorder(
         borderRadius: BorderRadius.circular(Corners.md),
@@ -588,35 +960,59 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: nest.sunnyButtons ? scheme.primaryContainer : null,
+        foregroundColor: nest.sunnyButtons ? scheme.onPrimaryContainer : null,
+        disabledBackgroundColor: disabledBg,
+        disabledForegroundColor: disabledFg,
         minimumSize: Size(64, controlHeight),
         padding: const EdgeInsets.symmetric(horizontal: Space.xl),
+        visualDensity: buttonDensity,
         shape: stadium,
         textStyle: buttonText,
+        iconSize: 18,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: Size(64, controlHeight),
+        visualDensity: buttonDensity,
         shape: stadium,
         textStyle: buttonText,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(64, controlHeight),
-        padding: const EdgeInsets.symmetric(horizontal: Space.xl),
-        shape: stadium,
-        textStyle: buttonText,
-        foregroundColor: scheme.primary,
-        side: BorderSide(color: scheme.outline),
-      ),
+      style:
+          OutlinedButton.styleFrom(
+            minimumSize: Size(64, controlHeight),
+            padding: const EdgeInsets.symmetric(horizontal: Space.xl),
+            visualDensity: buttonDensity,
+            shape: stadium,
+            textStyle: buttonText,
+            iconSize: 18,
+            foregroundColor: scheme.primary,
+            disabledForegroundColor: disabledFg,
+          ).copyWith(
+            // The 3:1 outline, dimmed (not removed) when disabled.
+            side: WidgetStateBorderSide.resolveWith(
+              (s) => BorderSide(
+                color: s.contains(WidgetState.disabled)
+                    ? scheme.onSurface.withValues(alpha: 0.2)
+                    : scheme.outline,
+              ),
+            ),
+          ),
     ),
+    // Text buttons share the height of the others, so a Cancel next to a
+    // filled Save in a dialog or sheet lines up instead of being 8dp short.
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        minimumSize: Size(48, desktop ? 36 : 40),
+        minimumSize: Size(48, controlHeight),
         padding: const EdgeInsets.symmetric(horizontal: Space.md),
+        visualDensity: buttonDensity,
         shape: stadium,
         textStyle: buttonText,
+        iconSize: 18,
+        disabledForegroundColor: disabledFg,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
@@ -628,9 +1024,11 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: SegmentedButton.styleFrom(
         minimumSize: Size(0, controlHeight),
+        visualDensity: buttonDensity,
         selectedBackgroundColor: scheme.secondaryContainer,
         selectedForegroundColor: scheme.onSecondaryContainer,
         foregroundColor: scheme.onSurface,
+        disabledForegroundColor: disabledFg,
         side: BorderSide(color: scheme.outline),
         textStyle: buttonText,
       ),

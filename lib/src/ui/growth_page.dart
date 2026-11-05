@@ -716,38 +716,39 @@ class _GrowthEditorState extends State<GrowthEditor> {
           ),
         ),
         const SizedBox(height: Space.lg),
-        FilledButton(
-          onPressed: picking
-              ? null
-              : () {
-                  if (!form.currentState!.validate()) return;
-                  final app = AppScope.of(context);
-                  final entry = GrowthEntry(
-                    id: widget.initial?.id,
-                    babyId: widget.baby.id,
-                    date: date,
-                    weightKg: number(weight.text),
-                    heightCm: number(height.text),
-                    photo: photo,
-                    note: note.text.trim(),
-                  );
-                  if (!app.saveGrowth(entry)) {
-                    showMessage(
-                      context,
-                      'Add a photo, measurement or memory with a date on or after birth.',
+        SheetActions(
+          primary: FilledButton.icon(
+            icon: const Icon(Icons.check_rounded),
+            onPressed: picking
+                ? null
+                : () {
+                    if (!form.currentState!.validate()) return;
+                    final app = AppScope.of(context);
+                    final entry = GrowthEntry(
+                      id: widget.initial?.id,
+                      babyId: widget.baby.id,
+                      date: date,
+                      weightKg: number(weight.text),
+                      heightCm: number(height.text),
+                      photo: photo,
+                      note: note.text.trim(),
                     );
-                    return;
-                  }
-                  Navigator.pop(context);
-                },
-          child: const LText('Save moment'),
+                    if (!app.saveGrowth(entry)) {
+                      showMessage(
+                        context,
+                        'Add a photo, measurement or memory with a date on or after birth.',
+                      );
+                      return;
+                    }
+                    Navigator.pop(context);
+                  },
+            label: const LText('Save moment'),
+          ),
         ),
         if (widget.initial != null) ...[
           const SizedBox(height: Space.sm),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
+          DeleteTextButton(
+            label: 'Delete moment',
             onPressed: () async {
               final app = AppScope.of(context);
               final confirmed = await showDialog<bool>(
@@ -763,6 +764,7 @@ class _GrowthEditorState extends State<GrowthEditor> {
                       child: const LText('Cancel'),
                     ),
                     FilledButton(
+                      style: dangerButtonStyle(ctx),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const LText('Delete'),
                     ),
@@ -778,7 +780,6 @@ class _GrowthEditorState extends State<GrowthEditor> {
                 () => app.setGrowthDeleted(widget.initial!, false),
               );
             },
-            child: const LText('Delete moment'),
           ),
         ],
       ],

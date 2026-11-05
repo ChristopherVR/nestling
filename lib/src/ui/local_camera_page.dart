@@ -400,6 +400,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
             child: const LText('Cancel'),
           ),
           FilledButton(
+            style: dangerButtonStyle(context),
             onPressed: () => Navigator.pop(context, true),
             child: const LText('Forget'),
           ),

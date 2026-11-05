@@ -195,11 +195,7 @@ class _MedCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: Space.lg),
-                OverflowBar(
-                  alignment: MainAxisAlignment.end,
-                  spacing: Space.sm,
-                  overflowSpacing: Space.sm,
-                  overflowAlignment: OverflowBarAlignment.end,
+                ButtonPair(
                   children: [
                     OutlinedButton.icon(
                       icon: const Icon(Icons.schedule_rounded),
@@ -295,17 +291,19 @@ class _TakePillSheetState extends State<TakePillSheet> {
         ],
         WhenField(value: time, onChanged: (t) => setState(() => time = t)),
         const SizedBox(height: Space.xl),
-        FilledButton.icon(
-          icon: const Icon(Icons.check_rounded),
-          label: LText(
-            time == null
-                ? 'Mark as taken now'
-                : 'Mark as taken at ${hm(time!)}',
+        SheetActions(
+          primary: FilledButton.icon(
+            icon: const Icon(Icons.check_rounded),
+            label: LText(
+              time == null
+                  ? 'Mark as taken now'
+                  : 'Mark as taken at ${hm(time!)}',
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              takeAndUndo(context, app, med, time: time);
+            },
           ),
-          onPressed: () {
-            Navigator.pop(context);
-            takeAndUndo(context, app, med, time: time);
-          },
         ),
       ],
     );
@@ -563,45 +561,41 @@ class _MedEditorState extends State<MedEditor> {
           onChanged: (v) => setState(() => remind = v),
         ),
         const SizedBox(height: Space.sm),
-        Row(
-          children: [
-            if (widget.initial != null)
-              TextButton.icon(
-                style: TextButton.styleFrom(foregroundColor: scheme.error),
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const LText('Delete'),
-                onPressed: () {
-                  final med = widget.initial!;
-                  app.deleteMed(med);
-                  Navigator.pop(context);
-                  showUndo(
-                    context,
-                    '${med.name} deleted',
-                    () => app.saveMed(med.copyWith(deleted: false)),
-                  );
-                },
-              ),
-            const Spacer(),
-            FilledButton(
-              onPressed: name.text.trim().isEmpty
-                  ? null
-                  : () async {
-                      if (!await okToOverwrite(context, app, widget.initial) ||
-                          !context.mounted) {
-                        return;
-                      }
-                      final saved = _draft;
-                      app.saveMed(
-                        saved,
-                        remindHere:
-                            remind ?? (widget.initial == null ? true : null),
-                      );
-                      app.setPillReminderOverrides(saved, reminderStyles);
-                      Navigator.pop(context);
-                    },
-              child: const LText('Save pill'),
-            ),
-          ],
+        SheetActions(
+          leading: widget.initial == null
+              ? null
+              : DeleteTextButton(
+                  onPressed: () {
+                    final med = widget.initial!;
+                    app.deleteMed(med);
+                    Navigator.pop(context);
+                    showUndo(
+                      context,
+                      '${med.name} deleted',
+                      () => app.saveMed(med.copyWith(deleted: false)),
+                    );
+                  },
+                ),
+          primary: FilledButton.icon(
+            icon: const Icon(Icons.check_rounded),
+            onPressed: name.text.trim().isEmpty
+                ? null
+                : () async {
+                    if (!await okToOverwrite(context, app, widget.initial) ||
+                        !context.mounted) {
+                      return;
+                    }
+                    final saved = _draft;
+                    app.saveMed(
+                      saved,
+                      remindHere:
+                          remind ?? (widget.initial == null ? true : null),
+                    );
+                    app.setPillReminderOverrides(saved, reminderStyles);
+                    Navigator.pop(context);
+                  },
+            label: const LText('Save pill'),
+          ),
         ),
       ],
     );

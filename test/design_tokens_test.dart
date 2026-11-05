@@ -14,100 +14,134 @@ String _hex(Color c) =>
     '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
 void main() {
-  for (final mode in NestMode.values) {
-    group('$mode palette', () {
-      final p = NestPalette.of(mode);
-      final s = p.scheme;
-      // Every surface text or a kind accent can sit on.
-      final surfaces = {
-        'surface': s.surface,
-        'card': p.card,
-        'surfaceContainer': s.surfaceContainer,
-        'surfaceContainerHigh': s.surfaceContainerHigh,
-      };
-
-      test('text roles pass WCAG AA (4.5:1) on every surface', () {
-        for (final MapEntry(key: name, value: bg) in surfaces.entries) {
-          for (final (role, fg) in [
-            ('onSurface', s.onSurface),
-            ('onSurfaceVariant', s.onSurfaceVariant),
-            ('primary', s.primary),
-            ('error', s.error),
-          ]) {
-            expect(
-              _contrast(fg, bg),
-              greaterThanOrEqualTo(4.5),
-              reason: '$role on $name',
-            );
-          }
-        }
-      });
-
-      test('kind accents pass WCAG AA (4.5:1) on every surface', () {
-        for (final (name, kind) in p.kinds) {
-          for (final MapEntry(key: surface, value: bg) in surfaces.entries) {
-            expect(
-              _contrast(kind.color, bg),
-              greaterThanOrEqualTo(4.5),
-              reason: '$name on $surface',
-            );
-          }
-          expect(
-            _contrast(kind.onContainer, kind.container),
-            greaterThanOrEqualTo(4.5),
-            reason: '$name onContainer',
-          );
-        }
-      });
-
-      test('filled and container pairs pass WCAG AA', () {
-        for (final (name, fg, bg) in [
-          ('onPrimary', s.onPrimary, s.primary),
-          ('onPrimaryContainer', s.onPrimaryContainer, s.primaryContainer),
-          (
-            'onSecondaryContainer',
-            s.onSecondaryContainer,
-            s.secondaryContainer,
-          ),
-          ('onError', s.onError, s.error),
-          ('onErrorContainer', s.onErrorContainer, s.errorContainer),
-          ('onInverseSurface', s.onInverseSurface, s.inverseSurface),
-        ]) {
-          expect(_contrast(fg, bg), greaterThanOrEqualTo(4.5), reason: name);
-        }
-        // Component outlines (text fields, outlined buttons): 3:1.
-        expect(_contrast(s.outline, p.card), greaterThanOrEqualTo(3));
-      });
-
-      test('kinds share one lightness and stay desaturated', () {
-        final hcts = [
-          for (final (_, k) in p.kinds) Hct.fromInt(k.color.toARGB32()),
-        ];
-        for (final hct in hcts) {
-          expect(hct.chroma, lessThan(42), reason: '$hct');
-          expect(
-            (hct.tone - hcts.first.tone).abs(),
-            lessThan(2),
-            reason: '$hct',
-          );
-        }
-      });
-
-      test('no red or pink outside the error roles', () {
-        final error = {
-          s.error,
-          s.onError,
-          s.errorContainer,
-          s.onErrorContainer,
+  // The shipped palette and every candidate under review must pass.
+  for (final variant in NestVariant.values) {
+    for (final mode in NestMode.values) {
+      group('${variant.name} $mode palette', () {
+        final p = NestPalette.forVariant(variant, mode);
+        final s = p.scheme;
+        // Every surface text or a kind accent can sit on.
+        final surfaces = {
+          'surface': s.surface,
+          'card': p.card,
+          'surfaceContainer': s.surfaceContainer,
+          'surfaceContainerHigh': s.surfaceContainerHigh,
         };
-        for (final MapEntry(key: role, value: c) in p.roles.entries) {
-          if (error.contains(c)) continue;
-          final hct = Hct.fromInt(c.toARGB32());
-          final reddish = hct.hue < 40 || hct.hue > 330;
-          expect(reddish && hct.chroma > 12, isFalse, reason: '$role $hct');
-        }
+
+        test('text roles pass WCAG AA (4.5:1) on every surface', () {
+          for (final MapEntry(key: name, value: bg) in surfaces.entries) {
+            for (final (role, fg) in [
+              ('onSurface', s.onSurface),
+              ('onSurfaceVariant', s.onSurfaceVariant),
+              ('primary', s.primary),
+              ('error', s.error),
+            ]) {
+              expect(
+                _contrast(fg, bg),
+                greaterThanOrEqualTo(4.5),
+                reason: '$role on $name',
+              );
+            }
+          }
+        });
+
+        test('kind accents pass WCAG AA (4.5:1) on every surface', () {
+          for (final (name, kind) in p.kinds) {
+            for (final MapEntry(key: surface, value: bg) in surfaces.entries) {
+              expect(
+                _contrast(kind.color, bg),
+                greaterThanOrEqualTo(4.5),
+                reason: '$name on $surface',
+              );
+            }
+            expect(
+              _contrast(kind.onContainer, kind.container),
+              greaterThanOrEqualTo(4.5),
+              reason: '$name onContainer',
+            );
+          }
+        });
+
+        test('filled and container pairs pass WCAG AA', () {
+          for (final (name, fg, bg) in [
+            ('onPrimary', s.onPrimary, s.primary),
+            ('onPrimaryContainer', s.onPrimaryContainer, s.primaryContainer),
+            (
+              'onSecondaryContainer',
+              s.onSecondaryContainer,
+              s.secondaryContainer,
+            ),
+            ('onError', s.onError, s.error),
+            ('onErrorContainer', s.onErrorContainer, s.errorContainer),
+            ('onInverseSurface', s.onInverseSurface, s.inverseSurface),
+          ]) {
+            expect(_contrast(fg, bg), greaterThanOrEqualTo(4.5), reason: name);
+          }
+          // Component outlines (text fields, outlined buttons): 3:1.
+          expect(_contrast(s.outline, p.card), greaterThanOrEqualTo(3));
+        });
+
+        test('kinds share one lightness and stay desaturated', () {
+          final hcts = [
+            for (final (_, k) in p.kinds) Hct.fromInt(k.color.toARGB32()),
+          ];
+          for (final hct in hcts) {
+            expect(hct.chroma, lessThan(42), reason: '$hct');
+            expect(
+              (hct.tone - hcts.first.tone).abs(),
+              lessThan(2),
+              reason: '$hct',
+            );
+          }
+        });
+
+        test('no red or pink outside the error roles', () {
+          final error = {
+            s.error,
+            s.onError,
+            s.errorContainer,
+            s.onErrorContainer,
+          };
+          for (final MapEntry(key: role, value: c) in p.roles.entries) {
+            if (error.contains(c)) continue;
+            final hct = Hct.fromInt(c.toARGB32());
+            final reddish = hct.hue < 40 || hct.hue > 330;
+            expect(reddish && hct.chroma > 12, isFalse, reason: '$role $hct');
+          }
+        });
+
+        test('text stays readable on tinted tiles and the summary', () {
+          final tints = {
+            if (p.tintedTiles)
+              for (final (name, k) in p.kinds)
+                'kind.$name.container': k.container,
+            'summary': ?p.summary,
+          };
+          for (final MapEntry(key: name, value: bg) in tints.entries) {
+            for (final (role, fg) in [
+              ('onSurface', s.onSurface),
+              ('onSurfaceVariant', s.onSurfaceVariant),
+            ]) {
+              expect(
+                _contrast(fg, bg),
+                greaterThanOrEqualTo(4.5),
+                reason: '$role on $name',
+              );
+            }
+          }
+          // A kind's icon on its own tile: 3:1 (non-text, WCAG 1.4.11).
+          if (p.tintedTiles) {
+            for (final (name, k) in p.kinds) {
+              expect(
+                _contrast(k.color, k.container),
+                greaterThanOrEqualTo(3),
+                reason: '$name icon on its tile',
+              );
+            }
+          }
+        });
       });
-    });
+    }
   }
 
   test('prints the role table', () {

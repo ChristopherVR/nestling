@@ -46,13 +46,33 @@ class _PumpPageState extends State<PumpPage> {
       builder: (context, _) {
         final recent = app.pumpEntries.toList()
           ..sort((a, b) => b.time.compareTo(a.time));
+        void logByHand() => showSheet(context, const PumpSheet());
+        // Like the other tabs: a FAB on phones, a top-bar button on desktop.
+        final desktop = Desktop.of(context);
         return Scaffold(
-          appBar: AppBar(title: const LText('Pumping')),
-          floatingActionButton: FloatingActionButton.extended(
-            icon: const Icon(Icons.edit_note_rounded),
-            label: const LText('Log by hand'),
-            onPressed: () => showSheet(context, const PumpSheet()),
+          appBar: AppBar(
+            title: const LText('Pumping'),
+            actions: [
+              if (desktop)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    end: Space.pageWide,
+                  ),
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.edit_note_rounded),
+                    label: const LText('Log by hand'),
+                    onPressed: logByHand,
+                  ),
+                ),
+            ],
           ),
+          floatingActionButton: desktop
+              ? null
+              : FloatingActionButton.extended(
+                  icon: const Icon(Icons.edit_note_rounded),
+                  label: const LText('Log by hand'),
+                  onPressed: logByHand,
+                ),
           body: PageWidth(
             maxWidth: 720,
             child: ListView(
@@ -452,11 +472,14 @@ class _Controls extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Space.lg),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-          icon: Icon(running ? Icons.pause_rounded : Icons.play_arrow_rounded),
-          label: LText(running ? 'Pause' : 'Start'),
-          onPressed: () => send((s) => running ? s.pause() : s.resume()),
+        SheetActions(
+          primary: FilledButton.icon(
+            icon: Icon(
+              running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            ),
+            label: LText(running ? 'Pause' : 'Start'),
+            onPressed: () => send((s) => running ? s.pause() : s.resume()),
+          ),
         ),
         for (final (p, s) in statuses)
           if (s.errorCode != 0)

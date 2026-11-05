@@ -176,12 +176,8 @@ class _SetupPageState extends State<SetupPage> {
                   Space.xl,
                   Space.lg,
                 ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
-                    ),
+                child: SheetActions(
+                  primary: FilledButton(
                     onPressed: () => _go(_step + 1),
                     child: LText(
                       maxLines: 2,
