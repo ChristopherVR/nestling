@@ -919,6 +919,8 @@ const afrikaans = <String, String>{
   'SLEEPING': 'SLAAP NOU',
   'Awake': 'Wakker',
   'NEXT PILL': 'VOLGENDE PIL',
+  'Next pill': 'Volgende pil',
+  'Next habit': 'Volgende gewoonte',
   'None': 'Geen',
   'Plan': 'Beplan',
   'Timer': 'Tydhouer',
@@ -1366,6 +1368,7 @@ const playWording = <String, String>{
   'Nothing logged yet today.\nTap Feed, Nappy or Pill above to start.':
       'Nothing logged yet today.\nTap Feed, Nappy or Habit above to start.',
   'NEXT PILL': 'NEXT HABIT',
+  'Next pill': 'Next habit',
   'Add pills': 'Add habits',
   'Pill doses': 'Habits done',
   'pill dose': 'habit done',

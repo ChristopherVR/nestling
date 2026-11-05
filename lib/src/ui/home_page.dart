@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> {
           _LastFeedCard(app: app),
           _LastNappyCard(app: app),
           _StatCard(
-            title: nap == null ? 'SLEEP' : 'SLEEPING',
+            title: nap == null ? 'Sleep' : 'Sleeping',
             value: nap == null ? 'Awake' : _agoShort(nap.time),
             detail: nap == null
                 ? 'Put down for a nap'
@@ -287,7 +287,7 @@ class _HomePageState extends State<HomePage> {
             onTap: () => _napTap(context, app),
           ),
           _StatCard(
-            title: 'NEXT PILL',
+            title: 'Next pill',
             value: next == null
                 ? 'None'
                 : next.$2.isBefore(now)
@@ -708,7 +708,9 @@ class _StatCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge?.copyWith(color: color),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
