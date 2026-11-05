@@ -1,6 +1,7 @@
 // Explicit opt-in: flutter test integration_test/local_camera_live_test.dart
 // -d windows --dart-define=NANIT_TEST_IP=<owned-camera-address>
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:baby_app/src/local_nanit.dart';
 import 'package:baby_app/src/nanit_integration.dart';
@@ -49,6 +50,9 @@ void main() {
                   lastPosition = position;
                   progressEvents++;
                 },
+                onDiagnostics: (values) => debugPrint(
+                  'CAMERA_TIMING ${jsonEncode({'elapsed_ms': elapsed.elapsedMilliseconds, ...values})}',
+                ),
                 onError: () => errors++,
               ),
             ),

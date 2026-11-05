@@ -354,3 +354,29 @@ sound-machine start or breathing action was used for these alert tests. No new
 WAN-block experiment was performed. Real-cry sensitivity/false positives, cry
 performance during sound playback, overnight Android power management and
 reboot/process-restart recovery remain unvalidated on hardware.
+
+## Recovering accumulated stream delay
+
+A three-second test-only transport stall reproduced an advancing but delayed
+stream on the local RTSP path. The previous watchdog only detected stopped
+playback, so the resumed stream could stay several seconds behind indefinitely.
+The player now compares playback progress against a monotonic clock after
+startup and requests a fresh connection if it gains more than 1.5 seconds of lag
+for three seconds. Brief jitter or a backlog that catches up does not reconnect.
+Audio/video synchronization is retained; this fixes accumulated delay rather
+than promising zero base latency.
+
+A PC-clock comparison measured roughly 0.8–0.9 seconds on the published Windows
+build and about 0.5–1.1 seconds on Android in short samples after reconnecting.
+Those measurements are not an overnight guarantee or a physical audio-delay
+measurement. The 45-second baseline runs passed on both platforms. The stall
+test fails when the new guard is disabled; with it enabled, it checks that a
+fresh player decodes again and does not enter a reconnect loop.
+
+```powershell
+flutter test integration_test/local_camera_lag_test.dart -d windows --dart-define=NANIT_TEST_IP=<owned-camera-ip>
+```
+
+Android hardware tests must continue using the isolated `cameraTest` flavor,
+prebuild/verify its actual package ID, and use `--no-uninstall`. Do not deploy
+integration tests over the owner's production app.
