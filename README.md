@@ -2,6 +2,14 @@
 
 # Nestling
 
+## Website
+
+User guide, install help and the privacy policy: **https://christophervr.github.io/nestling/**
+(privacy policy at [/privacy](https://christophervr.github.io/nestling/privacy)). The site lives in
+[`website/`](website) (VitePress); run it locally with `cd website && npm ci && npm run dev`.
+It includes `PRIVACY.md`, `DISCLAIMER.md` and `docs/local-camera.md` directly, so edit those files
+rather than copies. Pushes to `main` that touch them deploy via `.github/workflows/pages.yml`.
+
 **Use at your own risk.** All features are provided as is, without warranties or
 responsibility for use to the extent permitted by law. Read the full
 [disclaimer and responsibility notice](DISCLAIMER.md), also available in Settings.
