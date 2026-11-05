@@ -33,12 +33,14 @@ import 'src/ui/setup_page.dart';
 import 'src/ui/theme.dart';
 
 /// Desktop testing flags:
-///   --profile=b                 separate data file (or BABYLOG_PROFILE=b), to run a second "device"
+///   --profile=b                 separate data file (or NESTLING_PROFILE=b), to run a second "device"
 ///   --pair=host:port:code       pair with another running copy on start
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting();
-  var profile = Platform.environment['BABYLOG_PROFILE'] ?? '';
+  final env = Platform.environment;
+  // BABYLOG_PROFILE is the pre-rename name, still honoured for old scripts.
+  var profile = env['NESTLING_PROFILE'] ?? env['BABYLOG_PROFILE'] ?? '';
   String? pair;
   for (final a in args) {
     if (a.startsWith('--profile=')) profile = a.substring('--profile='.length);

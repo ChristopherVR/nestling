@@ -101,7 +101,7 @@ class Reminders {
   bool _ready = false;
   Future<void> _queue = Future.value();
 
-  static const _timerChannel = MethodChannel('babylog/feeding_timer');
+  static const _timerChannel = MethodChannel('nestling/feeding_timer');
   final timerProblem = ValueNotifier<String?>(null);
   String? _timerPlan;
   Future<void> _timerQueue = Future.value();
@@ -292,6 +292,8 @@ class Reminders {
     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     windows: WindowsInitializationSettings(
       appName: 'Nestling',
+      // Pre-rename id kept on purpose: changing it would give Windows a new
+      // notification identity and drop the user's notification settings.
       appUserModelId: 'BabyApp.BabyLog',
       guid: '6f1d6c39-2a3e-4d7b-9b8e-3c2f4a5e7d10',
     ),
