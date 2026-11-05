@@ -1,0 +1,34 @@
+---
+title: Nestling
+description: A free baby log for Android and Windows. Track feeds, nappies, sleep and growth, and share the log with your partner over your home Wi-Fi.
+---
+
+<p class="lede">A free baby log for Android and Windows that tracks feeds, nappies, sleep and growth, and shares them with your partner over your home Wi‑Fi. No account, no ads, and your log stays on your own devices.</p>
+
+<div class="buttons">
+<a class="button" href="https://github.com/ChristopherVR/nestling/releases/latest">Download for Android (APK)</a>
+<a class="button" href="https://github.com/ChristopherVR/nestling/releases/latest">Download for Windows (ZIP)</a>
+</div>
+
+<p class="muted">Both are on the latest GitHub release. On Windows, extract the whole ZIP before you run it. <a href="{{root}}get-started/">Install and setup steps</a></p>
+
+<div class="shots" markdown="1">
+
+![Today screen: last feed 2 hours ago, last nappy, sleep, and buttons for Feed, Nappy, Sleep and Habit]({{root}}images/today.webp){ width="600" height="1081" }
+
+</div>
+
+## Guides { #guides }
+
+<ul class="guide-list">
+<li><a href="{{root}}get-started/">Get started</a><span>Install on Android or Windows, and the first-time setup.</span></li>
+<li><a href="{{root}}guides/logging/">Logging</a><span>Feeds with a timer, nappies and sleep.</span></li>
+<li><a href="{{root}}guides/habits/">Habits &amp; reminders</a><span>Your own habits, and reminders that arrive on time.</span></li>
+<li><a href="{{root}}guides/routines/">Routines</a><span>Bath time, bedtime and anything you do each week.</span></li>
+<li><a href="{{root}}guides/growth/">Growth</a><span>Weight, height, photos and memories.</span></li>
+<li><a href="{{root}}guides/history/">History &amp; charts</a><span>Find, fix and chart what you logged.</span></li>
+<li><a href="{{root}}guides/sharing/">Sharing with a partner</a><span>One log on every phone and PC, over Wi‑Fi or QR codes.</span></li>
+<li><a href="{{root}}guides/pump/">Momcozy pump</a><span>Control a Momcozy pump on Android and save each session.</span></li>
+<li><a href="{{root}}guides/camera/">Nanit camera</a><span>Watch and listen at home, without a Nanit account.</span></li>
+<li><a href="{{root}}guides/backups/">Backups</a><span>Keep a copy of your log and stay up to date.</span></li>
+</ul>

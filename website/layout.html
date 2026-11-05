@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F8F9FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1113" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="{{root}}favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="{{root}}apple-touch-icon.png">
+<link rel="stylesheet" href="{{root}}style.css">
+<script src="{{root}}site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="bar">
+  <div class="bar-inner">
+    <a class="brand" href="{{root}}">Nestling</a>
+    <nav class="top" aria-label="Site">
+      <a href="{{root}}get-started/" data-section="get-started">Get started</a>
+      <a href="{{root}}#guides" data-section="guides">Guides</a>
+      <a href="{{root}}privacy/" data-section="privacy">Privacy</a>
+      <a href="https://github.com/ChristopherVR/nestling">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main id="content" class="wrap">
+{{main}}
+</main>
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p>Nestling is free and open source. It is not a medical device.</p>
+    <p><a href="{{root}}privacy/">Privacy</a> · <a href="{{root}}disclaimer/">Disclaimer</a> · <a href="https://github.com/ChristopherVR/nestling">GitHub</a></p>
+  </div>
+</footer>
+</body>
+</html>

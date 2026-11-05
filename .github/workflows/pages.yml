@@ -16,7 +16,7 @@ permissions:
   pages: write
   id-token: write
 
-# One deployment at a time; a newer push replaces a queued one.
+# One deployment at a time; a newer push waits for the running one.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -24,26 +24,23 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: website/package-lock.json
+          python-version: '3.12'
 
       - uses: actions/configure-pages@v5
 
-      - run: npm ci
-      - run: npm run build
+      # Renders website/pages, PRIVACY.md, DISCLAIMER.md and
+      # docs/local-camera.md into website/_site.
+      - run: pip install -r website/requirements.txt
+      - run: python website/build.py
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: website/.vitepress/dist
+          path: website/_site
 
   deploy:
     needs: build

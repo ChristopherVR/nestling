@@ -5,10 +5,22 @@
 ## Website
 
 User guide, install help and the privacy policy: **https://christophervr.github.io/nestling/**
-(privacy policy at [/privacy](https://christophervr.github.io/nestling/privacy)). The site lives in
-[`website/`](website) (VitePress); run it locally with `cd website && npm ci && npm run dev`.
-It includes `PRIVACY.md`, `DISCLAIMER.md` and `docs/local-camera.md` directly, so edit those files
-rather than copies. Pushes to `main` that touch them deploy via `.github/workflows/pages.yml`.
+(privacy policy at [/privacy](https://christophervr.github.io/nestling/privacy)). The site in
+[`website/`](website) is plain HTML and CSS with no framework: `website/build.py` renders the
+Markdown pages in `website/pages/` into `layout.html`, and renders `PRIVACY.md`, `DISCLAIMER.md`
+and `docs/local-camera.md` directly, so edit those files rather than copies. Build and view it:
+
+```powershell
+pip install -r website/requirements.txt
+python website/build.py
+python -m http.server -d website/_site
+```
+
+Pushes to `main` that touch `website/`, `docs/`, `PRIVACY.md` or `DISCLAIMER.md` deploy via
+`.github/workflows/pages.yml`. The screenshots in `website/images` come from the app's preview
+renderer: run `python tool/website_screenshots.py fonts`, then
+`flutter test --run-skipped --tags preview test/ui_preview_test.dart --plain-name website`, then
+`python tool/website_screenshots.py`.
 
 **Use at your own risk.** All features are provided as is, without warranties or
 responsibility for use to the extent permitted by law. Read the full

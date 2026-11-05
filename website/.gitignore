@@ -1,5 +1,4 @@
-node_modules/
-.vitepress/cache/
-.vitepress/dist/
+# Built site (python website/build.py).
+_site/
+# Review screenshots of the built site.
 .screenshots/
-guides/images/

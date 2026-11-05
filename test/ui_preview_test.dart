@@ -308,7 +308,8 @@ void main() {
     debugDisableShadows = true;
   });
 
-  // The phone screenshots on the website (site/images), at 600 x 1081.
+  // The phone screenshots on the website (website/images),
+  // at 600 x 1081.
   // Render all three cases with `--plain-name website`, then convert them to
   // webp with tool/website_screenshots.py.
   Future<void> websiteView(WidgetTester tester, DateTime now) async {
