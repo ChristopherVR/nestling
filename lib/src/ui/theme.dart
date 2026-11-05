@@ -259,7 +259,7 @@ class NestPalette extends ThemeExtension<NestPalette> {
   final bool sunnyButtons;
 
   /// The palette that ships. Change this to adopt a candidate.
-  static const shipped = NestVariant.current;
+  static const shipped = NestVariant.sky;
 
   /// Preview-only override of [shipped].
   @visibleForTesting

@@ -2,15 +2,15 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #F8F9FA;
+  --bg: #FCF7F3;
   --surface: #FFFFFF;
-  --sunken: #EEF0F2;
+  --sunken: #F1ECE8;
   --text: #1A1D21;
   --muted: #5F6670;
   --line: #D0D5DA;
   --line-soft: #E3E6E9;
-  --accent: #2F6F73;
-  --accent-soft: #E1EEEE;
+  --accent: #256293;
+  --accent-soft: #E4F1E7;
   --on-accent: #FFFFFF;
   --radius: 10px;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -19,16 +19,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0F1113;
-    --surface: #16191C;
+    --bg: #141618;
+    --surface: #1B1D20;
     --sunken: #1C2024;
     --text: #E8EAED;
     --muted: #9EA5AD;
     --line: #30363C;
     --line-soft: #23282D;
-    --accent: #8CC5C7;
-    --accent-soft: #1A2B2C;
-    --on-accent: #0F1113;
+    --accent: #99CBFF;
+    --accent-soft: #1F2220;
+    --on-accent: #003256;
   }
 }
 

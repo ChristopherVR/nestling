@@ -10,12 +10,14 @@ shadow of its own.
 
 1. **Data first, decoration last.** Show the number ("Last feed 27m ago ·
    Left") as text. Don't wrap it in a decorated card, gradient or badge.
-2. **Neutral first.** Screens read as grey and white. Hierarchy comes from
-   type, spacing and tonal surfaces, not from colour.
-3. **One accent.** The slate-teal accent appears only on primary actions and
-   selected states. Red is reserved for errors.
-4. **Kinds are accents, not areas.** Feed, sleep, nappy and habit colours tint
-   an icon, a chart series or a thin indicator, and nothing larger.
+2. **Light and calm.** Screens read as warm off-white with a little colour.
+   Hierarchy comes from type, spacing and tonal surfaces first.
+3. **Sky and mint.** The shipped palette is Sky: a soft sky-blue accent for
+   primary actions, mint for selection and the Today summary. Red is reserved
+   for errors; no pink.
+4. **Kinds are small, gentle colour.** Feed, sleep, nappy and habit colours
+   tint icons, chart series and, at very low chroma, the quick-log tiles.
+   They never fill a whole screen.
 5. **Plain Material.** Use Google's own patterns (Fit, Clock, Settings):
    ListTiles grouped in cards, section headers, dividers only where they
    help. Avoid the "generated" look: no icon-in-a-tinted-circle on every
@@ -34,6 +36,10 @@ to explicit values; containers and kind colours come from HCT tonal palettes
 (`material_color_utilities`), so contrast is set by tone, not by eye.
 
 ### Roles
+
+> These tables list the Slate palette that shipped first. Sky now ships; its
+> key values are under [Palette candidates](#palette-candidates), and every
+> role is derived at the same tones, so the contrast figures hold for Sky too.
 
 | Role | Light | Night light | Dark | Use |
 |---|---|---|---|---|
@@ -216,8 +222,8 @@ component themes rather than per screen:
 
 ## Palette candidates
 
-`NestPalette` can be built in several variants (`NestVariant`): the shipped
-`current` (Slate) and three candidates under review, each described by a
+`NestPalette` can be built in several variants (`NestVariant`). **Sky ships** (chosen by the owner on
+5 November 2026); `current` (Slate), Tide and Marigold remain as alternatives, each described by a
 `_Spec` (HCT hues and chromas, plus where it allows a little colour: tinted
 quick-log tiles, a tinted Today summary, or sunny filled buttons). Every
 candidate passes `test/design_tokens_test.dart`. `NestPalette.shipped`
