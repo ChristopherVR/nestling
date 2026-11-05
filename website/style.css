@@ -491,27 +491,6 @@ main.wrap {
 }
 
 /* Home */
-.guide-list {
-  list-style: none;
-  padding: 0 !important;
-}
-
-.guide-list li {
-  margin: 0 !important;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.guide-list a {
-  font-weight: 600;
-}
-
-.guide-list span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
 /* Footer */
 .foot {
   border-top: 1px solid var(--line);

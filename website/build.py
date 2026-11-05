@@ -77,7 +77,7 @@ def guide_nav(current: str, root: str) -> str:
         f'<li><a href="{root}{path}/"'
         + (' aria-current="page"' if path == current else '')
         + f'>{html.escape(label)}</a></li>'
-        for path, label in GUIDES
+        for path, label in [('get-started', 'Get started'), *GUIDES]
     )
     return f'<ul>{items}</ul>'
 
@@ -125,11 +125,14 @@ def render(path: str, layout: str) -> str:
         + (pager(path, root) if guide else '')
         + '</article>'
     )
-    if guide:
+    # Guides and the home page share the guide list: a sidebar on wide
+    # screens, a menu at the top on phones.
+    if guide or path == '':
+        summary = f'Guides: {html.escape(title)}' if guide else 'Guides'
         main = (
             '<div class="with-side">'
-            f'<nav class="side" aria-label="Guides"><p class="side-title">Guides</p>{guide_nav(path, root)}</nav>'
-            f'<details class="guide-menu"><summary>Guides: {html.escape(title)}</summary>{guide_nav(path, root)}</details>'
+            f'<nav class="side" id="guides" aria-label="Guides"><p class="side-title">Guides</p>{guide_nav(path, root)}</nav>'
+            f'<details class="guide-menu"><summary>{summary}</summary>{guide_nav(path, root)}</details>'
             f'{article}</div>'
         )
     else:
