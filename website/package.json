@@ -4,7 +4,9 @@
   "type": "module",
   "description": "Public website and user guide for Nestling.",
   "scripts": {
+    "predev": "node scripts/sync-doc-images.mjs",
     "dev": "vitepress dev",
+    "prebuild": "node scripts/sync-doc-images.mjs",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },
