@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show SocketException;
 
 import 'package:flutter/foundation.dart';
 import 'package:nanit_camera/nanit_camera.dart';
@@ -32,6 +33,27 @@ class SavedLocalCamera {
 
 enum LocalCameraState { idle, connecting, ready, retrying }
 
+/// Why [LocalNanitHub.problem] is set, so the UI can offer a specific fix.
+enum LocalCameraFault {
+  /// No answer at the saved address, and discovery did not find it elsewhere.
+  unreachable,
+
+  /// Another camera answered at the saved address.
+  differentCamera,
+
+  /// The address answered, but not as a supported Nanit camera.
+  notACamera,
+
+  /// The camera answered but its video/audio source did not start.
+  videoDidNotStart,
+
+  /// Video was playing, then stopped.
+  videoInterrupted,
+  roomReadings,
+  nightLight,
+  savedDetails,
+}
+
 /// Local mode has no Nanit account dependency. Only device identity and its
 /// last LAN address are saved, never a Wi-Fi password or streaming token.
 class LocalNanitHub extends ChangeNotifier {
@@ -63,6 +85,9 @@ class LocalNanitHub extends ChangeNotifier {
   bool changingSound = false;
   LocalCameraState state = LocalCameraState.idle;
   String? problem;
+
+  /// The kind of [problem]; null when [problem] is null.
+  LocalCameraFault? fault;
   String? get streamUrl => _bridge?.url;
   NanitOfflineCamera? _camera;
   NanitOfflineBridge? _bridge;
@@ -82,6 +107,7 @@ class LocalNanitHub extends ChangeNotifier {
     } catch (_) {
       problem =
           'Saved camera details could not be loaded. Add the camera again.';
+      fault = LocalCameraFault.savedDetails;
     }
     await alerts.load();
   }
@@ -103,6 +129,7 @@ class LocalNanitHub extends ChangeNotifier {
       saved = next;
       await alerts.restart();
       problem = null;
+      fault = null;
       _notify();
     } finally {
       camera.close();
@@ -128,6 +155,7 @@ class LocalNanitHub extends ChangeNotifier {
     if (!current()) return;
     state = LocalCameraState.connecting;
     problem = null;
+    fault = null;
     _notify();
     final savedCamera = saved!;
     var address = savedCamera.address;
@@ -180,6 +208,16 @@ class LocalNanitHub extends ChangeNotifier {
       if (current()) {
         await _failed(
           e is FormatException ? e.message : 'Camera unreachable. Keep this device on the same home network.',
+          fault: switch (e) {
+            FormatException(:final message)
+                when message.contains('different camera') =>
+              LocalCameraFault.differentCamera,
+            FormatException() => LocalCameraFault.notACamera,
+            SocketException(:final message)
+                when message.contains('did not start video') =>
+              LocalCameraFault.videoDidNotStart,
+            _ => LocalCameraFault.unreachable,
+          },
         );
       }
     } finally {
@@ -198,11 +236,13 @@ class LocalNanitHub extends ChangeNotifier {
       if (generation != _generation || !_watching) return;
       readings = value;
       problem = null;
+      fault = null;
     } catch (_) {
       if (generation != _generation || !_watching) return;
       readings = null;
       problem =
           'Room readings unavailable. Video can continue; readings will retry.';
+      fault = LocalCameraFault.roomReadings;
     }
     _notify();
     if (generation == _generation && _watching) _scheduleRead(generation);
@@ -210,7 +250,10 @@ class LocalNanitHub extends ChangeNotifier {
 
   Future<void> streamFailed() async {
     if (_watching && state == LocalCameraState.ready) {
-      await _failed('Video connection interrupted. Reconnecting…');
+      await _failed(
+        'Video connection interrupted. Reconnecting…',
+        fault: LocalCameraFault.videoInterrupted,
+      );
     }
   }
 
@@ -276,11 +319,15 @@ class LocalNanitHub extends ChangeNotifier {
     }
   }
 
-  Future<void> _failed(String message) async {
+  Future<void> _failed(
+    String message, {
+    LocalCameraFault fault = LocalCameraFault.unreachable,
+  }) async {
     await _close();
     if (!_watching || _disposed) return;
     state = LocalCameraState.retrying;
     problem = message;
+    this.fault = fault;
     _notify();
     _retry = Timer(const Duration(seconds: 8), reconnect);
   }
@@ -297,10 +344,12 @@ class LocalNanitHub extends ChangeNotifier {
       if (generation == _generation) {
         readings = value;
         problem = null;
+        fault = null;
       }
     } catch (_) {
       if (generation == _generation) {
         problem = 'Could not change the night light. Try again.';
+        fault = LocalCameraFault.nightLight;
       }
     } finally {
       changingLight = false;
@@ -314,6 +363,7 @@ class LocalNanitHub extends ChangeNotifier {
     if (_disposed) return;
     state = LocalCameraState.idle;
     problem = null;
+    fault = null;
     _notify();
   }
 

@@ -4,11 +4,32 @@ import 'package:flutter/foundation.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 import 'package:universal_ble/universal_ble.dart';
 
+/// Why [NanitWifiSetup.problem] is set, so the UI can offer a specific fix.
+enum WifiSetupFault {
+  bluetoothOff,
+
+  /// Permission denied, no adapter, or the platform refused to scan.
+  bluetoothUnavailable,
+  noCameraFound,
+
+  /// The selected device has no Nanit Wi-Fi setup service.
+  notNanit,
+
+  /// The camera answered but did not accept the Wi-Fi details.
+  rejected,
+
+  /// Timed out or disconnected part-way.
+  interrupted,
+}
+
 /// Platform adapter for the independently tested Nanit BLE flow.
 class NanitWifiSetup extends ChangeNotifier {
   final Map<String, BleDevice> devices = {};
   bool scanning = false, busy = false, joined = false;
   String? problem;
+
+  /// The kind of [problem]; null when [problem] is null.
+  WifiSetupFault? fault;
   StreamSubscription<BleDevice>? _scan;
   Timer? _scanTimer;
   String? _connected;
@@ -18,6 +39,7 @@ class NanitWifiSetup extends ChangeNotifier {
   Future<void> scan() async {
     if (scanning || busy) return;
     problem = null;
+    fault = null;
     devices.clear();
     scanning = true;
     _notify();
@@ -38,6 +60,7 @@ class NanitWifiSetup extends ChangeNotifier {
         },
         onError: (_) {
           problem = 'Bluetooth scan failed. Check Bluetooth and Nearby devices permissions.';
+          fault = WifiSetupFault.bluetoothUnavailable;
           unawaited(stopScan());
         },
       );
@@ -50,11 +73,15 @@ class NanitWifiSetup extends ChangeNotifier {
         await stopScan();
         if (devices.isEmpty) {
           problem = 'No camera found. Check its flashing pairing light, keep it nearby and close the Nanit app.';
+          fault = WifiSetupFault.noCameraFound;
           _notify();
         }
       });
     } catch (e) {
       problem = e is FormatException ? e.message : 'Bluetooth is unavailable. Check Nearby devices permissions and try again.';
+      fault = e is FormatException
+          ? WifiSetupFault.bluetoothOff
+          : WifiSetupFault.bluetoothUnavailable;
       await stopScan();
     }
   }
@@ -86,6 +113,7 @@ class NanitWifiSetup extends ChangeNotifier {
     busy = true;
     joined = false;
     problem = null;
+    fault = null;
     _notify();
     final queue = StreamController<(String, Uint8List)>();
     final events = StreamIterator(queue.stream);
@@ -178,7 +206,17 @@ class NanitWifiSetup extends ChangeNotifier {
       }
       joined = true;
     } catch (e) {
-      if (current()) problem = e is FormatException ? e.message : 'Wi-Fi setup was interrupted. Enable pairing mode again and retry.';
+      if (current()) {
+        problem = e is FormatException ? e.message : 'Wi-Fi setup was interrupted. Enable pairing mode again and retry.';
+        fault = switch (e) {
+          FormatException(:final message) when message.contains('status') =>
+            WifiSetupFault.rejected,
+          FormatException(:final message)
+              when message.contains('does not offer') =>
+            WifiSetupFault.notNanit,
+          _ => WifiSetupFault.interrupted,
+        };
+      }
     } finally {
       flow?.clear();
       payload.fillRange(0, payload.length, 0);
