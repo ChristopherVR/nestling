@@ -446,7 +446,6 @@ class _ShellState extends State<Shell> {
     Widget pages,
   ) => Scaffold(
     appBar: AppBar(
-      toolbarHeight: 68,
       // The Today hero already names the baby; the bar just says where you are.
       title: LText(
         [
