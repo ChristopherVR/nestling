@@ -69,4 +69,4 @@ your hub stays on those devices until it is deleted there or the app is uninstal
 ## Changes and contact
 
 If this policy changes, the updated version will be published at this address. Questions:
-open an issue at https://github.com/ChristopherVR/baby-log/issues.
+open an issue at https://github.com/ChristopherVR/nestling/issues.
