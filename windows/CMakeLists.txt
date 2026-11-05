@@ -1,9 +1,14 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(baby_app LANGUAGES CXX)
+project(nestling LANGUAGES CXX)
 
-# The name of the executable created for the application. Change this to change
-# the on-disk name of your application.
+# The name of the executable created for the application. It stays baby_app
+# after the rename to Nestling on purpose: Windows users update by unzipping
+# a release over their old folder, so a new name would leave the old
+# baby_app.exe behind for their shortcuts, pins and startup entries to keep
+# launching, and the Windows Firewall rule that lets family-hub sync through
+# is tied to this path. The window title, ProductName and data folder already
+# say Nestling.
 set(BINARY_NAME "baby_app")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent

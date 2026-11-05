@@ -1,6 +1,6 @@
-import 'package:baby_app/src/background.dart';
-import 'package:baby_app/src/distribution.dart';
-import 'package:baby_app/src/ui/settings_page.dart';
+import 'package:nestling/src/background.dart';
+import 'package:nestling/src/distribution.dart';
+import 'package:nestling/src/ui/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

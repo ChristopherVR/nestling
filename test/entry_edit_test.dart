@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/common.dart';
-import 'package:baby_app/src/ui/sheets.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/common.dart';
+import 'package:nestling/src/ui/sheets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

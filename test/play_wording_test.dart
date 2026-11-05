@@ -1,5 +1,5 @@
-import 'package:baby_app/src/distribution.dart';
-import 'package:baby_app/src/localization.dart';
+import 'package:nestling/src/distribution.dart';
+import 'package:nestling/src/localization.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

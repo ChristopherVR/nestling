@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:baby_app/src/ui/theme.dart';
+import 'package:nestling/src/ui/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';

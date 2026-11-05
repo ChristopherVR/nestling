@@ -75,7 +75,9 @@ commands and remaining hardware checks.
 Download `Nestling-<version>-windows-x64.zip` from
 [Releases](https://github.com/ChristopherVR/nestling/releases), extract the entire ZIP,
 and run `baby_app.exe`. (Releases also carry `BabyLog-*` copies of the APK and ZIP, the names
-used before the rename, so older installs keep finding their updates.) Keep the DLLs and `data` folder together with the executable.
+used before the rename, so older installs keep finding their updates. The executable keeps
+its old name too, so unzipping over an older copy replaces it and existing shortcuts and
+firewall permissions keep working.) Keep the DLLs and `data` folder together with the executable.
 The ZIP includes the Visual C++ runtime; Flutter, Visual Studio and Developer Mode are
 not required to run it.
 

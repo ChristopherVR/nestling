@@ -1,4 +1,4 @@
-import 'package:baby_app/src/notifications.dart';
+import 'package:nestling/src/notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

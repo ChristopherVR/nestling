@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:baby_app/main.dart';
-import 'package:baby_app/src/growth.dart';
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/qr_transfer.dart';
-import 'package:baby_app/src/routines.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/growth_page.dart';
-import 'package:baby_app/src/ui/home_page.dart';
+import 'package:nestling/main.dart';
+import 'package:nestling/src/growth.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/qr_transfer.dart';
+import 'package:nestling/src/routines.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/growth_page.dart';
+import 'package:nestling/src/ui/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

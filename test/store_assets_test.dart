@@ -14,20 +14,20 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:baby_app/main.dart';
-import 'package:baby_app/src/distribution.dart';
-import 'package:baby_app/src/growth.dart';
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/hub_page.dart';
-import 'package:baby_app/src/ui/theme.dart';
+import 'package:nestling/main.dart';
+import 'package:nestling/src/distribution.dart';
+import 'package:nestling/src/growth.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/hub_page.dart';
+import 'package:nestling/src/ui/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:baby_app/src/ui/nestling_mark.dart';
+import 'package:nestling/src/ui/nestling_mark.dart';
 
 final _root = Directory.current.path;
 String _p(String rel) => '$_root/$rel';

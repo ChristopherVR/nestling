@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:baby_app/src/local_nanit.dart';
-import 'package:baby_app/src/localization.dart';
-import 'package:baby_app/src/nanit_wifi_setup.dart';
-import 'package:baby_app/src/ui/camera/camera_help.dart';
-import 'package:baby_app/src/ui/camera/camera_help_content.dart';
-import 'package:baby_app/src/ui/camera/camera_issues.dart';
-import 'package:baby_app/src/ui/camera/camera_live_tips.dart';
-import 'package:baby_app/src/ui/camera/camera_setup_wizard.dart';
-import 'package:baby_app/src/ui/local_camera_page.dart';
+import 'package:nestling/src/local_nanit.dart';
+import 'package:nestling/src/localization.dart';
+import 'package:nestling/src/nanit_wifi_setup.dart';
+import 'package:nestling/src/ui/camera/camera_help.dart';
+import 'package:nestling/src/ui/camera/camera_help_content.dart';
+import 'package:nestling/src/ui/camera/camera_issues.dart';
+import 'package:nestling/src/ui/camera/camera_live_tips.dart';
+import 'package:nestling/src/ui/camera/camera_setup_wizard.dart';
+import 'package:nestling/src/ui/local_camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';

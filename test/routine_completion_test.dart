@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:baby_app/src/qr_transfer.dart';
-import 'package:baby_app/src/routines.dart';
-import 'package:baby_app/src/store.dart';
+import 'package:nestling/src/qr_transfer.dart';
+import 'package:nestling/src/routines.dart';
+import 'package:nestling/src/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

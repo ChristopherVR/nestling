@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/sync.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/sync.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

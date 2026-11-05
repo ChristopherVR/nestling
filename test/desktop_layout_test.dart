@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:baby_app/main.dart';
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/common.dart';
-import 'package:baby_app/src/ui/desktop/desktop_shell.dart';
-import 'package:baby_app/src/ui/global_search.dart';
-import 'package:baby_app/src/ui/home_page.dart';
-import 'package:baby_app/src/ui/settings_page.dart';
-import 'package:baby_app/src/ui/theme.dart';
+import 'package:nestling/main.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/common.dart';
+import 'package:nestling/src/ui/desktop/desktop_shell.dart';
+import 'package:nestling/src/ui/global_search.dart';
+import 'package:nestling/src/ui/home_page.dart';
+import 'package:nestling/src/ui/settings_page.dart';
+import 'package:nestling/src/ui/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

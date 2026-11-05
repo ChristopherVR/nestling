@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/changelog_dialog.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/changelog_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

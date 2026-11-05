@@ -11,12 +11,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show ImageByteFormat;
 
-import 'package:baby_app/src/local_nanit.dart';
-import 'package:baby_app/src/nanit_wifi_setup.dart';
-import 'package:baby_app/src/ui/camera/camera_help.dart';
-import 'package:baby_app/src/ui/camera/camera_setup_wizard.dart';
-import 'package:baby_app/src/ui/local_camera_page.dart';
-import 'package:baby_app/src/ui/theme.dart';
+import 'package:nestling/src/local_nanit.dart';
+import 'package:nestling/src/nanit_wifi_setup.dart';
+import 'package:nestling/src/ui/camera/camera_help.dart';
+import 'package:nestling/src/ui/camera/camera_setup_wizard.dart';
+import 'package:nestling/src/ui/local_camera_page.dart';
+import 'package:nestling/src/ui/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';

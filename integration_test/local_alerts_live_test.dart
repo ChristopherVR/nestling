@@ -2,12 +2,12 @@
 // separately labelled synthetic cry-policy fixture; does not simulate a baby.
 import 'dart:io';
 
-import 'package:baby_app/src/background.dart';
-import 'package:baby_app/src/local_camera_alerts.dart';
-import 'package:baby_app/src/local_nanit.dart';
-import 'package:baby_app/src/nanit_integration.dart';
-import 'package:baby_app/src/notifications.dart';
-import 'package:baby_app/src/ui/local_camera_page.dart';
+import 'package:nestling/src/background.dart';
+import 'package:nestling/src/local_camera_alerts.dart';
+import 'package:nestling/src/local_nanit.dart';
+import 'package:nestling/src/nanit_integration.dart';
+import 'package:nestling/src/notifications.dart';
+import 'package:nestling/src/ui/local_camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

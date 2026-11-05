@@ -1,4 +1,4 @@
-import 'package:baby_app/src/momcozy.dart';
+import 'package:nestling/src/momcozy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

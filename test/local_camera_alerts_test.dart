@@ -1,6 +1,6 @@
-import 'package:baby_app/src/local_camera_alerts.dart';
-import 'package:baby_app/src/local_nanit.dart';
-import 'package:baby_app/src/ui/local_camera_page.dart';
+import 'package:nestling/src/local_camera_alerts.dart';
+import 'package:nestling/src/local_nanit.dart';
+import 'package:nestling/src/ui/local_camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanit_camera/nanit_camera.dart';

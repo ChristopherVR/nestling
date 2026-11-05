@@ -1,4 +1,4 @@
-import 'package:baby_app/src/updates.dart';
+import 'package:nestling/src/updates.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, dynamic> asset(String name, String version, {int size = 1234}) => {

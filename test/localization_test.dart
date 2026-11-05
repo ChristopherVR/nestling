@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:baby_app/main.dart';
-import 'package:baby_app/src/localization.dart';
-import 'package:baby_app/src/notifications.dart';
-import 'package:baby_app/src/store.dart';
-import 'package:baby_app/src/ui/language_picker.dart';
+import 'package:nestling/main.dart';
+import 'package:nestling/src/localization.dart';
+import 'package:nestling/src/notifications.dart';
+import 'package:nestling/src/store.dart';
+import 'package:nestling/src/ui/language_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

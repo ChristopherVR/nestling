@@ -1,7 +1,7 @@
-import 'package:baby_app/src/history_stats.dart';
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/momcozy.dart';
-import 'package:baby_app/src/pump_tracking.dart';
+import 'package:nestling/src/history_stats.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/momcozy.dart';
+import 'package:nestling/src/pump_tracking.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _t0 = DateTime.utc(2026, 10, 31, 4);

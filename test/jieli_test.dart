@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:baby_app/src/jieli.dart';
-import 'package:baby_app/src/pump_session.dart';
+import 'package:nestling/src/jieli.dart';
+import 'package:nestling/src/pump_session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<int> hex(String s) => [

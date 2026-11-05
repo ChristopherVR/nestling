@@ -3,9 +3,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:baby_app/src/local_nanit.dart';
-import 'package:baby_app/src/nanit_integration.dart';
-import 'package:baby_app/src/ui/camera_page.dart';
+import 'package:nestling/src/local_nanit.dart';
+import 'package:nestling/src/nanit_integration.dart';
+import 'package:nestling/src/ui/camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:baby_app/main.dart';
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
+import 'package:nestling/main.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';

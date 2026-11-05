@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:baby_app/src/models.dart';
-import 'package:baby_app/src/store.dart';
+import 'package:nestling/src/models.dart';
+import 'package:nestling/src/store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<AppState> _device(String name, List<Directory> dirs) async {

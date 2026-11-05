@@ -1,5 +1,5 @@
-import 'package:baby_app/src/ui/update_card.dart';
-import 'package:baby_app/src/updates.dart';
+import 'package:nestling/src/ui/update_card.dart';
+import 'package:nestling/src/updates.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:baby_app/src/localization.dart';
-import 'package:baby_app/src/nanit_integration.dart';
-import 'package:baby_app/src/ui/camera_page.dart';
+import 'package:nestling/src/localization.dart';
+import 'package:nestling/src/nanit_integration.dart';
+import 'package:nestling/src/ui/camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanit_camera/nanit_camera.dart';
