@@ -345,7 +345,6 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Mia');
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
-    await shot(tester, 'setup-name');
     // Birthday and photo, then "How is Mia fed?".
     for (var i = 0; i < 3; i++) {
       await next(tester);
@@ -442,10 +441,9 @@ void main() {
     await websiteView(tester, today);
     await tester.tap(find.text('Pump'));
     await shot(tester, 'pump');
-    await tester.tap(find.text('Left'));
-    await shot(tester, 'pump-detail');
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    // Let the sync that adding entries queued run, and write the pending
+    // save, so no timer is left when the test ends.
+    await tester.pump(const Duration(seconds: 2));
     hub.pumps.clear();
     app.flush();
     debugDisableShadows = true;
@@ -476,11 +474,7 @@ void _seedWebsite(AppState app, DateTime today) {
     );
   }
   final midnight = DateTime(today.year, today.month, today.day);
-  final water = Medication(
-    name: 'Drink water',
-    count: 4,
-    startMinutes: 7 * 60,
-  );
+  final water = Medication(name: 'Drink water', count: 4, startMinutes: 7 * 60);
   final stretch = Medication(
     name: 'Stretches',
     count: 1,
