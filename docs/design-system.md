@@ -229,6 +229,26 @@ quick-log tiles, a tinted Today summary, or sunny filled buttons). Every
 candidate passes `test/design_tokens_test.dart`. `NestPalette.shipped`
 chooses the palette; `NestPalette.debugVariant` overrides it in previews.
 
+**Blush also switches on the soft style** (`NestPalette.soft`), which brings
+back the earlier rose design's look as well as its colours:
+- a peach-to-blush gradient hero on Today with frosted tiles for the last
+  nappy and sleep
+- one card of round pastel quick-log buttons with bright icons
+  (`KindColors.vivid`)
+- cards that float on a warm shadow instead of an outline
+- pastel tiles behind list and sheet icons
+- each log sheet's buttons in its own colour
+- the Figtree typeface, set a little bolder
+
+Its motion is livelier too (`playful()` in `motion_kit.dart`):
+- buttons squash and spring back
+- sections and buttons pop in with a slight overshoot
+- pages and tabs grow in
+- a new entry arrives with a wash of its colour
+- the hero gives a small bounce when a feed is logged
+
+Sky keeps the plain style.
+
 **Blush** is the one palette people can pick themselves (Settings → Theme →
 Colours, stored per device as `palette`). It brings back the earlier rose
 theme, close to the Momcozy pump app, rebuilt on the same tones, so it passes

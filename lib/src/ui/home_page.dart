@@ -76,6 +76,7 @@ class _HomePageState extends State<HomePage> {
     final today = app.entriesOn(DateTime.now());
 
     final nap = app.activeSleep;
+    final soft = context.nest.soft;
     final quick = <Widget>[
       _Guided(
         on: app.tourPending && _guideStep(app) == _Guide.feed,
@@ -87,6 +88,7 @@ class _HomePageState extends State<HomePage> {
               : 'Log a feed',
           soft: Baby.feedSoft,
           strong: Baby.feed,
+          vivid: context.nest.feed.vivid,
           onTap: () => showSheet(context, const FeedSheet()),
         ),
       ),
@@ -98,6 +100,7 @@ class _HomePageState extends State<HomePage> {
           hint: 'Pee or poo',
           soft: Baby.nappySoft,
           strong: Baby.nappy,
+          vivid: context.nest.nappy.vivid,
           onTap: () => showSheet(context, const NappySheet()),
         ),
       ),
@@ -109,6 +112,7 @@ class _HomePageState extends State<HomePage> {
             : duration(DateTime.now().difference(nap.time)),
         soft: Baby.sleepSoft,
         strong: Baby.sleep,
+        vivid: context.nest.sleep.vivid,
         onTap: () => _napTap(context, app),
       ),
       ActionTile(
@@ -117,6 +121,7 @@ class _HomePageState extends State<HomePage> {
         hint: _pillHint(app),
         soft: Baby.pillSoft,
         strong: Baby.pill,
+        vivid: context.nest.pill.vivid,
         onTap: () => _pillTap(context, app),
       ),
       if (app.pumpOnToday) _pumpTile(context, app),
@@ -134,9 +139,17 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       const SizedBox(height: Space.sm),
-      Reveal(
-        child: _SummaryTint(child: _StatusCard(app: app)),
-      ),
+      if (soft)
+        Reveal(
+          child: Pulse(
+            value: app.lastFeed?.time,
+            child: _SoftHero(app: app),
+          ),
+        )
+      else
+        Reveal(
+          child: _SummaryTint(child: _StatusCard(app: app)),
+        ),
       // A new parent's next step comes before the buttons it points at, so it
       // is never pushed off screen (e.g. by the night-light notice).
       Collapse(
@@ -148,10 +161,33 @@ class _HomePageState extends State<HomePage> {
       ),
       const SizedBox(height: Space.lg),
       const PumpLiveCard(),
-      Reveal(
-        delay: Reveal.stagger(1),
-        child: _QuickGrid(children: quick),
-      ),
+      if (soft)
+        // One card holding a row of round buttons that pop in one by one.
+        Reveal(
+          delay: Reveal.pop(1),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.xs,
+                vertical: Space.xs,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (i, q) in quick.indexed)
+                    Expanded(
+                      child: Reveal(delay: Reveal.pop(i + 2), child: q),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        )
+      else
+        Reveal(
+          delay: Reveal.stagger(1),
+          child: _QuickGrid(children: quick),
+        ),
     ];
     final activity = <Widget>[
       SectionTitle(
@@ -195,6 +231,7 @@ class _HomePageState extends State<HomePage> {
                           key: ValueKey(e.id),
                           delay: Reveal.stagger(i),
                           offset: 8,
+                          flash: lookOf(e).soft,
                           child: EntryTile(
                             entry: e,
                             onTap: () => editEntry(context, e),
@@ -445,6 +482,7 @@ class _HomePageState extends State<HomePage> {
           : duration(DateTime.now().difference(last.time)),
       soft: Baby.pumpSoft,
       strong: Baby.pump,
+      vivid: context.nest.pump.vivid,
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const PumpPage()),
@@ -1087,6 +1125,239 @@ void _napTap(BuildContext context, AppState app) {
     showSheet(context, const SleepSheet());
   } else {
     app.endSleep(nap);
+  }
+}
+
+/// The soft style's Today hero: the baby and the time since the last feed
+/// on a peach-to-blush wash, with the last nappy and sleep on two frosted
+/// tiles. The time rolls when it changes.
+class _SoftHero extends StatelessWidget {
+  const _SoftHero({required this.app});
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final baby = app.activeBaby;
+    final name = baby.name.trim();
+    final last = app.lastFeed;
+    final nappy = app.lastNappy;
+    final nap = app.activeSleep;
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+      fontWeight: FontWeight.w600,
+    );
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: Baby.hero,
+        ),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide =
+              constraints.maxWidth >=
+              320 * MediaQuery.textScalerOf(context).scale(1);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Semantics(
+                    button: true,
+                    label: tr('Edit profile'),
+                    child: GestureDetector(
+                      onTap: () => editBabyProfile(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Baby.card.withValues(alpha: 0.85),
+                          shape: BoxShape.circle,
+                        ),
+                        child: BabyPhoto(photo: baby.photo, size: 50),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Space.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LText.raw(
+                          name.isEmpty ? tr('Your baby') : name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        if (baby.dateOfBirth != null)
+                          LText(babyAge(baby), style: muted)
+                        else
+                          GestureDetector(
+                            onTap: () => editBabyProfile(context),
+                            child: LText(
+                              'Add a birthday',
+                              style: muted?.copyWith(
+                                color: scheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // The greeting is a nicety: it gives way on narrow screens.
+                  if (wide) ...[
+                    const SizedBox(width: Space.sm),
+                    LText(greeting(), style: muted),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 18),
+              Semantics(
+                button: last != null,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: last == null ? null : () => editEntry(context, last),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LText('Since last feed', style: muted),
+                      if (last == null)
+                        LText(
+                          'No feeds yet',
+                          style: theme.textTheme.headlineMedium,
+                        )
+                      else
+                        RollingText(
+                          tr(_agoShort(last.time)),
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontSize: 42,
+                            height: 1.15,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      LText(
+                        last == null
+                            ? 'Tap Feed below when the next one starts'
+                            : [
+                                last.side == null
+                                    ? 'Breast'
+                                    : sideLabel(last.side!),
+                                hm(last.time),
+                                ?entryDetail(last),
+                              ].join(' · '),
+                        style: muted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _HeroStat(
+                      glyph: Glyphs.nappy,
+                      color: context.nest.nappy.vivid,
+                      label: 'Last nappy',
+                      value: nappy == null ? 'None yet' : ago(nappy.time),
+                      onTap: nappy == null
+                          ? () => showSheet(context, const NappySheet())
+                          : () => editEntry(context, nappy),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _HeroStat(
+                      glyph: Glyphs.sleep,
+                      color: context.nest.sleep.vivid,
+                      label: nap == null ? 'Sleep' : 'Sleeping',
+                      value: nap == null
+                          ? 'Awake'
+                          : duration(DateTime.now().difference(nap.time)),
+                      onTap: () => _napTap(context, app),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A small frosted tile inside the soft hero.
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({
+    required this.glyph,
+    required this.color,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+  final Glyph glyph;
+  final Color color;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PressScale(
+      child: Material(
+        color: Baby.card.withValues(alpha: Baby.dark ? 0.35 : 0.7),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+            child: Row(
+              children: [
+                glyph(22, color),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LText(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      AnimatedSwitcher(
+                        duration: Motion.medium,
+                        child: LText(
+                          value,
+                          key: ValueKey(value),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

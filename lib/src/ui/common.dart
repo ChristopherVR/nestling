@@ -558,14 +558,20 @@ class _PressScaleState extends State<PressScale> {
   @override
   Widget build(BuildContext context) {
     final still = MediaQuery.disableAnimationsOf(context);
+    // The soft style squashes further and springs back with a little wobble.
+    final soft = context.nest.soft;
     return Listener(
       onPointerDown: (_) => _set(true),
       onPointerUp: (_) => _set(false),
       onPointerCancel: (_) => _set(false),
       child: AnimatedScale(
-        scale: _down && !still ? 0.98 : 1,
-        duration: still ? Duration.zero : Motion.short,
-        curve: Motion.enter,
+        scale: _down && !still ? (soft ? 0.9 : 0.98) : 1,
+        duration: still
+            ? Duration.zero
+            : soft && !_down
+            ? const Duration(milliseconds: 650)
+            : Motion.short,
+        curve: soft && !_down ? Curves.elasticOut : Motion.enter,
         child: widget.child,
       ),
     );
@@ -585,6 +591,7 @@ class ActionTile extends StatelessWidget {
     required this.soft,
     required this.strong,
     required this.onTap,
+    this.vivid,
   });
 
   final Glyph glyph;
@@ -594,11 +601,15 @@ class ActionTile extends StatelessWidget {
   final Color strong;
   final VoidCallback onTap;
 
+  /// The icon colour in the soft style's round button (defaults to [strong]).
+  final Color? vivid;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final desktop = Desktop.of(context);
+    if (!desktop && context.nest.soft) return _round(context);
     return PressScale(
       child: Material(
         color: context.nest.tintedTiles ? soft : scheme.surfaceContainerHigh,
@@ -660,6 +671,66 @@ class ActionTile extends StatelessWidget {
       ),
     );
   }
+
+  /// The soft style: a pastel circle with a bright icon, label and hint
+  /// below, sitting four or five to a row inside one card.
+  Widget _round(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return PressScale(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(2, 12, 2, 10),
+            child: Column(
+              children: [
+                // Shrinks to fit on the narrowest phones.
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final size = constraints.maxWidth.clamp(36.0, 60.0);
+                    return Container(
+                      width: size,
+                      height: size,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: soft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: glyph(size * 0.5, vivid ?? strong),
+                    );
+                  },
+                ),
+                const SizedBox(height: Space.sm),
+                LText(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(fontSize: 15),
+                ),
+                AnimatedSwitcher(
+                  duration: Motion.medium,
+                  switchInCurve: Motion.enter,
+                  child: LText(
+                    hint,
+                    key: ValueKey(hint),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// One logged entry as a row: icon, title/detail, time.
@@ -698,10 +769,22 @@ class EntryTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              SizedBox(
-                width: 24,
-                child: Center(child: look.glyph(24, look.strong)),
-              ),
+              if (context.nest.soft)
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: look.soft,
+                    borderRadius: BorderRadius.circular(Corners.md),
+                  ),
+                  child: look.glyph(22, look.strong),
+                )
+              else
+                SizedBox(
+                  width: 24,
+                  child: Center(child: look.glyph(24, look.strong)),
+                ),
               const SizedBox(width: Space.lg),
               Expanded(
                 child: Column(
@@ -809,7 +892,20 @@ class SheetHeader extends StatelessWidget {
       child: Row(
         children: [
           if (glyph != null) ...[
-            glyph!(28, strong ?? Baby.pill),
+            // The soft style sets the icon on a pastel tile.
+            if (context.nest.soft && soft != null)
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: soft,
+                  borderRadius: BorderRadius.circular(Corners.lg),
+                ),
+                child: glyph!(26, strong ?? Baby.pill),
+              )
+            else
+              glyph!(28, strong ?? Baby.pill),
             const SizedBox(width: Space.md),
           ],
           Expanded(

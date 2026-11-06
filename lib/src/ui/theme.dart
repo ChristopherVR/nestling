@@ -1,6 +1,8 @@
 // Nestling's design tokens and Material 3 theme. This file is the single
 // source of colour, type, shape, spacing and motion; see
 // docs/design-system.md for the reasoning behind each value.
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
 
@@ -33,11 +35,18 @@ class KindColors {
     required this.onColor,
     required this.container,
     required this.onContainer,
-  });
+    Color? vivid,
+  }) : _vivid = vivid; // ignore: prefer_initializing_formals
   final Color color;
   final Color onColor;
   final Color container;
   final Color onContainer;
+  final Color? _vivid;
+
+  /// A brighter version of [color] for large icons on [container] (the soft
+  /// style's round quick-log buttons). Not for text: the label carries the
+  /// meaning. Falls back to [color].
+  Color get vivid => _vivid ?? color;
 
   static KindColors _of(double hue, double chroma, NestMode mode) {
     final p = TonalPalette.of(hue, chroma);
@@ -111,7 +120,13 @@ class _Spec {
     this.tileChroma,
     this.summaryChroma,
     this.sunnyButtons = false,
+    this.soft = false,
   });
+
+  /// The soft style (Blush): a gradient hero on Today, round pastel
+  /// quick-log buttons, shadowed cards without outlines, the rounder Figtree
+  /// face and bouncier motion. See [NestPalette.soft].
+  final bool soft;
 
   /// (hue, chroma) of the primary accent.
   final (double, double) accent;
@@ -226,6 +241,7 @@ const _specs = <NestVariant, _Spec>{
     containerChroma: 30,
     tileChroma: 10,
     summaryChroma: 16,
+    soft: true,
     kinds: {
       'feed': (44, 38),
       'sleep': (278, 36),
@@ -261,6 +277,8 @@ class NestPalette extends ThemeExtension<NestPalette> {
     this.summary,
     this.tintedTiles = false,
     this.sunnyButtons = false,
+    this.soft = false,
+    this.hero,
   });
 
   final NestMode mode;
@@ -284,6 +302,14 @@ class NestPalette extends ThemeExtension<NestPalette> {
   /// Whether filled buttons use primaryContainer with dark text (see
   /// [_Spec.sunnyButtons]).
   final bool sunnyButtons;
+
+  /// The soft style: the warm, rounded look of the earlier rose design, with
+  /// livelier motion. Widgets check it to draw the gradient hero, round
+  /// quick-log buttons and so on.
+  final bool soft;
+
+  /// Top-left to bottom-right gradient behind Today's hero (soft style only).
+  final List<Color>? hero;
 
   /// The palette that ships. Change this to adopt a candidate.
   static const shipped = NestVariant.sky;
@@ -324,7 +350,8 @@ class NestPalette extends ThemeExtension<NestPalette> {
     final scheme = switch (mode) {
       NestMode.light => ColorScheme(
         brightness: Brightness.light,
-        primary: t(a, 40),
+        // The soft style's rose is a touch brighter, still AA with white.
+        primary: t(a, spec.soft ? 43 : 40),
         onPrimary: const Color(0xFFFFFFFF),
         primaryContainer: t(ac, spec.containerTone),
         onPrimaryContainer: t(a, 12),
@@ -451,18 +478,21 @@ class NestPalette extends ThemeExtension<NestPalette> {
           onColor: const Color(0xFFFFFFFF),
           container: t(tile, 92.5),
           onContainer: t((hue, chroma), 15),
+          vivid: t((hue, max(chroma, 46)), 60),
         ),
         NestMode.dim => KindColors(
           color: t((hue, chroma), 31),
           onColor: const Color(0xFFFFFFFF),
           container: t(tile, 80),
           onContainer: t((hue, chroma), 8),
+          vivid: t((hue, max(chroma, 46)), 48),
         ),
         NestMode.dark => KindColors(
           color: t((hue, chroma), 77),
           onColor: t((hue, chroma), 15),
           container: t((hue, (spec.tileChroma ?? 6) * 0.75), 18),
           onContainer: t((hue, chroma), 92),
+          vivid: t((hue, max(chroma, 40)), 76),
         ),
       };
     }
@@ -484,6 +514,15 @@ class NestPalette extends ThemeExtension<NestPalette> {
       },
       tintedTiles: spec.tileChroma != null,
       sunnyButtons: spec.sunnyButtons && mode != NestMode.dark,
+      soft: spec.soft,
+      // A peach-to-blush wash; text on it keeps the surface contrast.
+      hero: !spec.soft
+          ? null
+          : switch (mode) {
+              NestMode.light => [t((52, 12), 93), t((2, 16), 90)],
+              NestMode.dim => [t((52, 10), 80), t((2, 14), 77)],
+              NestMode.dark => [t((40, 8), 17), t((355, 10), 15)],
+            },
       feed: k('feed'),
       pump: k('pump'),
       pill: k('pill'),
@@ -736,7 +775,8 @@ abstract final class Baby {
   static Color get error => _s.error;
 
   /// Background behind illustrations (welcome, photo ring): neutral.
-  static List<Color> get hero => [_s.surfaceContainer, _s.surfaceContainer];
+  static List<Color> get hero =>
+      palette.hero ?? [_s.surfaceContainer, _s.surfaceContainer];
 
   static Color get feed => palette.feed.color;
   static Color get feedSoft => palette.feed.container;
@@ -841,7 +881,7 @@ ThemeData babyTheme({bool desktop = false}) {
   return _themes[key] ??= _theme(Baby.palette, desktop: desktop);
 }
 
-TextTheme _textTheme(TextTheme base, ColorScheme scheme) {
+TextTheme _textTheme(TextTheme base, ColorScheme scheme, {bool soft = false}) {
   // Material 3 type scale on the platform face (Roboto on Android, Segoe UI
   // on Windows). Titles get Medium weight for a more confident hierarchy;
   // numbers that matter use tabular figures where they are shown.
@@ -849,6 +889,39 @@ TextTheme _textTheme(TextTheme base, ColorScheme scheme) {
     bodyColor: scheme.onSurface,
     displayColor: scheme.onSurface,
   );
+  if (soft) {
+    // Figtree reads best a little bolder, with tighter large sizes.
+    final bold = t.copyWith(
+      displayLarge: t.displayLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -1.5,
+      ),
+      displaySmall: t.displaySmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -1,
+      ),
+      headlineMedium: t.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.5,
+      ),
+      headlineSmall: t.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+      titleLarge: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      titleMedium: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+      titleSmall: t.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      labelLarge: t.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      labelMedium: t.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+      bodyLarge: t.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      bodyMedium: t.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w500,
+        color: scheme.onSurface,
+      ),
+      bodySmall: t.bodySmall?.copyWith(
+        fontWeight: FontWeight.w500,
+        color: scheme.onSurfaceVariant,
+      ),
+    );
+    return bold;
+  }
   return t.copyWith(
     displaySmall: t.displaySmall?.copyWith(letterSpacing: -0.25),
     headlineMedium: t.headlineMedium?.copyWith(letterSpacing: -0.25),
@@ -872,10 +945,12 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
   final base = ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    // The soft style's rounder face; otherwise the platform face.
+    fontFamily: nest.soft ? 'Figtree' : null,
     visualDensity: desktop ? VisualDensity.compact : VisualDensity.standard,
     extensions: [nest],
   );
-  final text = _textTheme(base.textTheme, scheme);
+  final text = _textTheme(base.textTheme, scheme, soft: nest.soft);
   final card = nest.card;
   const stadium = StadiumBorder();
   final controlHeight = desktop ? Controls.heightDesktop : Controls.height;
@@ -927,14 +1002,22 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
     // Grouped content sits on a white (light) or one-step-lighter (dark)
     // surface. In light themes a faint hairline (half-strength outline) keeps
     // white on near-white legible without drawing boxes around everything.
+    // The soft style floats cards on a warm shadow instead of outlining them.
     cardTheme: CardThemeData(
       color: card,
       surfaceTintColor: Colors.transparent,
-      elevation: 0,
+      elevation: nest.soft && nest.mode != NestMode.dark ? 3 : 0,
+      shadowColor: nest.soft
+          ? Color.lerp(
+              scheme.primary,
+              Colors.black,
+              0.4,
+            )!.withValues(alpha: 0.22)
+          : null,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: Corners.card,
-        side: nest.mode == NestMode.dark
+        borderRadius: nest.soft ? BorderRadius.circular(24) : Corners.card,
+        side: nest.mode == NestMode.dark || nest.soft
             ? BorderSide.none
             : BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
       ),

@@ -14,6 +14,14 @@ import 'theme.dart';
 bool calmMotion(BuildContext context) =>
     MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
+/// Whether the soft style (Blush) is on: its motion is livelier, with a
+/// little scale and overshoot, where the default style only fades and glides.
+bool playful(BuildContext context) =>
+    Theme.of(context).extension<NestPalette>()?.soft ?? false;
+
+/// A gentle overshoot for the soft style: settles past its mark and back.
+const springy = Curves.easeOutBack;
+
 // ------------------------------------------------------------------- pages
 
 /// Page transition for every pushed page: the new page fades in while
@@ -38,6 +46,7 @@ class NestPageTransitionsBuilder extends PageTransitionsBuilder {
       return FadeTransition(opacity: animation, child: child);
     }
     final dir = Directionality.of(context) == TextDirection.rtl ? -1.0 : 1.0;
+    final soft = playful(context);
     final enter = CurvedAnimation(
       parent: animation,
       curve: Motion.standard,
@@ -65,7 +74,19 @@ class NestPageTransitionsBuilder extends PageTransitionsBuilder {
               parent: animation,
               curve: const Interval(0, 0.6, curve: Curves.easeOut),
             ),
-            child: child,
+            // The soft style also grows the page in from slightly smaller.
+            child: soft
+                ? ScaleTransition(
+                    scale: Tween(begin: 0.94, end: 1.0).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Motion.standard,
+                        reverseCurve: Motion.standard.flipped,
+                      ),
+                    ),
+                    child: child,
+                  )
+                : child,
           ),
         ),
       ),
@@ -102,7 +123,12 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
     begin: const Offset(0, 0.015),
     end: Offset.zero,
   ).animate(CurvedAnimation(parent: _c, curve: Motion.standard));
+  late final _grow = Tween(
+    begin: 0.96,
+    end: 1.0,
+  ).animate(CurvedAnimation(parent: _c, curve: springy));
   static const _still = AlwaysStoppedAnimation(Offset.zero);
+  static const _whole = AlwaysStoppedAnimation(1.0);
 
   @override
   void didUpdateWidget(FadeIndexedStack old) {
@@ -119,24 +145,30 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
   }
 
   @override
-  Widget build(BuildContext context) => IndexedStack(
-    index: widget.index,
-    children: [
-      for (final (i, child) in widget.children.indexed)
-        // Every child gets the same wrappers (only the animations differ),
-        // so switching tabs never rebuilds a page from scratch.
-        FadeTransition(
-          opacity: i == widget.index ? _fade : kAlwaysCompleteAnimation,
-          child: SlideTransition(
-            position: i == widget.index ? _rise : _still,
-            child: ActiveGate(
-              active: i == widget.index,
-              child: TickerMode(enabled: i == widget.index, child: child),
+  Widget build(BuildContext context) {
+    final soft = playful(context);
+    return IndexedStack(
+      index: widget.index,
+      children: [
+        for (final (i, child) in widget.children.indexed)
+          // Every child gets the same wrappers (only the animations differ),
+          // so switching tabs never rebuilds a page from scratch.
+          FadeTransition(
+            opacity: i == widget.index ? _fade : kAlwaysCompleteAnimation,
+            child: SlideTransition(
+              position: i == widget.index ? _rise : _still,
+              child: ScaleTransition(
+                scale: i == widget.index && soft ? _grow : _whole,
+                child: ActiveGate(
+                  active: i == widget.index,
+                  child: TickerMode(enabled: i == widget.index, child: child),
+                ),
+              ),
             ),
           ),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 /// Keeps a hidden page from rebuilding on every app change: below it,
@@ -211,9 +243,14 @@ class Reveal extends StatefulWidget {
     required this.child,
     this.delay = Duration.zero,
     this.offset = 16,
+    this.flash,
   });
   final Widget child;
   final Duration delay;
+
+  /// A colour that washes over the child as it arrives and fades away, so a
+  /// newly logged entry catches the eye (soft style only).
+  final Color? flash;
 
   /// How far below its place the child starts, in logical pixels.
   final double offset;
@@ -221,6 +258,9 @@ class Reveal extends StatefulWidget {
   /// The delay for the [i]th item of a staggered list (capped so long lists
   /// do not keep the last items waiting).
   static Duration stagger(int i) => Duration(milliseconds: 45 * i.clamp(0, 8));
+
+  /// The soft style's livelier stagger: each item pops in a beat later.
+  static Duration pop(int i) => Duration(milliseconds: 70 * i.clamp(0, 8));
 
   @override
   State<Reveal> createState() => _RevealState();
@@ -230,11 +270,17 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   late final _c = AnimationController(vsync: this, duration: Motion.long);
   late final _fade = CurvedAnimation(parent: _c, curve: Motion.enter);
   late final _rise = CurvedAnimation(parent: _c, curve: Motion.standard);
+  late final _pop = CurvedAnimation(parent: _c, curve: springy);
   Timer? _wait;
+  bool _soft = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _soft = playful(context);
+    if (_soft && _c.isDismissed) {
+      _c.duration = const Duration(milliseconds: 560);
+    }
     if (calmMotion(context)) {
       _wait?.cancel();
       _c.value = 1;
@@ -257,17 +303,88 @@ class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => FadeTransition(
-    opacity: _fade,
-    child: AnimatedBuilder(
-      animation: _rise,
-      child: widget.child,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, (1 - _rise.value) * widget.offset),
-        child: child,
+  Widget build(BuildContext context) {
+    final flash = _soft ? widget.flash : null;
+    return FadeTransition(
+      opacity: _fade,
+      child: AnimatedBuilder(
+        animation: _c,
+        child: widget.child,
+        builder: (context, child) {
+          final t = _soft ? _pop.value : _rise.value;
+          Widget out = Transform.translate(
+            offset: Offset(0, (1 - t) * widget.offset * (_soft ? 1.6 : 1)),
+            child: _soft
+                ? Transform.scale(scale: 0.92 + 0.08 * t, child: child)
+                : child,
+          );
+          if (flash != null && _c.value < 1) {
+            // Holds the colour, then lets it fade over the second half.
+            final fade = ((1 - _c.value) * 2).clamp(0.0, 1.0);
+            out = DecoratedBox(
+              decoration: BoxDecoration(
+                color: flash.withValues(alpha: flash.a * fade),
+              ),
+              child: out,
+            );
+          }
+          return out;
+        },
       ),
-    ),
+    );
+  }
+}
+
+/// Gives [child] a quick, gentle bounce (grow and settle) each time [value]
+/// changes, e.g. the hero when a new feed is logged. Soft style only.
+class Pulse extends StatefulWidget {
+  const Pulse({super.key, required this.value, required this.child});
+  final Object? value;
+  final Widget child;
+
+  @override
+  State<Pulse> createState() => _PulseState();
+}
+
+class _PulseState extends State<Pulse> with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
   );
+  late final _scale = TweenSequence([
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 1.0,
+        end: 1.035,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 35,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 1.035,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.elasticOut)),
+      weight: 65,
+    ),
+  ]).animate(_c);
+
+  @override
+  void didUpdateWidget(Pulse old) {
+    super.didUpdateWidget(old);
+    if (old.value != widget.value && playful(context) && !calmMotion(context)) {
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      ScaleTransition(scale: _scale, child: widget.child);
 }
 
 /// Shows or hides [child] by smoothly growing or shrinking the space it takes

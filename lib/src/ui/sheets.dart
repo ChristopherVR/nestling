@@ -62,7 +62,7 @@ Future<void> _openSheet(BuildContext context, Widget child) {
           Space.xl,
           Space.lg + max(media.viewInsets.bottom, media.viewPadding.bottom),
         ),
-        child: _SheetScroll(child: child),
+        child: _SheetScroll(child: _kindButtons(c, child)),
       ),
     );
   }
@@ -95,6 +95,35 @@ Future<void> _openSheet(BuildContext context, Widget child) {
       reverseDuration: Motion.medium,
     ),
     builder: builder,
+  );
+}
+
+/// The soft style colours a log sheet's filled buttons in the sheet's own
+/// kind (an orange Save on Feed, teal on Nappy), as the earlier rose design
+/// did. The kind tone keeps white text at AA contrast.
+Widget _kindButtons(BuildContext context, Widget child) {
+  final nest = context.nest;
+  if (!nest.soft) return child;
+  final kind = switch (child) {
+    FeedSheet() => nest.feed,
+    NappySheet() => nest.nappy,
+    SleepSheet() => nest.sleep,
+    PumpSheet() => nest.pump,
+    PillDoseSheet() => nest.pill,
+    _ => null,
+  };
+  if (kind == null) return child;
+  final theme = Theme.of(context);
+  return Theme(
+    data: theme.copyWith(
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: kind.color,
+          foregroundColor: kind.onColor,
+        ).merge(theme.filledButtonTheme.style),
+      ),
+    ),
+    child: child,
   );
 }
 
