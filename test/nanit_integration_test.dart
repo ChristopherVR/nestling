@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:nestling/src/local_nanit.dart';
 import 'package:nestling/src/localization.dart';
 import 'package:nestling/src/nanit_integration.dart';
 import 'package:nestling/src/ui/camera_page.dart';
@@ -60,12 +61,17 @@ class FakeNanitHttp implements NanitHttp {
   }
 }
 
-NanitHub testHub(MemoryNanitSecretStore store, FakeNanitHttp http) => NanitHub(
+NanitHub testHub(
+  MemoryNanitSecretStore store,
+  FakeNanitHttp http, {
+  Duration? refreshEvery,
+}) => NanitHub(
   account: NanitAccount(
     store: store,
     api: NanitApi(http: http),
   ),
   alertSink: NanitAlertSink((_) async {}),
+  refreshEvery: refreshEvery,
 );
 
 /// Lets the fake HTTP answer and the UI catch up. (Spinners never settle,
@@ -185,6 +191,172 @@ void main() {
     expect(hub.signedIn, isTrue);
     expect(hub.connection, isNull);
     await hub.signOut();
-    expect(store.values, isEmpty);
+    expect(hub.mode, CameraMode.home);
+    expect(store.values.keys, [NanitHub.modeKey]);
+  });
+
+  group('camera modes', () {
+    /// A store with a home-network camera and a paired account whose
+    /// camera key runs out in [keyLeft].
+    MemoryNanitSecretStore bothSaved({
+      String? mode,
+      Duration keyLeft = const Duration(days: 6),
+    }) => MemoryNanitSecretStore()
+      ..values[LocalNanitHub.storageKey] = jsonEncode(
+        const SavedLocalCamera(
+          address: '192.168.1.40',
+          uid: 'N301CMA2449596',
+          firmware: '6.58.615',
+        ).toJson(),
+      )
+      ..values['nanit.session'] = jsonEncode({
+        'access_token': 'ACCESS',
+        'refresh_token': 'REFRESH',
+      })
+      ..values['nanit.pairing'] = jsonEncode({
+        'baby_uid': 'd5783a3f',
+        'baby_name': 'Markus',
+        'camera_uid': 'N301CMA2449596',
+      })
+      ..values['nanit.camera_token'] = jsonEncode({
+        'token': 'CAMTOKEN',
+        'expiration':
+            DateTime.now().add(keyLeft).millisecondsSinceEpoch ~/ 1000,
+        'camera_uid': 'N301CMA2449596',
+      })
+      ..values.addAll({NanitHub.modeKey: ?mode});
+
+    /// Leaves the paired camera's key less than the renewal margin.
+    Future<void> makeDue(MemoryNanitSecretStore store, NanitHub hub) async {
+      store.values['nanit.camera_token'] = jsonEncode({
+        'token': 'CAMTOKEN',
+        'expiration':
+            DateTime.now()
+                .add(const Duration(hours: 5))
+                .millisecondsSinceEpoch ~/
+            1000,
+        'camera_uid': 'N301CMA2449596',
+      });
+      await hub.account.load();
+    }
+
+    test('both modes stay set up; only the active one streams', () async {
+      final store = bothSaved();
+      final hub = testHub(store, FakeNanitHttp());
+      await hub.start();
+      expect(hub.mode, CameraMode.home);
+      expect(hub.homeReady, isTrue);
+      expect(hub.accountReady, isTrue);
+      // Home is active, so the account link stays closed.
+      expect(hub.connection, isNull);
+
+      await hub.switchMode(CameraMode.account);
+      expect(hub.connection, isNotNull);
+      expect(hub.local.saved, isNotNull);
+
+      await hub.switchMode(CameraMode.home);
+      expect(hub.connection, isNull);
+      expect(hub.paired, isTrue);
+      expect(hub.signedIn, isTrue);
+      hub.dispose();
+    });
+
+    test('the chosen mode is remembered across restarts', () async {
+      final store = bothSaved();
+      final first = testHub(store, FakeNanitHttp());
+      await first.start();
+      await first.switchMode(CameraMode.account);
+      expect(store.values[NanitHub.modeKey], 'account');
+      await first.switchMode(CameraMode.home);
+      await first.switchMode(CameraMode.account);
+      first.dispose();
+
+      final again = testHub(store, FakeNanitHttp());
+      await again.start();
+      expect(again.mode, CameraMode.account);
+      expect(again.connection, isNotNull);
+      await again.switchMode(CameraMode.home);
+      again.dispose();
+    });
+
+    test(
+      'without a saved mode, an account-only setup stays on the account',
+      () async {
+        final store = bothSaved()..values.remove(LocalNanitHub.storageKey);
+        final hub = testHub(store, FakeNanitHttp());
+        await hub.start();
+        expect(hub.mode, CameraMode.account);
+        await hub.switchMode(CameraMode.home);
+        hub.dispose();
+      },
+    );
+
+    test('adding a home camera keeps the account paired', () async {
+      final store = bothSaved(mode: 'account')
+        ..values.remove(LocalNanitHub.storageKey);
+      final hub = testHub(store, FakeNanitHttp());
+      await hub.start();
+      expect(hub.connection, isNotNull);
+      store.values[LocalNanitHub.storageKey] = jsonEncode(
+        const SavedLocalCamera(
+          address: '192.168.1.40',
+          uid: 'N301CMA2449596',
+          firmware: '6.58.615',
+        ).toJson(),
+      );
+      await hub.local.load();
+      await hub.switchMode(CameraMode.home);
+      expect(hub.paired, isTrue);
+      expect(hub.homeReady, isTrue);
+      expect(hub.connection, isNull);
+      hub.dispose();
+    });
+
+    test('the camera key is renewed at start and on resume even when home '
+        'is active', () async {
+      final http = FakeNanitHttp();
+      final store = bothSaved(keyLeft: const Duration(hours: 20));
+      final hub = testHub(store, http);
+      await hub.start();
+      await pumpEventQueue();
+      expect(
+        http.calls,
+        contains('GET /focus/cameras/N301CMA2449596/uc_token'),
+      );
+      expect(
+        hub.account.cameraTokenExpires!.isAfter(
+          DateTime.now().add(const Duration(days: 6)),
+        ),
+        isTrue,
+      );
+
+      // Close to running out again: resuming the app renews it.
+      http.calls.clear();
+      await makeDue(store, hub);
+      hub.appResumed();
+      await pumpEventQueue();
+      expect(http.calls, ['GET /focus/cameras/N301CMA2449596/uc_token']);
+      hub.dispose();
+    });
+
+    test('the key is checked on a timer while the app runs', () async {
+      final http = FakeNanitHttp();
+      final store = bothSaved();
+      final hub = testHub(
+        store,
+        http,
+        refreshEvery: const Duration(milliseconds: 50),
+      );
+      await hub.start();
+      await pumpEventQueue();
+      expect(http.calls, isEmpty, reason: 'the key has days left');
+      await makeDue(store, hub);
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(
+        http.calls,
+        contains('GET /focus/cameras/N301CMA2449596/uc_token'),
+      );
+      hub.dispose();
+    });
   });
 }

@@ -70,13 +70,23 @@ Future<void> deliverLocalCameraAlert(
   ),
 );
 
-/// The signed-in Nanit account and, once a camera is picked, its control
-/// socket, readings, video and alerts. One for the whole app, like
-/// [PumpHub].
-class NanitHub extends ChangeNotifier {
-  static final instance = NanitHub();
+/// How Nestling watches the camera.
+enum CameraMode {
+  /// Straight from the camera over the home Wi-Fi; no account.
+  home,
 
-  NanitHub({NanitAccount? account, this.alertSink})
+  /// Through a Nanit sign-in; the camera key is renewed about weekly.
+  account,
+}
+
+/// The signed-in Nanit account and, once a camera is picked, its control
+/// socket, readings, video and alerts, next to the home-network camera.
+/// Both modes can be set up at once; [mode] picks the one that streams.
+/// One for the whole app, like [PumpHub].
+class NanitHub extends ChangeNotifier {
+  static final instance = NanitHub(refreshEvery: const Duration(hours: 1));
+
+  NanitHub({NanitAccount? account, this.alertSink, this.refreshEvery})
     : account = account ?? NanitAccount() {
     local = LocalNanitHub(
       store: this.account.store,
@@ -87,8 +97,25 @@ class NanitHub extends ChangeNotifier {
 
   late final LocalNanitHub local;
   bool get hasCamera => local.saved != null || paired;
-  String get cameraName =>
-      local.saved?.name ?? account.pairing?.babyName ?? 'Camera';
+  String get cameraName => mode == CameraMode.account && paired
+      ? account.pairing!.babyName
+      : local.saved?.name ?? account.pairing?.babyName ?? 'Camera';
+
+  /// Where the chosen [CameraMode] is kept, next to the saved local camera.
+  static const modeKey = 'nestling.cameraMode.v1';
+
+  /// The mode that streams. Home unless the user chose the account.
+  CameraMode mode = CameraMode.home;
+
+  /// Whether each mode has what it needs to stream.
+  bool get homeReady => local.saved != null;
+  bool get accountReady => paired;
+  bool isReady(CameraMode m) => m == CameraMode.home ? homeReady : accountReady;
+
+  /// How often the camera key is checked while the app runs; null (tests)
+  /// checks only at start and on resume.
+  final Duration? refreshEvery;
+  Timer? _refreshTimer;
 
   final NanitAccount account;
   final NanitAlertSink? alertSink;
@@ -116,11 +143,65 @@ class NanitHub extends ChangeNotifier {
       // Secure storage unavailable (e.g. in tests): behave as signed out.
       debugPrint('Nanit: could not load the account: $e');
     }
+    mode = await _loadMode();
     loaded = true;
     account.addListener(notifyListeners);
-    if (account.paired && local.saved == null) _open();
+    // Both modes stay set up; only the chosen one streams.
+    if (mode == CameraMode.account && account.paired) _open();
     notifyListeners();
-    if (local.saved == null) unawaited(account.refreshIfDue());
+    refreshIfDue();
+    final every = refreshEvery;
+    if (every != null) {
+      _refreshTimer ??= Timer.periodic(every, (_) => refreshIfDue());
+    }
+  }
+
+  Future<CameraMode> _loadMode() async {
+    try {
+      final raw = await account.store.read(modeKey);
+      for (final m in CameraMode.values) {
+        if (m.name == raw) return m;
+      }
+    } catch (e) {
+      debugPrint('Nanit: could not load the camera mode: $e');
+    }
+    // Before modes were saved, a paired account without a local camera was
+    // the account mode.
+    return local.saved == null && account.paired
+        ? CameraMode.account
+        : CameraMode.home;
+  }
+
+  /// Renews the account's camera key when it is close to running out. Runs
+  /// whenever an account camera is paired, whichever mode is active, so a
+  /// switch to the account later finds a working key.
+  void refreshIfDue() {
+    if (account.paired) unawaited(account.refreshIfDue());
+  }
+
+  /// The app came back to the foreground.
+  void appResumed() {
+    if (loaded) refreshIfDue();
+  }
+
+  /// Makes [next] the mode that streams and remembers it. The other mode
+  /// keeps its setup, so switching back needs no new setup.
+  Future<void> switchMode(CameraMode next) async {
+    if (mode != next) {
+      mode = next;
+      notifyListeners();
+    }
+    try {
+      await account.store.write(modeKey, next.name);
+    } catch (e) {
+      debugPrint('Nanit: could not save the camera mode: $e');
+    }
+    if (next == CameraMode.account) {
+      await local.pause();
+      if (account.paired) _open();
+    } else {
+      await _close();
+    }
   }
 
   Future<void> useLocalCamera(
@@ -128,11 +209,12 @@ class NanitHub extends ChangeNotifier {
     String name = 'Nursery camera',
   }) async {
     await local.add(address, name: name);
-    await _close();
+    await switchMode(CameraMode.home);
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     local.removeListener(notifyListeners);
     local.dispose();
     account.removeListener(notifyListeners);
@@ -187,7 +269,7 @@ class NanitHub extends ChangeNotifier {
   Future<void> pair(NanitBaby baby) async {
     await _close();
     await account.pair(baby);
-    _open();
+    await switchMode(CameraMode.account);
   }
 
   /// Retries after a failure (e.g. the camera was off).
@@ -211,9 +293,21 @@ class NanitHub extends ChangeNotifier {
     await account.unpair();
   }
 
+  /// Signs out and goes back to the home network, which needs no account.
   Future<void> signOut() async {
     await _close();
     await account.signOut();
+    await switchMode(CameraMode.home);
+  }
+
+  /// Whether the account camera cannot stream right now: a refused or
+  /// expired key, or the camera turned this viewer away (stream limit).
+  bool get accountFailing {
+    if (connection?.state == NanitLinkState.failed) return true;
+    final l = live;
+    return l != null &&
+        l.state == NanitLiveState.failed &&
+        l.failure != NanitLiveFailure.notConnected;
   }
 
   /// Why the camera cannot be reached, in words for the screen, or null.
