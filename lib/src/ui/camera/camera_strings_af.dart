@@ -168,7 +168,7 @@ const cameraAfrikaans = <String, String>{
   'Turn off any VPN.': 'Skakel enige VPN af.',
   // Topics: account.
   'Your camera key needs renewing': 'Jou kamerasleutel moet hernu word',
-  'In Nanit account mode, Nanit gives Nestling a camera key that lasts about 7 days. Nestling renews it by itself whenever this device has internet. If it could not renew in time, or you were signed out, the key stops working.': 'In Nanit-rekeningmodus gee Nanit vir Nestling ’n kamerasleutel wat omtrent 7 dae hou. Nestling hernu dit self wanneer hierdie toestel internet het. As dit nie betyds kon hernu nie, of jy afgemeld is, hou die sleutel op werk.',
+  'In Nanit account mode, Nanit gives Nestling a camera key that lasts about 7 days. Nestling renews it by itself whenever this device has internet, and keeps you signed in. If it could not renew in time, or Nanit signed you out, the key stops working.': 'In Nanit-rekeningmodus gee Nanit vir Nestling ’n kamerasleutel wat omtrent 7 dae hou. Nestling hernu dit self wanneer hierdie toestel internet het, en hou jou aangemeld. As dit nie betyds kon hernu nie, of Nanit jou afgemeld het, hou die sleutel op werk.',
   'Make sure this device has internet for a moment.':
       'Maak seker hierdie toestel het vir ’n oomblik internet.',
   'Tap Sign in again and sign in with your Nanit account.':
@@ -341,7 +341,7 @@ const cameraAfrikaans = <String, String>{
       'Opsionele klank- en moontlike-huil-waarskuwings',
   'Good to know': 'Goed om te weet',
   'Works only while this device is on your home Wi-Fi, not away from home.': 'Werk net terwyl hierdie toestel op jou huis-Wi-Fi is, nie weg van die huis nie.',
-  'No recordings, sleep reports, breathing or motion alerts. Keep the Nanit app for those.': 'Geen opnames, slaapverslae, asemhaling- of bewegingswaarskuwings nie. Hou die Nanit-toepassing daarvoor.',
+  'No recordings, sleep reports or breathing alerts. Keep the Nanit app for those.': 'Geen opnames, slaapverslae of asemhalingwaarskuwings nie. Hou die Nanit-toepassing daarvoor.',
   'Nothing is uploaded: video goes straight from the camera to this device.': 'Niks word opgelaai nie: video gaan direk van die kamera na hierdie toestel.',
   'Setup takes about 5 minutes.': 'Opstelling neem omtrent 5 minute.',
   'Adds motion alerts. Needs the internet about once a week.': 'Voeg bewegingswaarskuwings by. Het omtrent een keer per week die internet nodig.',
@@ -433,4 +433,21 @@ const cameraAfrikaans = <String, String>{
       'Video gaan steeds net oor jou huis se Wi-Fi.',
   'Adds motion alerts. They react to changes in the picture, so they are simpler than in the Nanit app.': 'Voeg bewegingswaarskuwings by. Hulle reageer op veranderinge in die beeld, so hulle is eenvoudiger as in die Nanit-toepassing.',
   'Why does this need the internet?': 'Hoekom het dit die internet nodig?',
+  // Choosing and switching between home network and Nanit account.
+  'How should Nestling connect to your camera? You can switch later.':
+      'Hoe moet Nestling aan jou kamera koppel? Jy kan later oorskakel.',
+  'Home network (no account)': 'Tuisnetwerk (geen rekening)',
+  'Works without the internet. No motion alerts.':
+      'Werk sonder die internet. Geen bewegingswaarskuwings nie.',
+  'Sign in with Nanit': 'Meld aan met Nanit',
+  'Home network': 'Tuisnetwerk',
+  'Back to the camera': 'Terug na die kamera',
+  'Watch over home network': 'Kyk oor tuisnetwerk',
+  'Use the home network instead': 'Gebruik eerder die tuisnetwerk',
+  'Set up home network': 'Stel tuisnetwerk op',
+  'Watch with Nanit account': 'Kyk met Nanit-rekening',
+  'Home network set up too? Tap Watch over home network.':
+      'Tuisnetwerk ook opgestel? Tik Kyk oor tuisnetwerk.',
+  'Can I set up both modes?': 'Kan ek albei modusse opstel?',
+  'Yes. Set up the home network and sign in with Nanit, then switch between them under the video. If one stops working, Nestling offers the other.': 'Ja. Stel die tuisnetwerk op en meld aan met Nanit, en skakel dan onder die video tussen hulle oor. As een ophou werk, bied Nestling die ander een aan.',
 };

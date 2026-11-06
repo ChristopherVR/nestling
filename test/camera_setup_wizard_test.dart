@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:nestling/src/local_nanit.dart';
 import 'package:nestling/src/localization.dart';
+import 'package:nestling/src/nanit_integration.dart' show NanitHub;
 import 'package:nestling/src/nanit_wifi_setup.dart';
 import 'package:nestling/src/ui/camera/camera_help.dart';
 import 'package:nestling/src/ui/camera/camera_help_content.dart';
@@ -187,7 +188,8 @@ void main() {
     testWidgets('home Wi-Fi path: steps, back, not found, typed address, '
         'save, done', (tester) async {
       await phone(tester);
-      final hub = testHub(MemoryNanitSecretStore(), FakeNanitHttp());
+      final store = MemoryNanitSecretStore();
+      final hub = testHub(store, FakeNanitHttp());
       final discovered = <Map<String, String>>[
         {},
         {'192.168.1.40': 'Nanit camera'},
@@ -218,7 +220,14 @@ void main() {
       );
       expect(find.text('Your camera, at home'), findsOneWidget);
       expect(find.textContaining('Step '), findsNothing);
-      await tap(tester, 'Get started');
+      // Two equal choices, each with its trade-off.
+      expect(find.text('Sign in with Nanit'), findsOneWidget);
+      expect(
+        find.text('Works without the internet. No motion alerts.'),
+        findsOneWidget,
+      );
+      await tap(tester, 'Home network (no account)');
+      expect(store.values[NanitHub.modeKey], 'home');
       expect(find.text('Step 1 of 5'), findsOneWidget);
       expect(
         find.text('Is your camera already on your Wi-Fi?'),
@@ -228,7 +237,7 @@ void main() {
       // Back returns to the previous screen.
       await tap(tester, 'Back');
       expect(find.text('Your camera, at home'), findsOneWidget);
-      await tap(tester, 'Get started');
+      await tap(tester, 'Home network (no account)');
       await tap(tester, 'Already on Wi-Fi');
       expect(find.text('Step 2 of 5'), findsOneWidget);
       expect(find.text('A guest network'), findsOneWidget);
@@ -317,7 +326,7 @@ void main() {
           ),
         ),
       );
-      await tap(tester, 'Get started');
+      await tap(tester, 'Home network (no account)');
       await tap(tester, 'Set up Wi-Fi');
       expect(find.text('Step 2 of 8'), findsOneWidget);
       expect(find.text('Put the camera in pairing mode'), findsOneWidget);
@@ -386,7 +395,7 @@ void main() {
         ),
       );
       expect(find.text('Jou kamera, by die huis'), findsOneWidget);
-      await tap(tester, tr('Get started', language: 'af'));
+      await tap(tester, tr('Home network (no account)', language: 'af'));
       expect(find.text('Stap 1 van 5'), findsOneWidget);
       expect(tester.takeException(), isNull);
       hub.dispose();

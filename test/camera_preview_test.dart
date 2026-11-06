@@ -65,7 +65,11 @@ void main() {
   setUpAll(_loadFonts);
   final boundary = GlobalKey();
 
-  Future<void> show(WidgetTester tester, Widget home, {bool dark = false}) async {
+  Future<void> show(
+    WidgetTester tester,
+    Widget home, {
+    bool dark = false,
+  }) async {
     Baby.dark = dark;
     Baby.dim = false;
     debugDisableShadows = false;
@@ -107,8 +111,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Widget page(Widget body) =>
-      Scaffold(appBar: AppBar(title: const Text('Camera')), body: body);
+  Widget page(Widget body) => Scaffold(
+    appBar: AppBar(title: const Text('Camera')),
+    body: body,
+  );
 
   for (final dark in [false, true]) {
     testWidgets('wizard${dark ? ' dark' : ''}', (tester) async {
@@ -146,7 +152,7 @@ void main() {
         debugDisableShadows = true;
         return;
       }
-      await tap(tester, 'Get started');
+      await tap(tester, 'Home network (no account)');
       await snap(tester, '02-path');
       await tap(tester, 'Set up Wi-Fi');
       await snap(tester, '03-pairing');
@@ -187,7 +193,7 @@ void main() {
   testWidgets('step help sheet', (tester) async {
     final hub = testHub(MemoryNanitSecretStore(), FakeNanitHttp());
     await show(tester, page(CameraSetupWizard(hub: hub, onAccount: () {})));
-    await tap(tester, 'Get started');
+    await tap(tester, 'Home network (no account)');
     await tap(tester, 'Already on Wi-Fi');
     await tap(tester, 'Something not working?');
     await snap(tester, 'step-help');

@@ -334,7 +334,7 @@ void main() {
       await tester.runAsync(tested.start);
       await tester.pump();
       expect(find.text('Your camera, at home'), findsOneWidget);
-      await tester.tap(find.text('Get started'));
+      await tester.tap(find.text('Home network (no account)'));
       await tester.pump();
       expect(find.text('Already on Wi-Fi'), findsOneWidget);
       expect(find.text('Set up Wi-Fi'), findsOneWidget);

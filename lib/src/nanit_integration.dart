@@ -262,7 +262,13 @@ class NanitHub extends ChangeNotifier {
     String email,
     String password, {
     required NanitMfaPrompt onMfa,
-  }) => account.signIn(email.trim(), password, onMfa: onMfa);
+  }) async {
+    await account.signIn(email.trim(), password, onMfa: onMfa);
+    // Signing in again over a paired camera: pick up where it left off.
+    if (paired && mode == CameraMode.account) {
+      connection == null ? _open() : reconnect();
+    }
+  }
 
   Future<List<NanitBaby>> babies() => account.babies();
 

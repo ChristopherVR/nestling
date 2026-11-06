@@ -1,12 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:nestling/src/local_nanit.dart';
 import 'package:nestling/src/localization.dart';
 import 'package:nestling/src/nanit_integration.dart';
+import 'package:nestling/src/ui/camera/camera_help.dart';
+import 'package:nestling/src/ui/camera/camera_help_content.dart';
+import 'package:nestling/src/ui/camera/camera_issues.dart';
 import 'package:nestling/src/ui/camera_page.dart';
+import 'package:nestling/src/ui/local_camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nanit_camera/nanit_camera.dart';
+
+import 'local_nanit_test.dart' show FakeLocalCamera;
 
 NanitAlert alert(NanitAlertKind kind, {String babyName = 'Markus'}) =>
     NanitAlert(kind: kind, babyName: babyName, at: DateTime(2026));
@@ -136,13 +143,15 @@ void main() {
     await tester.runAsync(hub.start);
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.text('Use a Nanit account instead'),
+      find.text('Sign in with Nanit'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Use a Nanit account instead'));
+    await tester.tap(find.text('Sign in with Nanit'));
     await tester.pump();
     expect(find.text('Sign in to Nanit'), findsOneWidget);
+    // The choice is saved, so the camera opens on the account next time.
+    expect(store.values[NanitHub.modeKey], 'account');
 
     await tester.enterText(find.byType(TextField).at(0), 'me@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'secret');
@@ -356,6 +365,176 @@ void main() {
         http.calls,
         contains('GET /focus/cameras/N301CMA2449596/uc_token'),
       );
+      hub.dispose();
+    });
+
+    test('a 403 stream limit counts as the account failing', () async {
+      final hub = testHub(bothSaved(mode: 'account'), FakeNanitHttp());
+      await hub.start();
+      expect(hub.accountFailing, isFalse);
+      hub.live!
+        ..state = NanitLiveState.failed
+        ..failure = NanitLiveFailure.streamLimit;
+      expect(hub.accountFailing, isTrue);
+      expect(issueForLiveFailure(hub.live!.failure), CameraIssue.streamLimit);
+      await hub.switchMode(CameraMode.home);
+      hub.dispose();
+    });
+
+    testWidgets('a 403 offers to watch over the home network', (tester) async {
+      final store = bothSaved(mode: 'account');
+      final hub = testHub(store, FakeNanitHttp());
+      Future<void> show(Map<CameraFixAction, VoidCallback> actions) =>
+          tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: CameraIssueCard(
+                    issue: CameraIssue.streamLimit,
+                    actions: actions,
+                  ),
+                ),
+              ),
+            ),
+          );
+      // Without a home camera there is nothing to offer.
+      await show({CameraFixAction.retry: () {}});
+      expect(find.text('Watch over home network'), findsNothing);
+
+      await show({
+        CameraFixAction.retry: () {},
+        CameraFixAction.useHomeNetwork: () => hub.switchMode(CameraMode.home),
+      });
+      expect(find.text('Try again'), findsOneWidget);
+      await tester.tap(find.text('Watch over home network'));
+      await tester.pump();
+      expect(hub.mode, CameraMode.home);
+      expect(store.values[NanitHub.modeKey], 'home');
+      // Every account problem offers the same way out.
+      for (final issue in [
+        CameraIssue.streamLimit,
+        CameraIssue.tokenExpired,
+        CameraIssue.cloudUnreachable,
+        CameraIssue.cameraRefused,
+      ]) {
+        expect(
+          topicFor(issue, windows: false).actions,
+          contains(CameraFixAction.useHomeNetwork),
+          reason: issue.name,
+        );
+      }
+      // And a home-network problem offers the account.
+      expect(
+        topicFor(CameraIssue.unreachable, windows: false).actions,
+        contains(CameraFixAction.useAccount),
+      );
+      hub.dispose();
+    });
+
+    testWidgets('signing in again keeps the email and offers the home '
+        'network', (tester) async {
+      final store = bothSaved(mode: 'account')
+        ..values.remove('nanit.session')
+        ..values.remove('nanit.pairing')
+        ..values['nanit.email'] = 'me@example.com';
+      final hub = testHub(store, FakeNanitHttp());
+      await tester.runAsync(hub.start);
+      await tester.pumpWidget(MaterialApp(home: CameraPage(hub: hub)));
+      await tester.pump();
+      expect(find.text('Sign in to Nanit'), findsOneWidget);
+      expect(find.text('me@example.com'), findsOneWidget);
+      final home = find.text('Watch over home network');
+      await tester.scrollUntilVisible(
+        home,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(home);
+      await tester.pump();
+      await tester.tap(home);
+      expect(hub.mode, CameraMode.home);
+      // Leave before the live view opens a real camera connection.
+      await tester.pumpWidget(const SizedBox());
+      expect(store.values[NanitHub.modeKey], 'home');
+      hub.dispose();
+    });
+
+    testWidgets('the home camera screen offers the account', (tester) async {
+      var used = 0;
+      Future<void> show({required bool accountReady}) async {
+        // The camera never answers, so nothing leaves the test.
+        final camera = FakeLocalCamera('192.168.1.40')
+          ..pendingIdentity = Completer();
+        final local =
+            LocalNanitHub(
+                store: MemoryNanitSecretStore(),
+                cameraFactory: (_) => camera,
+              )
+              ..saved = const SavedLocalCamera(
+                address: '192.168.1.40',
+                uid: 'N301CMA2449596',
+                firmware: '6.58.615',
+              );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: LocalCameraWatch(
+                hub: local,
+                accountReady: accountReady,
+                onUseAccount: () => used++,
+              ),
+            ),
+          ),
+        );
+      }
+
+      await show(accountReady: false);
+      final signIn = find.text('Sign in with Nanit');
+      await tester.scrollUntilVisible(
+        signIn,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(signIn, findsOneWidget);
+      await show(accountReady: true);
+      final watch = find.text('Watch with Nanit account');
+      await tester.scrollUntilVisible(
+        watch,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(watch);
+      expect(used, 1);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('new camera mode wording has Afrikaans', () {
+      for (final text in [
+        'Home network (no account)',
+        'Sign in with Nanit',
+        'Works without the internet. No motion alerts.',
+        'How should Nestling connect to your camera? You can switch later.',
+        'Watch over home network',
+        'Watch with Nanit account',
+        'Use the home network instead',
+        'Set up home network',
+        'Back to the camera',
+        'Home network',
+      ]) {
+        expect(tr(text, language: 'af'), isNot(text), reason: text);
+      }
+    });
+
+    test('the timer is only a backstop: no key, nothing to renew', () async {
+      final http = FakeNanitHttp();
+      final store = bothSaved();
+      final hub = testHub(store, http);
+      await hub.start();
+      await hub.forgetCamera();
+      http.calls.clear();
+      hub.appResumed();
+      await pumpEventQueue();
+      expect(http.calls, isEmpty);
       hub.dispose();
     });
   });

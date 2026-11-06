@@ -84,7 +84,13 @@ Every setup screen shows your progress at the top, says what to expect, and has 
 
 ![The welcome screen explains what you get and what to know](images/camera/01-intro.png)
 
-The first screen lists what home network mode does and does not do. Tap **Get started**.
+The first screen offers two equal choices:
+
+- **Home network (no account)**: works without the internet. No motion alerts.
+- **Sign in with Nanit**: adds motion alerts. Needs the internet about once a week. See
+  [Optional: Nanit account mode](#optional-nanit-account-mode).
+
+Nestling remembers your choice. The steps below are for **Home network (no account)**.
 
 ### 2. Is your camera already on your Wi-Fi?
 
@@ -288,14 +294,15 @@ Good to know:
 
 ## Optional: Nanit account mode
 
-On the first setup screen you can choose **Use a Nanit account instead**. This signs in to
-Nanit once and adds **motion alerts**.
+On the first setup screen you can choose **Sign in with Nanit**. This signs in to Nanit once
+and adds **motion alerts**.
 
 - **Why it needs the internet about once a week:** in account mode the camera only accepts a
   key signed by Nanit, and each key lasts about **7 days**. Nestling renews it by itself
   whenever the device has internet. **Works offline until** on the camera screen shows when
   the current key runs out. If Nestling cannot reach Nanit for a week, video stops until you
-  are online again (and you may need to sign in again).
+  are online again. Nestling keeps you signed in, so you rarely need to sign in again; when
+  you do, your email is already filled in.
 - Video still travels only over your home Wi-Fi.
 - **Motion alerts are simpler than in the Nanit app.** They react to how much the picture
   changes, not to Nanit's cloud analysis of your baby's movement. Shadows, a night light
@@ -304,6 +311,12 @@ Nanit once and adds **motion alerts**.
 - Your password goes only to Nanit. This device keeps the sign-in key in its secure storage.
 
 If you would rather never need the internet, use home network mode.
+
+**You can set up both.** Under the video, tap **Watch over home network** or **Watch with
+Nanit account** to switch, or **Set up home network** / **Sign in with Nanit** to add the
+other one. Nestling remembers which one you last used. If the account stops working (for
+example the camera is busy with other viewers, or the key ran out), Nestling offers
+**Watch over home network**, and the other way round.
 
 ## Troubleshooting
 
@@ -372,6 +385,10 @@ No. During setup it is sent once to the camera over Bluetooth and then forgotten
 **Can I keep using the Nanit app?**
 Yes. Nestling does not change your Nanit account or subscription. Close the Nanit app while
 you set up the camera's Wi-Fi, and remember the camera only streams to a few apps at once.
+
+**Can I set up both modes?**
+Yes. Set up the home network and sign in with Nanit, then switch between them under the
+video. If one stops working, Nestling offers the other.
 
 **Can two phones watch at the same time?**
 Yes, if both are on the home Wi-Fi. Set up the camera in Nestling on each device. The camera

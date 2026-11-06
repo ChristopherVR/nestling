@@ -17,9 +17,22 @@ import 'disclaimer_page.dart';
 import 'theme.dart';
 
 class LocalCameraWatch extends StatefulWidget {
-  const LocalCameraWatch({super.key, required this.hub, this.onWifiSetup});
+  const LocalCameraWatch({
+    super.key,
+    required this.hub,
+    this.onWifiSetup,
+    this.onUseAccount,
+    this.accountReady = false,
+  });
   final LocalNanitHub hub;
   final Future<void> Function()? onWifiSetup;
+
+  /// Switches to watching with the Nanit account, or to signing in when
+  /// [accountReady] is false.
+  final VoidCallback? onUseAccount;
+
+  /// Whether a Nanit account camera is already set up.
+  final bool accountReady;
   @override
   State<LocalCameraWatch> createState() => _LocalCameraWatchState();
 }
@@ -85,6 +98,9 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
     CameraFixAction.changeAddress: () => _editAddress(context),
     if (widget.onWifiSetup != null)
       CameraFixAction.setUpWifi: () => _openDetails(widget.onWifiSetup!),
+    // When the home network fails, a set-up account camera is one tap away.
+    if (widget.accountReady && widget.onUseAccount != null)
+      CameraFixAction.useAccount: widget.onUseAccount!,
   };
 
   @override
@@ -332,6 +348,19 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
                     title: const LText('Change Wi-Fi'),
                     subtitle: const LText('New router, Wi-Fi name or password'),
                     onTap: () => _openDetails(widget.onWifiSetup!),
+                  ),
+                if (widget.onUseAccount != null)
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: LText(
+                      widget.accountReady
+                          ? 'Watch with Nanit account'
+                          : 'Sign in with Nanit',
+                    ),
+                    subtitle: const LText(
+                      'Adds motion alerts. Needs the internet about once a week.',
+                    ),
+                    onTap: widget.onUseAccount,
                   ),
                 ListTile(
                   leading: const Icon(Icons.help_outline),

@@ -29,16 +29,52 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   NanitHub get hub => widget.hub ?? NanitHub.instance;
-  bool _accountMode = false;
 
   /// Keeps the wizard on screen for its last step once the camera is saved.
   bool _finishingSetup = false;
+
+  /// Shows the sign-in form over a paired account camera whose sign-in ran
+  /// out, so the camera does not have to be picked again.
+  bool _signingIn = false;
 
   @override
   void initState() {
     super.initState();
     hub.start();
   }
+
+  /// Adds a home-network camera next to the account one. Saving it makes
+  /// home the active mode.
+  Future<void> _setUpHome() => Navigator.push(
+    context,
+    MaterialPageRoute<void>(
+      builder: (context) => Scaffold(
+        appBar: AppBar(title: const LText('Home network')),
+        body: PageWidth(
+          maxWidth: 720,
+          child: CameraSetupWizard(
+            hub: hub,
+            skipIntro: true,
+            onAccount: () => Navigator.pop(context),
+            onConnected: () => Navigator.pop(context),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  /// Watches over the home network, setting it up first if needed.
+  void _useHome() {
+    setState(() => _signingIn = false);
+    if (hub.homeReady) {
+      hub.switchMode(CameraMode.home);
+    } else {
+      _setUpHome();
+    }
+  }
+
+  /// Watches with the Nanit account; without one, the sign-in form shows.
+  void _useAccount() => hub.switchMode(CameraMode.account);
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -49,73 +85,63 @@ class _CameraPageState extends State<CameraPage> {
         body = const Center(child: CircularProgressIndicator());
       } else if (_finishingSetup) {
         body = _wizard();
-      } else if (hub.local.saved != null) {
-        body = LocalCameraWatch(
-          hub: hub.local,
-          onWifiSetup: () async {
-            if (!context.mounted) return;
-            await Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(title: const LText('Camera Wi-Fi')),
-                  body: PageWidth(
-                    maxWidth: 720,
-                    child: CameraSetupWizard(
-                      hub: hub,
-                      setupWifi: true,
-                      onAccount: () => Navigator.pop(context),
-                      onConnected: () => Navigator.pop(context),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+      } else if (hub.mode == CameraMode.home) {
+        body = hub.homeReady ? _home(context) : _wizard();
+      } else if ((!hub.signedIn && !hub.paired) || _signingIn) {
+        body = _SignIn(
+          hub: hub,
+          onUseHome: _useHome,
+          onCancel: _signingIn && hub.paired
+              ? () => setState(() => _signingIn = false)
+              : null,
+          onSignedIn: () => setState(() => _signingIn = false),
         );
-      } else if (!_accountMode && !hub.paired) {
-        body = _wizard();
-      } else if (!hub.signedIn && !hub.paired) {
-        body = _SignIn(hub: hub);
       } else if (!hub.paired) {
-        body = _PickCamera(hub: hub);
+        body = _PickCamera(hub: hub, onUseHome: _useHome);
       } else {
-        body = _Watch(hub: hub);
+        body = _Watch(
+          hub: hub,
+          onSignIn: () => setState(() => _signingIn = true),
+          onUseHome: _useHome,
+        );
       }
       return Scaffold(
-        appBar: AppBar(
-          title: const LText('Camera'),
-          actions: [
-            if (_accountMode || (hub.paired && hub.local.saved == null))
-              TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (context) => Scaffold(
-                      appBar: AppBar(title: const LText('Local camera')),
-                      body: PageWidth(
-                        maxWidth: 720,
-                        child: CameraSetupWizard(
-                          hub: hub,
-                          onAccount: () => Navigator.pop(context),
-                          onConnected: () => Navigator.pop(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                child: const LText('Local setup'),
-              ),
-          ],
-        ),
+        appBar: AppBar(title: const LText('Camera')),
         body: PageWidth(maxWidth: 720, child: body),
       );
     },
   );
 
+  Widget _home(BuildContext context) => LocalCameraWatch(
+    hub: hub.local,
+    accountReady: hub.accountReady,
+    onUseAccount: _useAccount,
+    onWifiSetup: () async {
+      if (!context.mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (context) => Scaffold(
+            appBar: AppBar(title: const LText('Camera Wi-Fi')),
+            body: PageWidth(
+              maxWidth: 720,
+              child: CameraSetupWizard(
+                hub: hub,
+                setupWifi: true,
+                onAccount: () => Navigator.pop(context),
+                onConnected: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  // Choosing "Sign in with Nanit" saves the mode, which reroutes this page.
   Widget _wizard() => CameraSetupWizard(
     hub: hub,
-    onAccount: () => setState(() => _accountMode = true),
+    onAccount: () {},
     onSaving: (v) => setState(() => _finishingSetup = v),
     onConnected: () => setState(() => _finishingSetup = false),
   );
@@ -124,15 +150,25 @@ class _CameraPageState extends State<CameraPage> {
 // --- Sign in ------------------------------------------------------------------
 
 class _SignIn extends StatefulWidget {
-  const _SignIn({required this.hub});
+  const _SignIn({
+    required this.hub,
+    required this.onUseHome,
+    required this.onSignedIn,
+    this.onCancel,
+  });
   final NanitHub hub;
+  final VoidCallback onUseHome, onSignedIn;
+
+  /// Back to the camera, when signing in again over a paired camera.
+  final VoidCallback? onCancel;
 
   @override
   State<_SignIn> createState() => _SignInState();
 }
 
 class _SignInState extends State<_SignIn> {
-  final _email = TextEditingController();
+  // The email last signed in with, so signing in again is quicker.
+  late final _email = TextEditingController(text: widget.hub.account.email);
   final _password = TextEditingController();
   bool _busy = false;
   bool _hide = true;
@@ -160,6 +196,7 @@ class _SignInState extends State<_SignIn> {
         _password.text,
         onMfa: (c) => _askCode(context, c),
       );
+      widget.onSignedIn();
     } on NanitAuthException catch (e) {
       if (mounted) setState(() => _error = _authMessage(e));
     } finally {
@@ -262,6 +299,24 @@ class _SignInState extends State<_SignIn> {
           child: const LText('Why does this need the internet?'),
         ),
       ),
+      if (widget.onCancel != null)
+        Center(
+          child: TextButton(
+            onPressed: widget.onCancel,
+            child: const LText('Back to the camera'),
+          ),
+        ),
+      Center(
+        child: TextButton.icon(
+          onPressed: widget.onUseHome,
+          icon: const Icon(Icons.home_outlined),
+          label: LText(
+            widget.hub.homeReady
+                ? 'Watch over home network'
+                : 'Use the home network instead',
+          ),
+        ),
+      ),
     ],
   );
 }
@@ -357,8 +412,9 @@ String _authMessage(NanitAuthException e) => switch (e.reason) {
 // --- Pick a camera ------------------------------------------------------------
 
 class _PickCamera extends StatefulWidget {
-  const _PickCamera({required this.hub});
+  const _PickCamera({required this.hub, required this.onUseHome});
   final NanitHub hub;
+  final VoidCallback onUseHome;
 
   @override
   State<_PickCamera> createState() => _PickCameraState();
@@ -441,6 +497,17 @@ class _PickCameraState extends State<_PickCamera> {
       ),
       const SizedBox(height: Space.md),
       Center(
+        child: TextButton.icon(
+          onPressed: widget.onUseHome,
+          icon: const Icon(Icons.home_outlined),
+          label: LText(
+            widget.hub.homeReady
+                ? 'Watch over home network'
+                : 'Use the home network instead',
+          ),
+        ),
+      ),
+      Center(
         child: TextButton(
           onPressed: widget.hub.signOut,
           child: const LText('Sign out of Nanit'),
@@ -453,8 +520,13 @@ class _PickCameraState extends State<_PickCamera> {
 // --- Watch --------------------------------------------------------------------
 
 class _Watch extends StatelessWidget {
-  const _Watch({required this.hub});
+  const _Watch({
+    required this.hub,
+    required this.onSignIn,
+    required this.onUseHome,
+  });
   final NanitHub hub;
+  final VoidCallback onSignIn, onUseHome;
 
   @override
   Widget build(BuildContext context) {
@@ -462,11 +534,16 @@ class _Watch extends StatelessWidget {
     final client = hub.client;
     final problem = hub.problem;
     final linkIssue = issueForAccountLink(hub);
+    // When the account cannot stream, a saved home camera is one tap away.
+    final fallback = <CameraFixAction, VoidCallback>{
+      if (hub.homeReady) CameraFixAction.useHomeNetwork: onUseHome,
+    };
     final fixes = <CameraFixAction, VoidCallback>{
       CameraFixAction.retry: hub.reconnect,
-      CameraFixAction.signIn: hub.signOut,
+      CameraFixAction.signIn: onSignIn,
       CameraFixAction.pickAgain: hub.forgetCamera,
       CameraFixAction.changeAddress: () => editCameraAddress(context, hub),
+      ...fallback,
     };
     return ListView(
       padding: _pagePadding(context),
@@ -487,7 +564,10 @@ class _Watch extends StatelessWidget {
                 padding: const EdgeInsets.only(top: Space.md),
                 child: CameraIssueCard(
                   issue: issue,
-                  actions: {CameraFixAction.retry: () => live.start()},
+                  actions: {
+                    CameraFixAction.retry: () => live.start(),
+                    ...fallback,
+                  },
                 ),
               );
             },
@@ -514,15 +594,16 @@ class _Watch extends StatelessWidget {
             header: (_, title) => SectionTitle(title),
           ),
         const SectionTitle('Camera'),
-        _Details(hub: hub),
+        _Details(hub: hub, onUseHome: onUseHome),
       ],
     );
   }
 }
 
 class _Details extends StatelessWidget {
-  const _Details({required this.hub});
+  const _Details({required this.hub, required this.onUseHome});
   final NanitHub hub;
+  final VoidCallback onUseHome;
 
   @override
   Widget build(BuildContext context) {
@@ -585,6 +666,22 @@ class _Details extends StatelessWidget {
             trailing: const Icon(Icons.help_outline),
             onTap: () => openCameraHelp(context, topicId: 'tokenExpired'),
           ),
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: Space.lg,
+            vertical: Space.xs,
+          ),
+          leading: const Icon(Icons.home_outlined),
+          title: LText(
+            hub.homeReady ? 'Watch over home network' : 'Set up home network',
+          ),
+          subtitle: LText(
+            'Works without the internet. No motion alerts.',
+            style: sub(),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: onUseHome,
+        ),
         ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: Space.lg,
@@ -722,9 +819,9 @@ class CameraTodayCard extends StatelessWidget {
             : connected
             ? 'Connected'
             : 'Not connected';
-        final localSubtitle = h.local.saved == null
-            ? subtitle
-            : 'Home network · No account needed';
+        final localSubtitle = h.mode == CameraMode.home && h.homeReady
+            ? 'Home network · No account needed'
+            : subtitle;
         return Card(
           clipBehavior: Clip.antiAlias,
           child: ListTile(
