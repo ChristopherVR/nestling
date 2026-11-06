@@ -36,13 +36,15 @@ class CameraSetupWizard extends StatefulWidget {
     this.onConnected,
     this.onSaving,
     this.setupWifi = false,
+    this.skipIntro = false,
     this.wifiSetup,
     this.discover,
     this.save,
   });
   final NanitHub hub;
 
-  /// "Use a Nanit account instead", or leaving when [setupWifi].
+  /// "Sign in with Nanit" on the first screen (the mode is already saved),
+  /// or leaving when [setupWifi].
   final VoidCallback onAccount;
 
   /// "Start watching" on the last step.
@@ -54,6 +56,10 @@ class CameraSetupWizard extends StatefulWidget {
 
   /// Starts at the Bluetooth Wi-Fi steps.
   final bool setupWifi;
+
+  /// Starts at the home-network steps, for adding a home camera next to an
+  /// account one. The mode switches once the camera is saved.
+  final bool skipIntro;
 
   /// For tests: the Bluetooth adapter, network search and saving.
   final NanitWifiSetup Function()? wifiSetup;
@@ -71,6 +77,8 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
   final _ssid = TextEditingController(), _password = TextEditingController();
   late CameraSetupStep _step = widget.setupWifi
       ? CameraSetupStep.prepare
+      : widget.skipIntro
+      ? CameraSetupStep.path
       : CameraSetupStep.intro;
   late bool _bluetooth = widget.setupWifi;
   Map<String, String> _found = {};
@@ -133,7 +141,10 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
   }
 
   List<CameraSetupStep> get _steps => [
-    if (!widget.setupWifi) ...[CameraSetupStep.intro, CameraSetupStep.path],
+    if (!widget.setupWifi) ...[
+      if (!widget.skipIntro) CameraSetupStep.intro,
+      CameraSetupStep.path,
+    ],
     if (_bluetooth) ...[
       CameraSetupStep.prepare,
       CameraSetupStep.bluetooth,
@@ -408,8 +419,22 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
   _StepContent _intro(BuildContext context) => _StepContent(
     scene: CameraScene.overview,
     title: 'Your camera, at home',
-    body: 'Watch and listen over your home network. No Nanit account or internet connection needed.',
+    body: 'How should Nestling connect to your camera? You can switch later.',
     children: [
+      _ChoiceCard(
+        icon: Icons.home_outlined,
+        title: 'Home network (no account)',
+        text: 'Works without the internet. No motion alerts.',
+        onTap: _chooseHome,
+      ),
+      const SizedBox(height: Space.md),
+      _ChoiceCard(
+        icon: Icons.person_outline,
+        title: 'Sign in with Nanit',
+        text: 'Adds motion alerts. Needs the internet about once a week.',
+        onTap: _chooseAccount,
+      ),
+      const SizedBox(height: Space.xl),
       const CameraInfoCard(
         title: 'What you get',
         icon: Icons.check_circle_outline,
@@ -426,28 +451,24 @@ class _CameraSetupWizardState extends State<CameraSetupWizard> {
         icon: Icons.info_outline,
         items: [
           'Works only while this device is on your home Wi-Fi, not away from home.',
-          'No recordings, sleep reports, breathing or motion alerts. Keep the Nanit app for those.',
+          'No recordings, sleep reports or breathing alerts. Keep the Nanit app for those.',
           'Nothing is uploaded: video goes straight from the camera to this device.',
           'Setup takes about 5 minutes.',
         ],
       ),
-      const SizedBox(height: Space.md),
-      Card(
-        child: ListTile(
-          leading: const Icon(Icons.person_outline),
-          title: const LText('Use a Nanit account instead'),
-          subtitle: const LText(
-            'Adds motion alerts. Needs the internet about once a week.',
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: widget.onAccount,
-        ),
-      ),
     ],
-    primary: 'Get started',
-    onPrimary: _next,
     help: const [CameraTopicId.networks, CameraTopicId.motionAlerts],
   );
+
+  void _chooseHome() {
+    unawaited(widget.hub.switchMode(CameraMode.home));
+    _next();
+  }
+
+  void _chooseAccount() {
+    unawaited(widget.hub.switchMode(CameraMode.account));
+    widget.onAccount();
+  }
 
   _StepContent _path(BuildContext context) => _StepContent(
     scene: CameraScene.network,

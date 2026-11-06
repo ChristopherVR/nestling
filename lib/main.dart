@@ -174,6 +174,8 @@ class _BabyAppState extends State<BabyApp>
         _applyAppearance();
         _scheduleAppearance();
         widget.state.appResumed();
+        // Renews the Nanit camera key while there is internet.
+        NanitHub.instance.appResumed();
         _showChangelog();
       },
       onHide: widget.state.appPaused,

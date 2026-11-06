@@ -54,6 +54,12 @@ enum CameraFixAction {
   scanAgain,
   signIn,
   pickAgain,
+
+  /// Watch the saved home-network camera instead of the account one.
+  useHomeNetwork,
+
+  /// Watch the account camera instead of the home-network one.
+  useAccount,
 }
 
 String cameraFixLabel(CameraFixAction action) => switch (action) {
@@ -65,6 +71,8 @@ String cameraFixLabel(CameraFixAction action) => switch (action) {
   CameraFixAction.scanAgain => 'Look again',
   CameraFixAction.signIn => 'Sign in again',
   CameraFixAction.pickAgain => 'Pick the camera again',
+  CameraFixAction.useHomeNetwork => 'Watch over home network',
+  CameraFixAction.useAccount => 'Watch with Nanit account',
 };
 
 enum CameraHelpSection { network, bluetooth, wifi, video, account, alerts }
@@ -302,6 +310,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       CameraFixAction.retry,
       CameraFixAction.changeAddress,
       CameraFixAction.setUpWifi,
+      CameraFixAction.useAccount,
     ],
     keywords: 'offline unreachable cannot connect camera off disconnected',
   ),
@@ -325,7 +334,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       'Wait half a minute, then tap Reconnect.',
       'If it keeps happening, unplug the camera for 10 seconds, plug it back in, wait for its light, then tap Reconnect.',
     ],
-    actions: [CameraFixAction.retry],
+    actions: [CameraFixAction.retry, CameraFixAction.useAccount],
     keywords: 'black screen no picture video not starting',
   ),
   const CameraHelpTopic(
@@ -339,7 +348,11 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       'If it drops often, the Wi-Fi may be weak where the camera or this device is. Try moving closer to the router, or add a mesh point near the nursery.',
       'Large downloads or video calls on the same Wi-Fi can also cause drops.',
     ],
-    actions: [CameraFixAction.retry],
+    actions: [
+      CameraFixAction.retry,
+      CameraFixAction.useHomeNetwork,
+      CameraFixAction.useAccount,
+    ],
     keywords: 'video stopped freezes drops lag delay buffering',
   ),
   const CameraHelpTopic(
@@ -396,7 +409,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
         'Turn off any VPN, firewall or ad-blocking app on this phone.',
       'Tap Try again.',
     ],
-    actions: const [CameraFixAction.retry],
+    actions: const [CameraFixAction.retry, CameraFixAction.useHomeNetwork],
     keywords: 'firewall blocked windows defender vpn no video private network',
   ),
   const CameraHelpTopic(
@@ -408,8 +421,9 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
     steps: [
       'Close the Nanit app on other phones and tablets, or close Nestling on another device.',
       'Wait about a minute, then tap Try again.',
+      'Home network set up too? Tap Watch over home network.',
     ],
-    actions: [CameraFixAction.retry],
+    actions: [CameraFixAction.retry, CameraFixAction.useHomeNetwork],
     keywords: '403 stream limit too many viewers busy other phones',
   ),
   const CameraHelpTopic(
@@ -423,7 +437,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       'Turn off any VPN.',
       'Tap Try again.',
     ],
-    actions: [CameraFixAction.retry],
+    actions: [CameraFixAction.retry, CameraFixAction.useHomeNetwork],
     keywords: 'not same wifi mobile data different network',
   ),
   // --- Account mode -------------------------------------------------------------
@@ -432,13 +446,13 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
     section: CameraHelpSection.account,
     icon: Icons.key_off_outlined,
     title: 'Your camera key needs renewing',
-    summary: 'In Nanit account mode, Nanit gives Nestling a camera key that lasts about 7 days. Nestling renews it by itself whenever this device has internet. If it could not renew in time, or you were signed out, the key stops working.',
+    summary: 'In Nanit account mode, Nanit gives Nestling a camera key that lasts about 7 days. Nestling renews it by itself whenever this device has internet, and keeps you signed in. If it could not renew in time, or Nanit signed you out, the key stops working.',
     steps: [
       'Make sure this device has internet for a moment.',
       'Tap Sign in again and sign in with your Nanit account.',
       'Prefer never needing the internet? Use home network mode instead; it needs no key.',
     ],
-    actions: [CameraFixAction.signIn],
+    actions: [CameraFixAction.signIn, CameraFixAction.useHomeNetwork],
     keywords:
         'token expired key signed out weekly 7 days renew internet sign in',
   ),
@@ -452,7 +466,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       'Check this device has internet, then tap Try again.',
       'If the internet is down, video still works until the key runs out.',
     ],
-    actions: [CameraFixAction.retry],
+    actions: [CameraFixAction.retry, CameraFixAction.useHomeNetwork],
     keywords: 'internet down cloud renew offline until',
   ),
   const CameraHelpTopic(
@@ -464,7 +478,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
     steps: [
       'Tap Pick the camera again, then choose it from your Nanit account.',
     ],
-    actions: [CameraFixAction.pickAgain],
+    actions: [CameraFixAction.pickAgain, CameraFixAction.useHomeNetwork],
     keywords: 'certificate identity reset replaced',
   ),
   const CameraHelpTopic(
@@ -474,7 +488,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
     title: 'The camera refused this device',
     summary: 'The camera did not accept Nestling’s key, usually because it has expired or the camera was moved to another account.',
     steps: ['Tap Sign in again.'],
-    actions: [CameraFixAction.signIn],
+    actions: [CameraFixAction.signIn, CameraFixAction.useHomeNetwork],
     keywords: 'refused unauthorized 401',
   ),
   // --- Bluetooth ------------------------------------------------------------------
@@ -668,6 +682,10 @@ const cameraFaq = <CameraFaq>[
   CameraFaq(
     'Why does account mode need the internet about once a week?',
     'In account mode the camera only accepts a key signed by Nanit, and each key lasts about 7 days. Nestling renews it by itself whenever it can. If it cannot reach Nanit for a week, video stops until you are online again.',
+  ),
+  CameraFaq(
+    'Can I set up both modes?',
+    'Yes. Set up the home network and sign in with Nanit, then switch between them under the video. If one stops working, Nestling offers the other.',
   ),
   CameraFaq(
     'Does my video go to the cloud?',
