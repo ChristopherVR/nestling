@@ -369,6 +369,7 @@ class _LiveCard extends StatelessWidget {
                       if (d != null && context.mounted) {
                         await savePumpDraft(context, d);
                       }
+                      if (context.mounted) await _offerSwitchOff(context, hub);
                     },
                   ),
                 ],
@@ -379,6 +380,39 @@ class _LiveCard extends StatelessWidget {
       ],
     );
   }
+}
+
+/// After a session is finished by hand the pumps are only paused, so offer
+/// to switch off any that are still on.
+Future<void> _offerSwitchOff(BuildContext context, PumpHub hub) async {
+  final on = hub.ready
+      .where((p) => p.session?.shownState != PumpRunState.off)
+      .toList();
+  if (on.isEmpty) return;
+  final off = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: LText(
+        on.length > 1 ? 'Switch off the pumps?' : 'Switch off the pump?',
+      ),
+      content: const LText('The session is over. Switching off saves battery.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const LText('Keep on'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const LText('Switch off'),
+        ),
+      ],
+    ),
+  );
+  if (off != true) return;
+  await hub.control(
+    null,
+    (s) => s.shownState == PumpRunState.off ? Future.value() : s.switchOff(),
+  );
 }
 
 class _Controls extends StatelessWidget {

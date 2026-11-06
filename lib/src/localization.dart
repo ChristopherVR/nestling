@@ -1011,6 +1011,11 @@ const afrikaans = <String, String>{
   'Pump now': 'Pomp nou',
   'Both together': 'Albei saam',
   'Finish and save': 'Klaar en stoor',
+  'Switch off the pumps?': 'Skakel die pompe af?',
+  'Switch off the pump?': 'Skakel die pomp af?',
+  'The session is over. Switching off saves battery.':
+      'Die sessie is verby. Afskakel spaar battery.',
+  'Keep on': 'Hou aan',
   'Massage': 'Masseer',
   'Expression': 'Uitpomp',
   'Mixed': 'Gemeng',
