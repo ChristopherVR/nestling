@@ -116,6 +116,141 @@ class AppearancePicker extends StatelessWidget {
   }
 }
 
+/// The palette in use for [AppState.palette] ('' means the default).
+NestVariant paletteOf(String name) {
+  final v = NestVariant.values.asNameMap()[name];
+  return NestPalette.choices.contains(v) ? v! : NestPalette.shipped;
+}
+
+/// A choice of colour palettes (Sky, Blush), each drawn as a small swatch of
+/// its own colours so the choice can be seen before it is made.
+class PalettePicker extends StatelessWidget {
+  const PalettePicker({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    final current = paletteOf(app.palette);
+    return Row(
+      children: [
+        for (final (i, v) in NestPalette.choices.indexed) ...[
+          if (i > 0) const SizedBox(width: Space.sm),
+          Expanded(
+            child: _PaletteSwatch(
+              variant: v,
+              selected: v == current,
+              onTap: () =>
+                  app.setPalette(v == NestPalette.shipped ? '' : v.name),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PaletteSwatch extends StatelessWidget {
+  const _PaletteSwatch({
+    required this.variant,
+    required this.selected,
+    required this.onTap,
+  });
+  final NestVariant variant;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colors;
+    // Drawn in the swatch's own colours, at the current light or dark mode.
+    final own = NestPalette.forVariant(variant, Baby.mode);
+    final radius = BorderRadius.circular(Corners.lg);
+    final dots = [
+      own.scheme.primary,
+      own.scheme.secondaryContainer,
+      own.feed.color,
+      own.sleep.color,
+    ];
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: AnimatedContainer(
+        duration: Motion.medium,
+        curve: Motion.standard,
+        decoration: BoxDecoration(
+          color: own.summary ?? own.scheme.surfaceContainer,
+          borderRadius: radius,
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(Space.md),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final (i, c) in dots.indexed)
+                        Align(
+                          widthFactor: i == dots.length - 1 ? 1 : 0.7,
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: c,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: own.card, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: Space.sm),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedSwitcher(
+                        duration: Motion.medium,
+                        transitionBuilder: (child, a) =>
+                            ScaleTransition(scale: a, child: child),
+                        child: selected
+                            ? Padding(
+                                key: const ValueKey('on'),
+                                padding: const EdgeInsetsDirectional.only(
+                                  end: Space.xs,
+                                ),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 18,
+                                  color: own.scheme.primary,
+                                ),
+                              )
+                            : const SizedBox(key: ValueKey('off')),
+                      ),
+                      LText(
+                        variant.label,
+                        style: Theme.of(context).textTheme.labelLarge
+                            ?.copyWith(color: own.scheme.onSurface),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Feed reminder switch and interval (used in Settings and the first-time setup).
 /// Notification or alarm, for feed or pill reminders on this phone.
 class RingStylePicker extends StatelessWidget {
@@ -273,6 +408,10 @@ Future<void> _showAppearanceSheet(BuildContext context) => showSheet(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       SheetHeader(title: 'Appearance'),
+      _SheetHeading('Colours'),
+      PalettePicker(),
+      SizedBox(height: Space.lg),
+      _SheetHeading('Light or dark'),
       AppearancePicker(),
       SizedBox(height: Space.lg),
       NightLightSwitch(),
@@ -280,6 +419,20 @@ Future<void> _showAppearanceSheet(BuildContext context) => showSheet(
     ],
   ),
 );
+
+class _SheetHeading extends StatelessWidget {
+  const _SheetHeading(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: Space.sm),
+    child: Semantics(
+      header: true,
+      child: LText(text, style: Theme.of(context).textTheme.titleSmall),
+    ),
+  );
+}
 
 /// Night light: a dimmer, warmer version of the light theme from 6 pm to 6 am.
 /// It is not dark mode, so the text says so.
@@ -462,11 +615,22 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     addSection('Appearance', [
       (
-        terms: ['Theme', 'Light', 'Dark', 'Match phone'],
+        terms: [
+          'Theme',
+          'Light',
+          'Dark',
+          'Match phone',
+          'Colours',
+          'Sky',
+          'Blush',
+          'Rose',
+        ],
         child: _Tile(
           icon: Baby.dark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
           title: 'Theme',
-          value: appearanceLabel(app.appearance),
+          value:
+              '${tr(paletteOf(app.palette).label)} · '
+              '${tr(appearanceLabel(app.appearance))}',
           onTap: () => _showAppearanceSheet(context),
         ),
       ),

@@ -7,6 +7,7 @@ import 'package:nestling/src/store.dart';
 import 'package:nestling/src/ui/growth_page.dart';
 import 'package:nestling/src/ui/setup_page.dart';
 import 'package:flutter/material.dart';
+import 'package:nestling/src/ui/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -35,7 +36,7 @@ void main() {
         await tester.pumpWidget(BabyApp(state: app));
         await tester.pumpAndSettle();
         expect(find.byType(SetupPage), findsOneWidget);
-        for (var i = 0; i < 5; i++) {
+        for (var i = 0; i < 6; i++) {
           await tester.tap(find.byType(FilledButton));
           await tester.pumpAndSettle();
           final ex = tester.takeException();
@@ -62,8 +63,10 @@ void main() {
     FlutterError.onError = (d) => debugPrint(d.toString());
     await tester.pumpWidget(BabyApp(state: app));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(FilledButton));
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+    }
     await tester.enterText(find.byType(TextField).first, 'Markus');
     await tester.tap(find.text('Add another baby'));
     await tester.pumpAndSettle();
@@ -106,6 +109,13 @@ void main() {
     tester,
   ) async {
     final app = await start(tester, 'unused-setup-answers-test.json');
+    addTearDown(() => NestPalette.chosen = null);
+    await next(tester);
+    // The look comes first, so the rest of setup is shown in it.
+    expect(find.text('Pick your look'), findsOneWidget);
+    await tester.tap(find.text('Blush'));
+    await tester.pumpAndSettle();
+    expect(app.palette, 'blush');
     await next(tester);
     await tester.enterText(find.byType(TextField), 'Mia');
     await next(tester);

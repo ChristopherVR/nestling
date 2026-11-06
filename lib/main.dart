@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -24,6 +26,7 @@ import 'src/ui/desktop/desktop_shell.dart';
 import 'src/ui/global_search.dart';
 import 'src/ui/history_page.dart';
 import 'src/ui/home_page.dart';
+import 'src/ui/motion_kit.dart';
 import 'src/ui/growth_page.dart';
 import 'src/ui/pills_page.dart';
 import 'src/ui/routines_page.dart';
@@ -81,7 +84,19 @@ class BabyApp extends StatefulWidget {
   State<BabyApp> createState() => _BabyAppState();
 }
 
-class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
+class _BabyAppState extends State<BabyApp>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  /// The whole app, so a picture of it can be taken before the colours change.
+  final _appKey = GlobalKey();
+
+  /// A picture of the app as it looked before the colours changed, faded out
+  /// over the new colours so a theme change is a soft cross-fade, not a flash.
+  ui.Image? _before;
+  late final _fade = AnimationController(
+    vsync: this,
+    duration: Motion.long,
+    value: 0,
+  );
   late String _language;
 
   /// Whether the night light is dimming the palette right now.
@@ -168,6 +183,7 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
     );
     Baby.dark = _wantDark;
     Baby.dim = _nighttime;
+    NestPalette.chosen = _wantPalette;
     _scheduleAppearance();
     if (!widget.state.startedHeadless) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showChangelog());
@@ -180,6 +196,8 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
     widget.state.removeListener(_applyAppearance);
     _appearanceTimer?.cancel();
     _lifecycle.dispose();
+    _fade.dispose();
+    _before?.dispose();
     super.dispose();
   }
 
@@ -193,6 +211,11 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
     _ => false,
   };
 
+  NestVariant? get _wantPalette {
+    final v = NestVariant.values.asNameMap()[widget.state.palette];
+    return NestPalette.choices.contains(v) ? v : null;
+  }
+
   /// The night light dims the light palette; dark mode needs no dimming.
   bool get _wantDim =>
       widget.state.nightLight && !_wantDark && isNighttime(_now);
@@ -202,11 +225,15 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
   void _applyAppearance() {
     final dark = _wantDark;
     final dim = _wantDim;
+    final palette = _wantPalette;
     if (dark == Baby.dark &&
         dim == _nighttime &&
+        palette == NestPalette.chosen &&
         _language == widget.state.language) {
       return;
     }
+    _snapshotBefore();
+    NestPalette.chosen = palette;
     _nighttime = dim;
     _language = widget.state.language;
     AppLanguage.use(_language);
@@ -219,6 +246,29 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
 
     (context as Element).visitChildren(markAll);
     setState(() {});
+  }
+
+  /// Takes a picture of the app as it is now and starts fading it out, so the
+  /// new colours appear underneath it. Skipped when the phone asks for less
+  /// motion, or when a picture cannot be taken (e.g. nothing painted yet).
+  void _snapshotBefore() {
+    final media = MediaQuery.maybeOf(_appKey.currentContext ?? context);
+    if (media?.disableAnimations ?? false) return;
+    final boundary = _appKey.currentContext?.findRenderObject();
+    if (boundary is! RenderRepaintBoundary || !boundary.hasSize) return;
+    final ui.Image picture;
+    try {
+      picture = boundary.toImageSync(pixelRatio: media?.devicePixelRatio ?? 1);
+    } catch (_) {
+      return;
+    }
+    _before?.dispose();
+    _before = picture;
+    _fade.forward(from: 0).whenCompleteOrCancel(() {
+      if (!mounted || _before != picture) return;
+      setState(() => _before = null);
+      picture.dispose();
+    });
   }
 
   @override
@@ -235,21 +285,38 @@ class _BabyAppState extends State<BabyApp> with WidgetsBindingObserver {
         theme: babyTheme(),
         themeAnimationDuration: Duration.zero,
         // Wide windows get the compact desktop theme, dialogs included.
-        builder: (context, child) => DesktopScope(
-          child: Column(
-            children: [
-              if (_nighttime) const NighttimeNotice(),
-              Expanded(
-                child: _nighttime
-                    ? MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        child: child!,
-                      )
-                    : child!,
+        builder: (context, child) => Stack(
+          fit: StackFit.expand,
+          children: [
+            RepaintBoundary(
+              key: _appKey,
+              child: DesktopScope(
+                child: Column(
+                  children: [
+                    if (_nighttime) const NighttimeNotice(),
+                    Expanded(
+                      child: _nighttime
+                          ? MediaQuery.removePadding(
+                              context: context,
+                              removeTop: true,
+                              child: child!,
+                            )
+                          : child!,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+            if (_before case final before?)
+              IgnorePointer(
+                child: FadeTransition(
+                  opacity: ReverseAnimation(
+                    CurvedAnimation(parent: _fade, curve: Motion.enter),
+                  ),
+                  child: RawImage(image: before, fit: BoxFit.fill),
+                ),
+              ),
+          ],
         ),
         // Lists can also be dragged with a mouse (Windows testing), e.g. pull to refresh.
         scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -332,7 +399,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final title = _title(app);
-    final pages = IndexedStack(
+    final pages = FadeIndexedStack(
       key: _pagesKey,
       index: tab,
       children: [
@@ -459,13 +526,22 @@ class _ShellState extends State<Shell> {
   ) => Scaffold(
     appBar: AppBar(
       // The Today hero already names the baby; the bar just says where you are.
-      title: LText(
-        [
-          if (tab == ShellTabs.today) 'Today' else title,
-          if (widget.profile.isNotEmpty) '[${widget.profile}]',
-        ].join(' '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      title: AnimatedSwitcher(
+        duration: Motion.medium,
+        switchInCurve: Motion.enter,
+        layoutBuilder: (current, previous) => Stack(
+          alignment: AlignmentDirectional.centerStart,
+          children: [...previous, ?current],
+        ),
+        child: LText(
+          [
+            if (tab == ShellTabs.today) 'Today' else title,
+            if (widget.profile.isNotEmpty) '[${widget.profile}]',
+          ].join(' '),
+          key: ValueKey(tab),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       actions: [
         LIconButton(
@@ -490,8 +566,11 @@ class _ShellState extends State<Shell> {
     body: Column(
       key: const ValueKey('shell-content'),
       children: [
-        if (tab != ShellTabs.today || AppScope.of(context).babies.length > 1)
-          const BabyPicker(),
+        Collapse(
+          visible:
+              tab != ShellTabs.today || AppScope.of(context).babies.length > 1,
+          child: const BabyPicker(),
+        ),
         Expanded(child: pages),
       ],
     ),

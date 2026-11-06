@@ -481,6 +481,8 @@ void main() {
     await websiteView(tester, DateTime.now());
     await shot(tester, 'setup-welcome');
     await next(tester);
+    await shot(tester, 'setup-look');
+    await next(tester);
     await tester.enterText(find.byType(TextField).first, 'Mia');
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();

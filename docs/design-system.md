@@ -228,6 +228,15 @@ component themes rather than per screen:
 quick-log tiles, a tinted Today summary, or sunny filled buttons). Every
 candidate passes `test/design_tokens_test.dart`. `NestPalette.shipped`
 chooses the palette; `NestPalette.debugVariant` overrides it in previews.
+
+**Blush** is the one palette people can pick themselves (Settings → Theme →
+Colours, stored per device as `palette`). It brings back the earlier rose
+theme, close to the Momcozy pump app, rebuilt on the same tones, so it passes
+every contrast check. It is the only exception to "no red or pink outside
+errors", because people choose it. `NestPalette.choices` lists the palettes
+offered. When the palette, light/dark or night light changes, the app
+cross-fades from a snapshot of the old colours (`_snapshotBefore` in
+`main.dart`). The cross-fade is skipped when the phone asks for reduced motion.
 To compare them:
 
 ```
@@ -244,6 +253,29 @@ the system asks for reduced motion (`MediaQuery.disableAnimations`),
 press-scale, looping guides and setup page slides are switched off.
 Predictive back works because pages use standard routes and sheets use
 `PopScope` only when there are unsaved edits.
+
+Shared movements live in `lib/src/ui/motion_kit.dart`, so every screen
+moves the same way. Use them rather than writing one-off animations:
+
+- **Pages** (`NestPageTransitionsBuilder`, set in the theme): the new page
+  fades in and glides a short way from the side, while the old page drifts
+  back and dims.
+- **Tabs** (`FadeIndexedStack`): the new tab fades and rises into place.
+  Hidden tabs keep their state, pause their tickers, and do not rebuild
+  until they are shown again (`ActiveGate`).
+- **Entrances** (`Reveal`): fade and rise on first build. Use
+  `Reveal.stagger(i)` for a list. Key list rows by id, so only new rows
+  animate.
+- **Show and hide** (`Collapse`): the space grows or shrinks while the
+  content fades, so nothing below jumps. The timer card, the first-log
+  guide, the routine preview and the baby picker use it.
+- **Counters** (`RollingText`): changed digits roll into place. It is used
+  for the feed timer, where only the digits rebuild each second.
+- **Sheets:** the content resizes smoothly (`AnimatedSize`) when options
+  reveal more fields.
+
+All of these use only transforms and `FadeTransition` (never `Opacity` per
+frame), and all are skipped under reduced motion.
 
 ## States
 

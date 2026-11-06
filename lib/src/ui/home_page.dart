@@ -9,6 +9,7 @@ import 'camera_page.dart';
 import 'common.dart';
 import 'growth_page.dart';
 import 'hub_page.dart';
+import 'motion_kit.dart';
 import 'pills_page.dart';
 import 'pump_page.dart';
 import 'routines_page.dart';
@@ -120,26 +121,37 @@ class _HomePageState extends State<HomePage> {
       ),
       if (app.pumpOnToday) _pumpTile(context, app),
     ];
+    // Today reads top to bottom as: what is happening now (timer, summary),
+    // what to log next (the buttons), and what has been logged. Everything
+    // else waits further down. Sections glide in one after another the first
+    // time Today is shown; the timer card grows in and out of place.
     final overview = <Widget>[
-      if (app.timerStart != null) ...[
-        _TimerCard(app: app),
-        const SizedBox(height: Space.md),
-      ],
+      Collapse(
+        visible: app.timerStart != null,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: Space.md),
+          child: _TimerCard(app: app),
+        ),
+      ),
       const SizedBox(height: Space.sm),
-      _SummaryTint(child: _StatusCard(app: app)),
+      Reveal(
+        child: _SummaryTint(child: _StatusCard(app: app)),
+      ),
       // A new parent's next step comes before the buttons it points at, so it
       // is never pushed off screen (e.g. by the night-light notice).
-      if (app.tourPending) ...[
-        const SizedBox(height: Space.lg),
-        _FirstLogGuide(app: app),
-      ],
+      Collapse(
+        visible: app.tourPending,
+        child: Padding(
+          padding: const EdgeInsets.only(top: Space.lg),
+          child: _FirstLogGuide(app: app),
+        ),
+      ),
       const SizedBox(height: Space.lg),
       const PumpLiveCard(),
-      _QuickGrid(children: quick),
-      if (app.cameraOnToday) ...[
-        const SizedBox(height: Space.md),
-        const CameraTodayCard(),
-      ],
+      Reveal(
+        delay: Reveal.stagger(1),
+        child: _QuickGrid(children: quick),
+      ),
     ];
     final activity = <Widget>[
       SectionTitle(
@@ -158,20 +170,41 @@ class _HomePageState extends State<HomePage> {
               .length,
         ),
       ),
-      if (today.isEmpty)
-        const Card(
-          child: EmptyState(
-            icon: Icons.edit_note_rounded,
-            text: 'Nothing logged yet today.\nTap Feed, Nappy or Pill above to start.',
+      // New entries glide into the list and the card grows to fit them.
+      Reveal(
+        delay: Reveal.stagger(2),
+        child: AnimatedSize(
+          duration: Motion.long,
+          curve: Motion.standard,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: Motion.medium,
+            child: today.isEmpty
+                ? const Card(
+                    key: ValueKey('empty'),
+                    child: EmptyState(
+                      icon: Icons.edit_note_rounded,
+                      text: 'Nothing logged yet today.\nTap Feed, Nappy or Pill above to start.',
+                    ),
+                  )
+                : ListCard(
+                    key: const ValueKey('list'),
+                    children: [
+                      for (final (i, e) in today.take(8).indexed)
+                        Reveal(
+                          key: ValueKey(e.id),
+                          delay: Reveal.stagger(i),
+                          offset: 8,
+                          child: EntryTile(
+                            entry: e,
+                            onTap: () => editEntry(context, e),
+                          ),
+                        ),
+                    ],
+                  ),
           ),
-        )
-      else
-        ListCard(
-          children: [
-            for (final e in today.take(8))
-              EntryTile(entry: e, onTap: () => editEntry(context, e)),
-          ],
         ),
+      ),
       const SizedBox(height: Space.xs),
       Align(
         child: TextButton.icon(
@@ -182,11 +215,12 @@ class _HomePageState extends State<HomePage> {
       ),
     ];
     final plan = <Widget>[
+      if (app.cameraOnToday) ...[
+        const SizedBox(height: Space.md),
+        const CameraTodayCard(),
+      ],
       ..._tips(context, app),
-      const SectionTitle('Plan'),
-      RoutinePreview(onOpen: widget.onSeeRoutines),
-      const SizedBox(height: Space.md),
-      _ReminderRow(app: app),
+      _PlanSection(app: app, onSeeRoutines: widget.onSeeRoutines),
     ];
     if (Desktop.of(context)) {
       return _desktop(context, app, today, activity);
@@ -468,28 +502,20 @@ class _TimerCard extends StatefulWidget {
 }
 
 class _TimerCardState extends State<_TimerCard> {
-  late final Timer _tick;
-
-  @override
-  void initState() {
-    super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _tick.cancel();
-    super.dispose();
-  }
+  /// The card as last drawn while running. When the timer stops, the card
+  /// shrinks away (see Collapse) still showing this, instead of going blank.
+  Widget? _last;
 
   @override
   Widget build(BuildContext context) {
     final app = widget.app;
+    if (app.timerStart == null) return _last ?? const SizedBox.shrink();
+    return _last = _card(context, app);
+  }
+
+  Widget _card(BuildContext context, AppState app) {
     final theme = Theme.of(context);
     final feed = context.nest.feed;
-    final elapsed = app.feedElapsed();
-    final mm = elapsed.inMinutes.toString().padLeft(2, '0');
-    final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -521,11 +547,9 @@ class _TimerCardState extends State<_TimerCard> {
             Semantics(
               liveRegion: false,
               label: tr('Active feeding time'),
-              child: LText(
-                '$mm:$ss',
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _TimerDigits(app: app),
               ),
             ),
             LText(
@@ -631,6 +655,87 @@ class _TimerCardState extends State<_TimerCard> {
       ),
     );
   }
+}
+
+/// The running feed time. Only these digits rebuild every second, not the
+/// whole card, and each changed digit rolls into place.
+class _TimerDigits extends StatefulWidget {
+  const _TimerDigits({required this.app});
+  final AppState app;
+
+  @override
+  State<_TimerDigits> createState() => _TimerDigitsState();
+}
+
+class _TimerDigitsState extends State<_TimerDigits> {
+  late final Timer _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tick.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsed = widget.app.feedElapsed();
+    final mm = elapsed.inMinutes.toString().padLeft(2, '0');
+    final ss = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+    return RollingText(
+      '$mm:$ss',
+      style: Theme.of(context).textTheme.displayLarge
+          ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+    );
+  }
+}
+
+/// Routines and the feed reminder under one quiet heading. The reminder line
+/// is always shown; the routine preview folds open and closed in place.
+class _PlanSection extends StatefulWidget {
+  const _PlanSection({required this.app, required this.onSeeRoutines});
+  final AppState app;
+  final VoidCallback onSeeRoutines;
+
+  @override
+  State<_PlanSection> createState() => _PlanSectionState();
+}
+
+class _PlanSectionState extends State<_PlanSection> {
+  bool _open = true;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SectionTitle(
+        'Plan',
+        trailing: LIconButton(
+          tooltip: _open ? 'Hide routines' : 'Show routines',
+          onPressed: () => setState(() => _open = !_open),
+          icon: AnimatedRotation(
+            turns: _open ? 0.5 : 0,
+            duration: Motion.medium,
+            curve: Motion.standard,
+            child: const Icon(Icons.expand_more_rounded),
+          ),
+        ),
+      ),
+      _ReminderRow(app: widget.app),
+      Collapse(
+        visible: _open,
+        child: Padding(
+          padding: const EdgeInsets.only(top: Space.md),
+          child: RoutinePreview(onOpen: widget.onSeeRoutines),
+        ),
+      ),
+    ],
+  );
 }
 
 /// A status card on the desktop Today grid.

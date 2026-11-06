@@ -9,6 +9,7 @@ import 'growth_page.dart';
 import 'hub_page.dart';
 import 'language_picker.dart';
 import 'nestling_mark.dart';
+import 'settings_page.dart';
 import 'setup/illustrations.dart';
 import 'setup/motion.dart';
 import 'theme.dart';
@@ -36,7 +37,7 @@ class _SetupPageState extends State<SetupPage> {
   late DateTime? _birth = AppScope.of(context).activeBaby.dateOfBirth;
   late String? _photo = AppScope.of(context).activeBaby.photo;
   _Feeding? _feeding;
-  static const _count = 6;
+  static const _count = 7;
 
   @override
   void dispose() {
@@ -117,12 +118,13 @@ class _SetupPageState extends State<SetupPage> {
                   controller: _pages,
                   physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (i) {
-                    if (_step == 1) _saveProfile();
+                    if (_step == 2) _saveProfile();
                     setState(() => _step = i);
                   },
                   children: [
                     for (final (i, page) in [
                       _Welcome(onSkip: _finish),
+                      const _Look(),
                       _Names(
                         baby: _baby,
                         more: _more,
@@ -132,7 +134,7 @@ class _SetupPageState extends State<SetupPage> {
                           _more.remove(c);
                           c.dispose();
                         }),
-                        onDone: () => _go(2),
+                        onDone: () => _go(3),
                       ),
                       _Birthday(
                         name: _name,
@@ -152,7 +154,7 @@ class _SetupPageState extends State<SetupPage> {
                           // A single choice moves straight on, as if
                           // Continue had been tapped.
                           Timer(const Duration(milliseconds: 260), () {
-                            if (mounted && _step == 4) _go(5);
+                            if (mounted && _step == 5) _go(6);
                           });
                         },
                       ),
@@ -613,6 +615,28 @@ class _Photo extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Colours and light or dark, chosen first so the rest of setup is already
+/// shown in them. The app cross-fades to a new choice straight away.
+class _Look extends StatelessWidget {
+  const _Look();
+
+  @override
+  Widget build(BuildContext context) => _Question(
+    title: 'Pick your look',
+    text:
+        'Choose the colours you like. You can change this any time in '
+        'Settings.',
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PalettePicker(),
+        SizedBox(height: Space.lg),
+        AppearancePicker(),
+      ],
+    ),
+  );
 }
 
 class _FeedingStep extends StatelessWidget {

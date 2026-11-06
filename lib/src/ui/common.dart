@@ -10,12 +10,20 @@ import '../localization.dart';
 export '../localization.dart';
 
 /// Gives every widget below access to [AppState] and rebuilds them on change.
-class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({super.key, required AppState state, required super.child})
-    : super(notifier: state);
+/// [trigger] replaces the state as the rebuild signal (see `ActiveGate`,
+/// which holds back rebuilds of hidden tabs).
+class AppScope extends InheritedNotifier<Listenable> {
+  const AppScope({
+    super.key,
+    required this.state,
+    Listenable? trigger,
+    required super.child,
+  }) : super(notifier: trigger ?? state);
+
+  final AppState state;
 
   static AppState of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+      context.dependOnInheritedWidgetOfExactType<AppScope>()!.state;
 }
 
 // ------------------------------------------------------------------ formatting
@@ -291,7 +299,7 @@ class PullToSync extends StatelessWidget {
 
 /// The same explicit sync action for touch gestures and the toolbar button.
 Future<void> refreshAndSync(BuildContext context) async {
-  final app = context.findAncestorWidgetOfExactType<AppScope>()!.notifier!;
+  final app = context.findAncestorWidgetOfExactType<AppScope>()!.state;
   await app.refreshIps();
   if (app.peers.isEmpty) {
     if (context.mounted) {

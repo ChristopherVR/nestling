@@ -20,6 +20,7 @@ VARIANTS = [
     ("tide", "A. Tide"),
     ("marigold", "B. Marigold"),
     ("sky", "C. Sky"),
+    ("blush", "D. Blush (opt-in)"),
 ]
 SCREENS = ["today", "history", "feed-sheet", "habits", "settings"]
 GAP = 24

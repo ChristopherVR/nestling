@@ -90,6 +90,10 @@ Future<void> _openSheet(BuildContext context, Widget child) {
     useSafeArea: true,
     useRootNavigator: true,
     constraints: const BoxConstraints(maxWidth: 560),
+    sheetAnimationStyle: const AnimationStyle(
+      duration: Duration(milliseconds: 360),
+      reverseDuration: Motion.medium,
+    ),
     builder: builder,
   );
 }
@@ -162,7 +166,17 @@ class _SheetScrollState extends State<_SheetScroll> {
   @override
   Widget build(BuildContext context) => Scrollbar(
     controller: _controller,
-    child: SingleChildScrollView(controller: _controller, child: widget.child),
+    child: SingleChildScrollView(
+      controller: _controller,
+      // Content that grows or shrinks (a chosen option revealing more fields)
+      // resizes the sheet smoothly instead of jumping.
+      child: AnimatedSize(
+        duration: Motion.medium,
+        curve: Motion.standard,
+        alignment: Alignment.topCenter,
+        child: widget.child,
+      ),
+    ),
   );
 }
 

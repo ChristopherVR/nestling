@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
 
+import 'motion_kit.dart';
+
 // ------------------------------------------------------------------- colour
 
 /// The one accent: a muted slate-teal. Used for primary actions and selected
@@ -86,7 +88,8 @@ enum NestVariant {
   current('Slate', 'Calm neutral grey with one muted slate-teal accent'),
   tide('Tide', 'Fresh aqua on warm off-white, like a clear morning'),
   marigold('Marigold', 'Sunny marigold on soft cream, warm without pink'),
-  sky('Sky', 'Soft sky blue with a mint companion, airy and light');
+  sky('Sky', 'Soft sky blue with a mint companion, airy and light'),
+  blush('Blush', 'Warm rose and peach, like the pump app');
 
   const NestVariant(this.label, this.mood);
   final String label;
@@ -197,7 +200,7 @@ const _specs = <NestVariant, _Spec>{
     neutral: (105, 1.5),
     darkNeutral: (250, 4),
     containerChroma: 24,
-    tileChroma: 8,
+    tileChroma: 6,
     summaryChroma: 10,
     kinds: {
       'feed': (238, 36),
@@ -209,6 +212,30 @@ const _specs = <NestVariant, _Spec>{
       'pump': (205, 32),
       'warn': (80, 40),
       'success': (150, 34),
+    },
+  ),
+  // The earlier rose theme, close to the Momcozy pump app: a rose accent,
+  // peach selection and summary wash, blush-tinted surfaces and tiles. Rebuilt
+  // on the same fixed tones as the others, so it keeps their contrast. It is
+  // an opt-in choice in Settings, never the default (see [NestPalette.choices]).
+  NestVariant.blush: _Spec(
+    accent: (13, 58),
+    secondary: (40, 24),
+    neutral: (25, 4),
+    darkNeutral: (355, 4),
+    containerChroma: 30,
+    tileChroma: 10,
+    summaryChroma: 16,
+    kinds: {
+      'feed': (44, 38),
+      'sleep': (278, 36),
+      'nappy': (178, 34),
+      'pee': (82, 40),
+      'poo': (48, 22),
+      'pill': (322, 34),
+      'pump': (13, 38),
+      'warn': (65, 40),
+      'success': (165, 34),
     },
   ),
 };
@@ -265,8 +292,14 @@ class NestPalette extends ThemeExtension<NestPalette> {
   @visibleForTesting
   static NestVariant? debugVariant;
 
+  /// The palettes offered in Settings, default first.
+  static const choices = [NestVariant.sky, NestVariant.blush];
+
+  /// The palette chosen in Settings, or null for [shipped].
+  static NestVariant? chosen;
+
   /// The palette in use.
-  static NestVariant get active => debugVariant ?? shipped;
+  static NestVariant get active => debugVariant ?? chosen ?? shipped;
 
   static final _cache = <(NestVariant, NestMode), NestPalette>{};
 
@@ -761,7 +794,7 @@ abstract final class Corners {
   static const double lg = 16;
   static const double xl = 28;
 
-  static final BorderRadius card = BorderRadius.circular(lg);
+  static final BorderRadius card = BorderRadius.circular(20);
   static final BorderRadius tile = BorderRadius.circular(md);
 }
 
@@ -865,6 +898,11 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
   return base.copyWith(
     scaffoldBackgroundColor: scheme.surface,
     textTheme: text,
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {
+        for (final p in TargetPlatform.values) p: NestPageTransitionsBuilder(),
+      },
+    ),
     splashFactory: desktop ? InkRipple.splashFactory : InkSparkle.splashFactory,
     materialTapTargetSize: desktop
         ? MaterialTapTargetSize.shrinkWrap
@@ -887,7 +925,8 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
       actionsIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
     ),
     // Grouped content sits on a white (light) or one-step-lighter (dark)
-    // surface. In light themes a hairline keeps white on near-white legible.
+    // surface. In light themes a faint hairline (half-strength outline) keeps
+    // white on near-white legible without drawing boxes around everything.
     cardTheme: CardThemeData(
       color: card,
       surfaceTintColor: Colors.transparent,
@@ -897,14 +936,17 @@ ThemeData _theme(NestPalette nest, {required bool desktop}) {
         borderRadius: Corners.card,
         side: nest.mode == NestMode.dark
             ? BorderSide.none
-            : BorderSide(color: scheme.outlineVariant),
+            : BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
       ),
     ),
+    // The bar sits on the page colour, so it reads as part of the page; the
+    // pill-shaped indicator glides between tabs.
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: scheme.surfaceContainer,
+      backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      height: 80,
+      height: 72,
+      indicatorShape: const StadiumBorder(),
       indicatorColor: scheme.secondaryContainer,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (s) => text.labelMedium?.copyWith(

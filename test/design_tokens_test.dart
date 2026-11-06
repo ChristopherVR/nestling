@@ -95,20 +95,25 @@ void main() {
           }
         });
 
-        test('no red or pink outside the error roles', () {
-          final error = {
-            s.error,
-            s.onError,
-            s.errorContainer,
-            s.onErrorContainer,
-          };
-          for (final MapEntry(key: role, value: c) in p.roles.entries) {
-            if (error.contains(c)) continue;
-            final hct = Hct.fromInt(c.toARGB32());
-            final reddish = hct.hue < 40 || hct.hue > 330;
-            expect(reddish && hct.chroma > 12, isFalse, reason: '$role $hct');
-          }
-        });
+        // Blush is the opt-in rose theme, so it is the one exception.
+        test(
+          'no red or pink outside the error roles',
+          skip: variant == NestVariant.blush,
+          () {
+            final error = {
+              s.error,
+              s.onError,
+              s.errorContainer,
+              s.onErrorContainer,
+            };
+            for (final MapEntry(key: role, value: c) in p.roles.entries) {
+              if (error.contains(c)) continue;
+              final hct = Hct.fromInt(c.toARGB32());
+              final reddish = hct.hue < 40 || hct.hue > 330;
+              expect(reddish && hct.chroma > 12, isFalse, reason: '$role $hct');
+            }
+          },
+        );
 
         test('text stays readable on tinted tiles and the summary', () {
           final tints = {

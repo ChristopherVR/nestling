@@ -311,6 +311,10 @@ class AppState extends ChangeNotifier {
   /// 'light', 'dark' or 'system'.
   String appearance = 'light';
 
+  /// The colour palette's name ('sky', 'blush'), or empty for the default.
+  /// Kept on this device only, like [appearance].
+  String palette = '';
+
   /// Night light: a dimmer, warmer light palette from 6 pm to 6 am.
   bool nightLight = true;
 
@@ -893,6 +897,11 @@ class AppState extends ChangeNotifier {
 
   void setAppearance(String value) {
     appearance = value;
+    _settingsChanged();
+  }
+
+  void setPalette(String value) {
+    palette = value;
     _settingsChanged();
   }
 
@@ -1948,6 +1957,7 @@ class AppState extends ChangeNotifier {
         Map<String, int>.from(j['babyFeedReminderMinutes'] as Map? ?? {}),
       );
       appearance = j['appearance'] as String? ?? 'light';
+      palette = j['palette'] as String? ?? '';
       nightLight = j['nightLight'] as bool? ?? true;
       showPump = j['showPump'] as bool?;
       showCamera = j['showCamera'] as bool?;
@@ -2075,6 +2085,7 @@ class AppState extends ChangeNotifier {
       'babyFeedReminderOn': _feedReminderOn,
       'babyFeedReminderMinutes': _feedReminderMinutes,
       'appearance': appearance,
+      'palette': palette,
       'nightLight': nightLight,
       'showPump': ?showPump,
       'showCamera': ?showCamera,
