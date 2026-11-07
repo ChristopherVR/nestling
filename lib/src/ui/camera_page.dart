@@ -7,6 +7,7 @@ import 'camera/camera_help.dart';
 import 'camera/camera_help_content.dart';
 import 'camera/camera_issues.dart';
 import 'camera/camera_setup_wizard.dart';
+import 'camera/recording_view.dart';
 import 'common.dart';
 import 'local_camera_page.dart';
 import 'theme.dart';
@@ -559,9 +560,7 @@ class _Watch extends StatelessWidget {
       children: [
         const SizedBox(height: Space.sm),
         if (live != null)
-          KeepVideoAlive(
-            child: NanitCameraView(stream: live, label: nanitVideoLabel),
-          ),
+          KeepVideoAlive(child: RecordableCameraView(stream: live)),
         if (live != null)
           ListenableBuilder(
             listenable: live,
@@ -584,6 +583,20 @@ class _Watch extends StatelessWidget {
               );
             },
           ),
+        const SizedBox(height: Space.sm),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.mic_none_rounded),
+            title: const LText('Talk to your baby'),
+            subtitle: LText(
+              hub.homeReady
+                  ? 'Talking works on the home network. Tap to switch.'
+                  : 'Set up the home network to talk. Tap to start.',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: onUseHome,
+          ),
+        ),
         if (linkIssue != null) ...[
           const SizedBox(height: Space.md),
           CameraIssueCard(issue: linkIssue, detail: problem, actions: fixes),

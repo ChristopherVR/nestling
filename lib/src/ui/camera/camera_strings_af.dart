@@ -1,6 +1,11 @@
 /// Afrikaans for the guided camera setup, help and FAQ. Spread into
 /// `afrikaans` in localization.dart; keys must not repeat keys there.
 const cameraAfrikaans = <String, String>{
+  'Talk to your baby': 'Praat met jou baba',
+  'Talking works on the home network. Tap to switch.':
+      'Praat werk op die tuisnetwerk. Tik om oor te skakel.',
+  'Set up the home network to talk. Tap to start.':
+      'Stel die tuisnetwerk op om te praat. Tik om te begin.',
   // Address dialog and examples.
   'Four numbers with dots, starting 192.168., 10. or 172. For example 192.168.1.25.': 'Vier getalle met punte, wat met 192.168., 10. of 172. begin. Byvoorbeeld 192.168.1.25.',
   'Find it in your router’s list of connected devices. Look for Nanit or a name starting with N3:': 'Kry dit in jou roeteerder se lys van gekoppelde toestelle. Soek na Nanit of ’n naam wat met N3 begin:',
@@ -147,7 +152,7 @@ const cameraAfrikaans = <String, String>{
   'Check the Windows sound output (speaker icon on the taskbar) is the speaker or headset you expect.': 'Kyk of die Windows-klankuitset (luidsprekerikoon op die taakbalk) die luidspreker of kopstuk is wat jy verwag.',
   'If headphones or a Bluetooth speaker are connected, the sound plays there.': 'As oorfone of ’n Bluetooth-luidspreker gekoppel is, speel die klank daar.',
   'Leaving the camera screen mutes it again, so tap Listen each time you come back.': 'As jy die kameraskerm verlaat, word dit weer gedemp, so tik Luister elke keer as jy terugkom.',
-  'Talking to your baby through the camera is not available in Nestling yet.': 'Om deur die kamera met jou baba te praat, is nog nie in Nestling beskikbaar nie.',
+  'To talk to your baby, press and hold Talk under the video, speak, and let go. Sound only goes to the camera while you hold it.': 'Om met jou baba te praat, druk en hou Praat onder die video, praat, en los. Klank gaan net na die kamera terwyl jy hou.',
   'The camera did not send video': 'Die kamera het nie video gestuur nie',
   'The camera agreed to send video, but none arrived. Something on this device, usually a firewall or VPN, may be blocking it.': 'Die kamera het ingestem om video te stuur, maar niks het aangekom nie. Iets op hierdie toestel, gewoonlik ’n brandmuur of VPN, blokkeer dit dalk.',
   'Open Windows Security, then Firewall & network protection, then Allow an app through firewall. Make sure Nestling is allowed on Private networks.': 'Maak Windows-sekuriteit oop, dan Brandmuur en netwerkbeskerming, dan Laat ’n toepassing deur die brandmuur toe. Maak seker Nestling word op privaat netwerke toegelaat.',
@@ -271,10 +276,10 @@ const cameraAfrikaans = <String, String>{
   'Breathing monitoring and sleep insights are not available in Nestling.': 'Asemhalingsmonitering en slaapinsigte is nie in Nestling beskikbaar nie.',
   // FAQ.
   'What does home network mode do?': 'Wat doen tuisnetwerkmodus?',
-  'It shows live video and sound from your Nanit camera, the room temperature and humidity, the night light, soothing sounds, and optional sound and cry alerts. Everything travels over your own Wi-Fi, straight from the camera to this device.': 'Dit wys regstreekse video en klank van jou Nanit-kamera, die kamertemperatuur en humiditeit, die naglig, kalmerende klanke, en opsionele klank- en huilwaarskuwings. Alles gaan oor jou eie Wi-Fi, direk van die kamera na hierdie toestel.',
+  'It shows live video and sound from your Nanit camera, lets you talk to your baby through it, shows the room temperature and humidity, the night light, soothing sounds, and optional sound and cry alerts. Everything travels over your own Wi-Fi, straight from the camera to this device.': 'Dit wys regstreekse video en klank van jou Nanit-kamera, laat jou deur dit met jou baba praat, wys die kamertemperatuur en humiditeit, die naglig, kalmerende klanke, en opsionele klank- en huilwaarskuwings. Alles gaan oor jou eie Wi-Fi, direk van die kamera na hierdie toestel.',
   'What does it not do, compared with the Nanit app?':
       'Wat doen dit nie, vergeleke met die Nanit-toepassing?',
-  'No watching away from home, no recordings or video history, no sleep reports, no breathing monitoring, no motion alerts and no talking through the camera. Keep the Nanit app for those.': 'Geen kyk weg van die huis nie, geen opnames of videogeskiedenis, geen slaapverslae, geen asemhalingsmonitering, geen bewegingswaarskuwings en geen praat deur die kamera nie. Hou die Nanit-toepassing daarvoor.',
+  'No watching away from home, no recordings or video history, no sleep reports, no breathing monitoring, no motion alerts. Keep the Nanit app for those.': 'Geen kyk weg van die huis nie, geen opnames of videogeskiedenis, geen slaapverslae, geen asemhalingsmonitering, en geen bewegingswaarskuwings nie. Hou die Nanit-toepassing daarvoor.',
   'Do I need the internet?': 'Het ek die internet nodig?',
   'Not in home network mode. Once set up, it works with the internet switched off. Nanit account mode is different: it needs the internet for a moment about once a week.': 'Nie in tuisnetwerkmodus nie. Sodra dit opgestel is, werk dit met die internet af. Nanit-rekeningmodus is anders: dit het omtrent een keer per week vir ’n oomblik die internet nodig.',
   'Why does account mode need the internet about once a week?':

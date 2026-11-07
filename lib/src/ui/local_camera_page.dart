@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:nanit_camera/nanit_camera.dart';
 
 import '../local_nanit.dart';
+import '../local_talk.dart';
 import '../local_camera_alerts.dart';
 import '../background.dart';
 import '../nanit_integration.dart';
@@ -12,6 +13,7 @@ import 'camera/camera_help.dart';
 import 'camera/camera_help_content.dart';
 import 'camera/camera_issues.dart';
 import 'camera/camera_live_tips.dart';
+import 'camera/talk_button.dart';
 import 'common.dart';
 import 'disclaimer_page.dart';
 import 'theme.dart';
@@ -42,6 +44,20 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
   bool _muted = true, _foreground = true, _playing = false;
   bool _showingDetails = false;
   String? _playingUrl;
+  LocalTalk? _talk;
+  String? _talkAddress;
+
+  /// Talk-back for the saved camera. Rebuilt if the camera's address changes.
+  LocalTalk? _talkFor(String? address) {
+    if (address == null) return null;
+    if (_talk == null || _talkAddress != address) {
+      _talk?.dispose();
+      _talk = LocalTalk(address: address);
+      _talkAddress = address;
+    }
+    return _talk;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +73,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
     // Keep its live feed running; hidden/paused still close the connection.
     if (state == AppLifecycleState.inactive) return;
     final foreground = state == AppLifecycleState.resumed;
+    if (!foreground) unawaited(_talk?.stop() ?? Future<void>.value());
     if (_foreground == foreground) return;
     setState(() {
       _foreground = foreground;
@@ -71,6 +88,7 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
   }
 
   Future<void> _openDetails(Future<void> Function() open) async {
+    unawaited(_talk?.stop() ?? Future<void>.value());
     setState(() {
       _showingDetails = true;
       _muted = true;
@@ -89,6 +107,8 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Closes the microphone and the camera speaker stream.
+    _talk?.dispose();
     unawaited(widget.hub.pause());
     super.dispose();
   }
@@ -116,6 +136,9 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
       final t = Theme.of(context).textTheme;
       final s = Theme.of(context).colorScheme;
       final fault = hub.fault;
+      final talk = _talkFor(saved.address);
+      // Losing the camera connection ends any talk at once.
+      if (!ready && talk != null && talk.active) unawaited(talk.stop());
       return ListView(
         padding: EdgeInsets.fromLTRB(
           Space.page,
@@ -229,6 +252,10 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
               ),
             ],
           ),
+          if (talk != null) ...[
+            const SizedBox(height: Space.md),
+            TalkButton(talk: talk, enabled: ready && _foreground),
+          ],
           if (ready && _muted)
             Padding(
               padding: const EdgeInsets.only(top: Space.sm),

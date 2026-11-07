@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Scanning the pairing QR code -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Talking to the baby through the camera; only used while Talk is held. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- Feed and pill reminders -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

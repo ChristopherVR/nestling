@@ -391,7 +391,7 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
       else
         'If headphones or a Bluetooth speaker are connected, the sound plays there.',
       'Leaving the camera screen mutes it again, so tap Listen each time you come back.',
-      'Talking to your baby through the camera is not available in Nestling yet.',
+      'To talk to your baby, press and hold Talk under the video, speak, and let go. Sound only goes to the camera while you hold it.',
     ],
     keywords: 'no sound audio silent listen mute volume speaker hear talk back',
   ),
@@ -669,11 +669,11 @@ List<CameraHelpTopic> cameraHelpTopics({required bool windows}) => [
 const cameraFaq = <CameraFaq>[
   CameraFaq(
     'What does home network mode do?',
-    'It shows live video and sound from your Nanit camera, the room temperature and humidity, the night light, soothing sounds, and optional sound and cry alerts. Everything travels over your own Wi-Fi, straight from the camera to this device.',
+    'It shows live video and sound from your Nanit camera, lets you talk to your baby through it, shows the room temperature and humidity, the night light, soothing sounds, and optional sound and cry alerts. Everything travels over your own Wi-Fi, straight from the camera to this device.',
   ),
   CameraFaq(
     'What does it not do, compared with the Nanit app?',
-    'No watching away from home, no recordings or video history, no sleep reports, no breathing monitoring, no motion alerts and no talking through the camera. Keep the Nanit app for those.',
+    'No watching away from home, no recordings or video history, no sleep reports, no breathing monitoring, no motion alerts. Keep the Nanit app for those.',
   ),
   CameraFaq(
     'Do I need the internet?',

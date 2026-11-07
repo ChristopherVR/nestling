@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'ui/camera/camera_strings_af.dart';
+import 'ui/camera/recording_strings_af.dart';
 
 /// Device-local language; user-entered names and notes are kept as entered.
 abstract final class AppLanguage {
@@ -184,6 +185,7 @@ class LTextFormField extends TextFormField {
 const afrikaans = <String, String>{
   // Guided camera setup and help live with the camera screens.
   ...cameraAfrikaans,
+  ...recordingAfrikaans,
   "Growth": "Groei",
   "Growth journal": "Groeijoernaal",
   "Edit profile": "Wysig profiel",
@@ -1211,6 +1213,15 @@ const afrikaans = <String, String>{
   'Opening video…': 'Maak video oop…',
   'Connecting to your camera…': 'Koppel aan jou kamera…',
   'Listen': 'Luister',
+  'Talk': 'Praat',
+  'Talking…': 'Praat tans…',
+  'Talking… let go to stop': 'Praat tans… los om te stop',
+  'Getting ready…': 'Maak gereed…',
+  'Press and hold Talk to speak to your baby.':
+      'Druk en hou Praat om met jou baba te praat.',
+  'Microphone access is off. Allow it in your device settings to talk.': 'Mikrofoontoegang is af. Laat dit toe in jou toestel se instellings om te praat.',
+  'Could not talk through the camera. Try again.':
+      'Kon nie deur die kamera praat nie. Probeer weer.',
   'Reconnect': 'Koppel weer',
   'In the room': 'In die kamer',
   'Unavailable': 'Nie beskikbaar nie',
