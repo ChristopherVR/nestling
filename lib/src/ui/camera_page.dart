@@ -40,6 +40,10 @@ class _CameraPageState extends State<CameraPage> {
   @override
   void initState() {
     super.initState();
+    // On Android the screen can attach to an engine the headless sync service
+    // already started, where main() never initialised the player. Without
+    // this the video widget throws and shows a grey box.
+    ensureNanitVideoInitialized();
     hub.start();
   }
 
@@ -585,7 +589,16 @@ class _Watch extends StatelessWidget {
             onAction: () => editCameraAddress(context, hub),
           ),
         ],
-        if (client != null)
+        if (client != null &&
+            hub.connection?.state != NanitLinkState.connected &&
+            linkIssue == null &&
+            problem == null) ...[
+          const SizedBox(height: Space.md),
+          const _Problem(text: 'Not connected to the camera yet.'),
+        ],
+        // Readings only mean something while the camera is reachable;
+        // otherwise they would show empty, greyed-out values.
+        if (client != null && hub.connection?.state == NanitLinkState.connected)
           NanitCameraControls(
             client: client,
             alerts: hub.alerts,
