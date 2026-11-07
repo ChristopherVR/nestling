@@ -416,6 +416,28 @@ class Kbd extends StatelessWidget {
 }
 
 /// Fluid content width with a comfortable limit on large desktop displays.
+/// Keeps [child] built while it is scrolled out of a lazy list, so a live
+/// video and its sound carry on until the screen itself is left.
+class KeepVideoAlive extends StatefulWidget {
+  const KeepVideoAlive({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<KeepVideoAlive> createState() => _KeepVideoAliveState();
+}
+
+class _KeepVideoAliveState extends State<KeepVideoAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
 class PageWidth extends StatelessWidget {
   const PageWidth({super.key, required this.child, this.maxWidth = 1200});
   final Widget child;

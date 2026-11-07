@@ -43,7 +43,12 @@ class _CameraPageState extends State<CameraPage> {
     // On Android the screen can attach to an engine the headless sync service
     // already started, where main() never initialised the player. Without
     // this the video widget throws and shows a grey box.
-    ensureNanitVideoInitialized();
+    try {
+      ensureNanitVideoInitialized();
+    } catch (e) {
+      // No player library (e.g. in tests): the video box reports it itself.
+      debugPrint('Nanit: could not set up the video player: $e');
+    }
     hub.start();
   }
 
@@ -553,7 +558,10 @@ class _Watch extends StatelessWidget {
       padding: _pagePadding(context),
       children: [
         const SizedBox(height: Space.sm),
-        if (live != null) NanitCameraView(stream: live, label: nanitVideoLabel),
+        if (live != null)
+          KeepVideoAlive(
+            child: NanitCameraView(stream: live, label: nanitVideoLabel),
+          ),
         if (live != null)
           ListenableBuilder(
             listenable: live,

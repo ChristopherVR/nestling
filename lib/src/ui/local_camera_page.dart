@@ -166,42 +166,44 @@ class _LocalCameraWatchState extends State<LocalCameraWatch>
           const SizedBox(height: Space.md),
           CameraFirstTimeTips(store: hub.store),
           const SizedBox(height: Space.xs),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(Corners.lg),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              // Video letterboxing stays black in every theme.
-              child: ColoredBox(
-                color: Colors.black,
-                child: _foreground && ready && url != null
-                    ? NanitOfflineView(
-                        key: ValueKey(url),
-                        url: url,
-                        muted: _muted,
-                        onError: () {
-                          _playing = false;
-                          unawaited(hub.streamFailed());
-                        },
-                        onPlaying: () {
-                          if (mounted) {
-                            setState(() {
-                              _playing = true;
-                              _playingUrl = url;
-                            });
-                          }
-                        },
-                      )
-                    : Center(
-                        child: hub.state == LocalCameraState.connecting
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Icon(
-                                Icons.videocam_off_outlined,
-                                color: Colors.white,
-                                size: 40,
-                              ),
-                      ),
+          KeepVideoAlive(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(Corners.lg),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                // Video letterboxing stays black in every theme.
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: _foreground && ready && url != null
+                      ? NanitOfflineView(
+                          key: ValueKey(url),
+                          url: url,
+                          muted: _muted,
+                          onError: () {
+                            _playing = false;
+                            unawaited(hub.streamFailed());
+                          },
+                          onPlaying: () {
+                            if (mounted) {
+                              setState(() {
+                                _playing = true;
+                                _playingUrl = url;
+                              });
+                            }
+                          },
+                        )
+                      : Center(
+                          child: hub.state == LocalCameraState.connecting
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Icon(
+                                  Icons.videocam_off_outlined,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                        ),
+                ),
               ),
             ),
           ),
