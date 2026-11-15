@@ -272,7 +272,11 @@ class PumpHub extends ChangeNotifier {
       });
       _poll ??= Timer.periodic(const Duration(seconds: 2), (_) => _refresh());
       notifyListeners();
-      await importHistory(p);
+      // A slow history read must not drop a pump that is otherwise fine;
+      // the records stay on the pump until the next connect.
+      try {
+        await importHistory(p);
+      } catch (_) {}
     } catch (e) {
       p.state = PumpLinkState.failed;
       p.error = quiet ? 'Not reachable. Is it switched on?' : '$e';

@@ -108,7 +108,8 @@ enum PumpMode {
 
 /// Run state in status packets and history records. Seen on a BP380: 0 while
 /// switched on but not pumping (including after a pause), 1 while pumping,
-/// 3 once switched off. 2 never showed up.
+/// 3 once switched off. 2 shows up in history records written while it is
+/// put on charge.
 enum PumpRunState {
   stopped(0),
   running(1),
